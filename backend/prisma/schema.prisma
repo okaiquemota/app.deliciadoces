@@ -1,0 +1,223 @@
+// =====================================================================
+// Delícia Doces — Modelo de dados (RASCUNHO v0.1)
+// ---------------------------------------------------------------------
+// ATENÇÃO: este schema é uma PRIMEIRA VERSÃO, criada ANTES da reunião de
+// levantamento de requisitos com a cliente (Dalila). Ele foi mantido
+// deliberadamente simples e genérico para ser fácil de ajustar depois.
+//
+// Decisões conscientes deste rascunho:
+//  - Sem regra de negócio embutida no banco (ex.: baixa automática de
+//    estoque, cálculo de saldo) — isso fica na camada de serviço, onde
+//    é barato mudar.
+//  - Valores monetários em Decimal(10,2) e não Float, para evitar erro
+//    de arredondamento em dinheiro.
+//  - Quantidades em Decimal(10,3) porque confeitaria trabalha com peso
+//    (0,250 kg de chocolate) e não só com unidades inteiras.
+//  - Relacionamentos com usuário são OPCIONais (`?`) para não travar
+//    importação de dados históricos que não têm autor conhecido.
+//  - Nada é apagado de fato: usamos flag `ativo` (soft delete) em
+//    Usuario e Produto para preservar o histórico de movimentações.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------
+
+/// Perfil de acesso. Começamos com dois níveis; refinar após a reunião
+/// (a cliente pode precisar de perfis distintos p/ produção e caixa).
+enum PapelUsuario {
+  ADMIN
+  OPERADOR
+}
+
+/// Direção de uma movimentação — serve tanto para caixa quanto p/ estoque.
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+}
+
+/// Diferencia contas a pagar de contas a receber.
+enum TipoConta {
+  PAGAR
+  RECEBER
+}
+
+/// Ciclo de vida de uma conta. "QUITADA" cobre tanto conta paga
+/// quanto conta recebida, evitando dois status redundantes.
+enum StatusConta {
+  PENDENTE
+  QUITADA
+  CANCELADA
+}
+
+// ---------------------------------------------------------------------
+// USUÁRIO — autenticação e autoria dos lançamentos
+// ---------------------------------------------------------------------
+
+model Usuario {
+  id        String       @id @default(uuid())
+  nome      String
+  email     String       @unique
+  senhaHash String // hash bcrypt — a senha em texto puro nunca é persistida
+  papel     PapelUsuario @default(OPERADOR)
+  ativo     Boolean      @default(true)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  // Relações inversas: rastreiam quem registrou cada lançamento
+  movimentacoesEstoque MovimentacaoEstoque[]
+  movimentacoesCaixa   MovimentacaoCaixa[]
+  contas               ContaPagarReceber[]
+
+  @@map("usuarios")
+}
+
+// ---------------------------------------------------------------------
+// PRODUTO — itens de estoque da confeitaria
+// ---------------------------------------------------------------------
+
+model Produto {
+  id        String  @id @default(uuid())
+  nome      String
+  descricao String?
+
+  /// Unidade livre por enquanto ("un", "kg", "L", "cx"). Vira enum
+  /// depois da reunião, quando soubermos a lista real usada pela cliente.
+  unidadeMedida String @default("un")
+
+  /// Categoria como texto livre (ex.: "Insumo", "Bolo", "Embalagem").
+  /// Se a cliente precisar de hierarquia, isso vira uma tabela própria.
+  categoria String?
+
+  custoUnitario Decimal? @db.Decimal(10, 2)
+  precoVenda    Decimal? @db.Decimal(10, 2)
+
+  /// Saldo atual, mantido pela camada de serviço a cada movimentação.
+  /// É um "cache" do somatório de MovimentacaoEstoque — decisão tomada
+  /// para manter as telas de listagem rápidas e simples.
+  quantidadeEstoque Decimal @default(0) @db.Decimal(10, 3)
+
+  /// Usado na Fase 2 para disparar alerta de estoque baixo.
+  estoqueMinimo Decimal @default(0) @db.Decimal(10, 3)
+
+  ativo Boolean @default(true)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  movimentacoes MovimentacaoEstoque[]
+
+  @@index([nome])
+  @@index([ativo])
+  @@map("produtos")
+}
+
+// ---------------------------------------------------------------------
+// MOVIMENTAÇÃO DE ESTOQUE — histórico de entradas e saídas de produtos
+// ---------------------------------------------------------------------
+
+model MovimentacaoEstoque {
+  id         String           @id @default(uuid())
+  tipo       TipoMovimentacao
+  quantidade Decimal          @db.Decimal(10, 3)
+
+  /// Motivo/observação em texto livre (ex.: "compra fornecedor",
+  /// "perda por validade", "usado na produção do bolo X").
+  observacao String?
+
+  /// Data do fato, separada de `criadoEm` (data do registro no sistema).
+  /// A cliente pode lançar hoje algo que aconteceu ontem.
+  dataMovimentacao DateTime @default(now())
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  usuarioId String?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  criadoEm DateTime @default(now())
+
+  @@index([produtoId])
+  @@index([dataMovimentacao])
+  @@map("movimentacoes_estoque")
+}
+
+// ---------------------------------------------------------------------
+// MOVIMENTAÇÃO DE CAIXA — lançamentos financeiros (fluxo de caixa)
+// ---------------------------------------------------------------------
+
+model MovimentacaoCaixa {
+  id        String           @id @default(uuid())
+  tipo      TipoMovimentacao
+  valor     Decimal          @db.Decimal(10, 2)
+  descricao String
+
+  /// Categoria como texto livre (ex.: "Vendas", "Fornecedores",
+  /// "Aluguel"). Vira tabela própria se a cliente pedir relatório
+  /// por categoria com lista fechada.
+  categoria String?
+
+  /// Forma de pagamento em texto livre por enquanto (dinheiro, pix,
+  /// cartão...). Aguardando a reunião para virar enum.
+  formaPagamento String?
+
+  dataMovimentacao DateTime @default(now())
+
+  /// Vínculo OPCIONAL com uma conta: quando a cliente quita uma conta,
+  /// o pagamento gera um lançamento de caixa ligado a ela. Lançamentos
+  /// avulsos (venda no balcão) ficam sem conta associada.
+  contaId String?
+  conta   ContaPagarReceber? @relation(fields: [contaId], references: [id])
+
+  usuarioId String?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  criadoEm DateTime @default(now())
+
+  @@index([dataMovimentacao])
+  @@index([tipo])
+  @@map("movimentacoes_caixa")
+}
+
+// ---------------------------------------------------------------------
+// CONTA A PAGAR / RECEBER — compromissos com vencimento
+// ---------------------------------------------------------------------
+
+model ContaPagarReceber {
+  id        String      @id @default(uuid())
+  tipo      TipoConta
+  descricao String
+  valor     Decimal     @db.Decimal(10, 2)
+  status    StatusConta @default(PENDENTE)
+
+  /// Nome do fornecedor ou cliente, em texto livre. Só vira entidade
+  /// própria se a reunião mostrar que a cliente precisa de cadastro.
+  contraparte String?
+
+  dataVencimento DateTime
+  dataQuitacao   DateTime?
+
+  usuarioId String?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  /// Uma conta pode gerar mais de um lançamento de caixa (pagamento
+  /// parcelado). Modelado como lista para não fechar essa porta agora.
+  movimentacoes MovimentacaoCaixa[]
+
+  @@index([dataVencimento])
+  @@index([status])
+  @@index([tipo])
+  @@map("contas_pagar_receber")
+}

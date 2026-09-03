@@ -1,0 +1,82 @@
+# ---------- Dependências ----------
+node_modules/
+.pnp
+.pnp.js
+jspm_packages/
+
+# ---------- Variáveis de ambiente (NUNCA versionar) ----------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+# Os arquivos de exemplo DEVEM ser versionados:
+!.env.example
+
+# ---------- Build / distribuição ----------
+dist/
+dist-ssr/
+build/
+out/
+*.local
+
+# ---------- Prisma ----------
+# Prisma Client é gerado a partir do schema.prisma (não versionar)
+backend/prisma/generated/
+backend/src/generated/
+prisma/generated/
+# Banco local em arquivo, caso alguém use SQLite para testes rápidos
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# ---------- Logs ----------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---------- Testes / cobertura ----------
+coverage/
+*.lcov
+.nyc_output/
+
+# ---------- Cache de ferramentas ----------
+.cache/
+.parcel-cache/
+.eslintcache
+.vite/
+.turbo/
+.npm/
+
+# ---------- Editores e IDEs ----------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ---------- Sistema operacional ----------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ---------- Uploads / arquivos gerados em runtime ----------
+uploads/
+tmp/
+temp/
