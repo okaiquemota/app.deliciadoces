@@ -1,0 +1,283 @@
+/* =====================================================================
+   Estilos globais — CSS puro, sem framework.
+   Decisão: manter o setup leve no início. Se o grupo optar por uma
+   biblioteca de UI (Tailwind, MUI), a troca é feita depois sem
+   reescrever a lógica das telas.
+   ===================================================================== */
+
+:root {
+  --cor-fundo: #faf7f5;
+  --cor-superficie: #ffffff;
+  --cor-borda: #e8ded8;
+  --cor-texto: #3d2f28;
+  --cor-texto-suave: #8a7a71;
+  --cor-primaria: #c2185b;
+  --cor-primaria-escura: #a01549;
+  --cor-erro: #c62828;
+  --raio: 10px;
+  --sombra: 0 1px 3px rgba(61, 47, 40, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ---------- Layout ---------- */
+
+.layout__topo {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  background-color: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.layout__marca {
+  font-weight: 700;
+}
+
+.layout__menu {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.layout__link {
+  padding: 6px 12px;
+  border-radius: var(--raio);
+  color: var(--cor-texto-suave);
+  text-decoration: none;
+}
+
+.layout__link:hover {
+  background-color: var(--cor-fundo);
+}
+
+.layout__link--ativo {
+  background-color: var(--cor-primaria);
+  color: #fff;
+}
+
+.layout__usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.layout__conteudo {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ---------- Login ---------- */
+
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login__caixa {
+  width: 100%;
+  max-width: 360px;
+  padding: 32px;
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.login__marca {
+  margin: 0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.login__subtitulo {
+  margin: 4px 0 24px;
+  color: var(--cor-texto-suave);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* ---------- Campos e botões ---------- */
+
+.campo {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.campo__rotulo {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.campo__entrada {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.campo__entrada:focus {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 1px;
+}
+
+.botao {
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--raio);
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.botao--primario {
+  width: 100%;
+  background-color: var(--cor-primaria);
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.botao--primario:hover:not(:disabled) {
+  background-color: var(--cor-primaria-escura);
+}
+
+.botao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.botao--texto {
+  padding: 4px 8px;
+  background: none;
+  color: var(--cor-primaria);
+  font-size: 0.875rem;
+}
+
+/* ---------- Cartões, indicadores e avisos ---------- */
+
+.pagina__titulo {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+}
+
+.pagina__texto {
+  margin: 0 0 24px;
+  color: var(--cor-texto-suave);
+}
+
+.cartao {
+  padding: 24px;
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.cartao__titulo {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+}
+
+.cartao__subtitulo {
+  margin: 24px 0 8px;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cor-texto-suave);
+}
+
+.cartao__texto {
+  margin: 0;
+  color: var(--cor-texto-suave);
+}
+
+.cartao__lista {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.cartao__aviso {
+  margin-top: 24px;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--cor-texto-suave);
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.indicador__rotulo {
+  font-size: 0.875rem;
+  color: var(--cor-texto-suave);
+}
+
+.indicador__valor {
+  font-size: 1.75rem;
+}
+
+.indicador__dica {
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.alerta {
+  padding: 10px 12px;
+  border-radius: var(--raio);
+  font-size: 0.875rem;
+}
+
+.alerta--erro {
+  background-color: #fdecea;
+  color: var(--cor-erro);
+}
+
+.carregando,
+.pagina-erro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 100vh;
+  color: var(--cor-texto-suave);
+}
