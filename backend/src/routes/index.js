@@ -1,22 +1,121 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
+import { autenticar } from '../middlewares/auth.js';
+import { validar } from '../middlewares/validate.js';
+import {
+  insumoController,
+  produtoController,
+  estoqueController,
+  vendaController,
+  despesaController,
+  producaoController,
+  dashboardController,
+} from '../controllers/index.js';
+import {
+  insumoSchema,
+  insumoUpdateSchema,
+  produtoSchema,
+  produtoUpdateSchema,
+  fichaTecnicaSchema,
+  movimentacaoSchema,
+  vendaSchema,
+  despesaSchema,
+  despesaUpdateSchema,
+  producaoSchema,
+} from '../controllers/schemas.js';
 
 /**
  * Agregador de rotas da API.
  *
- * Cada módulo do sistema (estoque, caixa, contas, dashboard) ganha seu
- * próprio arquivo de rotas e é registrado aqui. Assim `app.js` não precisa
- * ser tocado a cada nova funcionalidade.
+ * Tudo que não é `/auth` fica atrás de `autenticar`: são dados financeiros
+ * de um negócio real. A proteção de verdade é aqui, não no React.
  */
 const router = Router();
 
 router.use('/auth', authRoutes);
 
-// --- Próximos módulos (Fase 1) ---
-// router.use('/produtos', produtoRoutes);
-// router.use('/estoque', estoqueRoutes);
-// router.use('/caixa', caixaRoutes);
-// router.use('/contas', contaRoutes);
-// router.use('/dashboard', dashboardRoutes);
+// A partir daqui, ninguém passa sem token
+router.use(autenticar);
+
+// ---------------------------------------------------------------- insumos
+router
+  .route('/insumos')
+  .get(insumoController.listar)
+  .post(validar(insumoSchema), insumoController.criar);
+
+router
+  .route('/insumos/:id')
+  .get(insumoController.porId)
+  .put(validar(insumoUpdateSchema), insumoController.atualizar)
+  .delete(insumoController.inativar);
+
+// --------------------------------------------------------------- produtos
+router
+  .route('/produtos')
+  .get(produtoController.listar)
+  .post(validar(produtoSchema), produtoController.criar);
+
+router
+  .route('/produtos/:id')
+  .get(produtoController.porId)
+  .put(validar(produtoUpdateSchema), produtoController.atualizar)
+  .delete(produtoController.inativar);
+
+router.put(
+  '/produtos/:id/ficha-tecnica',
+  validar(fichaTecnicaSchema),
+  produtoController.salvarFicha
+);
+
+// ---------------------------------------------------------------- estoque
+router.get('/estoque/movimentacoes', estoqueController.listarMovimentacoes);
+router.post(
+  '/estoque/movimentacoes',
+  validar(movimentacaoSchema),
+  estoqueController.movimentar
+);
+router.get('/estoque/alertas', estoqueController.alertas);
+router.post('/estoque/recalcular', estoqueController.recalcular);
+
+// ----------------------------------------------------------------- vendas
+router
+  .route('/vendas')
+  .get(vendaController.listar)
+  .post(validar(vendaSchema), vendaController.criar);
+
+router.route('/vendas/:id').get(vendaController.porId).put(validar(vendaSchema), vendaController.atualizar);
+
+/**
+ * O botão "Excluir" da tela chama `cancelar`, não um DELETE.
+ * Decisão de produto: nada some, a venda é marcada como cancelada e o
+ * estoque estornado — a cliente erra com frequência e precisa voltar atrás.
+ */
+router.patch('/vendas/:id/cancelar', vendaController.cancelar);
+router.patch('/vendas/:id/reabrir', vendaController.reabrir);
+
+// --------------------------------------------------------------- despesas
+router.get('/categorias-despesa', despesaController.categorias);
+
+router
+  .route('/despesas')
+  .get(despesaController.listar)
+  .post(validar(despesaSchema), despesaController.criar);
+
+router
+  .route('/despesas/:id')
+  .put(validar(despesaUpdateSchema), despesaController.atualizar)
+  .delete(despesaController.excluir);
+
+// --------------------------------------------------------------- produção
+router.get('/producoes/previsao', producaoController.previsao);
+router
+  .route('/producoes')
+  .get(producaoController.listar)
+  .post(validar(producaoSchema), producaoController.registrar);
+router.delete('/producoes/:id', producaoController.excluir);
+
+// -------------------------------------------------------------- dashboard
+router.get('/dashboard', dashboardController.resumo);
+router.get('/dashboard/por-dia', dashboardController.porDia);
 
 export default router;

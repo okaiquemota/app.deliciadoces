@@ -11,6 +11,7 @@ export function Layout() {
   const itensMenu = [
     { para: '/dashboard', rotulo: 'Dashboard' },
     { para: '/caixa', rotulo: 'Caixa' },
+    { para: '/producao', rotulo: 'Produção' },
     { para: '/estoque', rotulo: 'Estoque' },
   ];
 

@@ -281,3 +281,420 @@ body {
   min-height: 100vh;
   color: var(--cor-texto-suave);
 }
+
+/* =====================================================================
+   Telas dos módulos (caixa, estoque, produção, dashboard)
+   ===================================================================== */
+
+.pagina__cabecalho {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.filtro-periodo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+.filtro-periodo .campo__entrada {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+}
+
+/* ---------- Abas ---------- */
+
+.abas {
+  display: flex;
+  gap: 4px;
+  margin: 20px 0 16px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.abas__item {
+  padding: 8px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+}
+
+.abas__item:hover {
+  color: var(--cor-texto);
+}
+
+.abas__item--ativo {
+  color: var(--cor-primaria);
+  border-bottom-color: var(--cor-primaria);
+  font-weight: 600;
+}
+
+/* ---------- Barra de ações ---------- */
+
+.barra-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.barra-acoes__resumo {
+  font-size: 0.9rem;
+  color: var(--cor-texto-suave);
+}
+
+.botao--auto {
+  width: auto;
+}
+
+.botao--perigo {
+  color: var(--cor-erro);
+}
+
+/* ---------- Tabela ---------- */
+
+.tabela__rolagem {
+  overflow-x: auto;
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabela th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cor-texto-suave);
+  border-bottom: 1px solid var(--cor-borda);
+  white-space: nowrap;
+}
+
+.tabela td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--cor-fundo);
+  vertical-align: middle;
+}
+
+.tabela tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela__linha--clicavel {
+  cursor: pointer;
+}
+
+.tabela__linha--clicavel:hover {
+  background-color: var(--cor-fundo);
+}
+
+.tabela__aviso {
+  padding: 32px;
+  text-align: center;
+  color: var(--cor-texto-suave);
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.riscado {
+  text-decoration: line-through;
+  color: var(--cor-texto-suave);
+}
+
+/* ---------- Etiquetas e saldos ---------- */
+
+.etiqueta {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+  white-space: nowrap;
+}
+
+.etiqueta--retirada {
+  background-color: #fff4e5;
+  border-color: #ffd9a8;
+  color: #8a5a00;
+}
+
+.etiqueta--alerta {
+  margin-left: 8px;
+  background-color: #fdecea;
+  border-color: #f5c6c0;
+  color: var(--cor-erro);
+}
+
+.saldo--baixo {
+  color: var(--cor-erro);
+  font-weight: 600;
+}
+
+/* ---------- Modal ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: rgba(61, 47, 40, 0.45);
+}
+
+.modal__caixa {
+  width: 100%;
+  margin: auto;
+  background-color: var(--cor-superficie);
+  border-radius: var(--raio);
+  box-shadow: 0 10px 40px rgba(61, 47, 40, 0.25);
+}
+
+.modal__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.modal__titulo {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.modal__fechar {
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+}
+
+.modal__corpo {
+  padding: 24px;
+}
+
+/* ---------- Formulários ---------- */
+
+.form__linha {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.form__linha > .campo {
+  flex: 1;
+}
+
+.campo--inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.campo--inline input {
+  width: auto;
+}
+
+.campo__dica {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.total-previa {
+  margin: 20px 0 16px;
+  padding: 12px 16px;
+  background-color: var(--cor-fundo);
+  border-radius: var(--raio);
+  font-size: 1.05rem;
+}
+
+.previsao {
+  margin: 16px 0;
+  padding: 16px;
+  background-color: var(--cor-fundo);
+  border-radius: var(--raio);
+}
+
+.previsao__titulo {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cor-texto-suave);
+}
+
+.previsao__lista {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+
+.previsao__aviso {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+/* ---------- Dashboard ---------- */
+
+.indicador--positivo .indicador__valor {
+  color: #1b7a3d;
+}
+
+.indicador--negativo .indicador__valor {
+  color: var(--cor-erro);
+}
+
+.painel-duplo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.cartao--alerta {
+  margin-top: 16px;
+  border-color: #f5c6c0;
+  background-color: #fffaf9;
+}
+
+.lista-simples {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.lista-simples li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--cor-fundo);
+}
+
+.lista-simples li:last-child {
+  border-bottom: none;
+}
+
+.saldo-grande {
+  margin: 8px 0 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1b7a3d;
+}
+
+.saldo-grande--negativo {
+  color: var(--cor-erro);
+}
+
+/* ---------- Gráfico ---------- */
+
+.grafico {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 160px;
+  margin-bottom: 8px;
+}
+
+.grafico__coluna {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.grafico__barras {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+}
+
+.grafico__barra {
+  width: 45%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.2s;
+}
+
+.grafico__barra--venda {
+  background-color: var(--cor-primaria);
+}
+
+.grafico__barra--despesa {
+  background-color: #d9a441;
+}
+
+.grafico__rotulo {
+  font-size: 0.7rem;
+  color: var(--cor-texto-suave);
+}
+
+.grafico__legenda {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.ponto {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 50%;
+}
+
+.ponto--venda {
+  background-color: var(--cor-primaria);
+}
+
+.ponto--despesa {
+  background-color: #d9a441;
+}
+
+@media (max-width: 600px) {
+  .form__linha {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pagina__cabecalho {
+    align-items: stretch;
+  }
+}
