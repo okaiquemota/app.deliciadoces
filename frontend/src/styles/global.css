@@ -698,3 +698,30 @@ body {
     align-items: stretch;
   }
 }
+
+.seletor-periodo {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 999px;
+}
+
+.seletor-periodo__item {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.seletor-periodo__item--ativo {
+  background-color: var(--cor-primaria);
+  color: #fff;
+  font-weight: 600;
+}
