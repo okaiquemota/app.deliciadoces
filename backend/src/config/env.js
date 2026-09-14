@@ -43,7 +43,11 @@ export const env = {
    * O pooler em modo transação não suporta os comandos de DDL que o
    * `prisma migrate` precisa. Localmente as duas são a mesma coisa.
    */
-  directDatabaseUrl: process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL,
+  // Aceita também `DIRECT_URL`, que é o nome usado no modelo que o Supabase
+  // entrega na aba ORM — evita que alguém copie de lá e a variável seja
+  // silenciosamente ignorada.
+  directDatabaseUrl:
+    process.env.DIRECT_DATABASE_URL ?? process.env.DIRECT_URL ?? process.env.DATABASE_URL,
 
   jwt: {
     secret: process.env.JWT_SECRET,
