@@ -256,6 +256,41 @@ Acesse **http://localhost:5173** e faça login com as credenciais acima. 🎉
 
 ---
 
+## Onde este sistema vive
+
+Uma dúvida que bate em todo mundo que clona o projeto: *"cadê o sistema? tem algo no ar?"*
+
+Existem **dois lugares diferentes**, e eles não se misturam:
+
+### 1. Na sua máquina (desenvolvimento)
+
+Quando você segue o passo a passo acima, tudo roda no seu computador:
+
+```
+seu PC:  frontend (localhost:5173)  →  backend (localhost:3333)  →  PostgreSQL local
+```
+
+O banco é **seu**: os dados que você cadastrar testando não aparecem para mais ninguém do grupo, e os dados do colega não aparecem para você. **O que o grupo compartilha é o código, não os dados.** Isso é o normal em desenvolvimento.
+
+O banco não vem pronto no repositório — o que está versionado é a *receita* dele (a pasta `prisma/migrations`). O comando `prisma:migrate` lê essa receita e constrói as tabelas vazias na hora. O `db:seed` cria a conta da Dalila e as categorias.
+
+### 2. Em produção (o que a cliente usa)
+
+```
+Vercel  ├── frontend (arquivos estáticos)
+        └── backend (função serverless em /api)   →   PostgreSQL no Supabase
+```
+
+Detalhes que valem entender:
+
+- **Frontend e backend saem do mesmo endereço.** O navegador chama `/api/...` na própria origem, e por isso não existe configuração de CORS para dar errado em produção.
+- **Na Vercel não há servidor ligado o tempo todo.** Cada requisição acorda uma função, que morre logo depois. Por isso o backend separa `app.js` (monta o Express) de `server.js` (chama `listen`): em produção só o primeiro é usado, pelo arquivo `api/[...rota].mjs`.
+- **A conexão com o banco passa pelo pooler do Supabase** (porta 6543). Como cada requisição pode acordar uma função nova, sem pooler o Postgres esgotaria o limite de conexões. As migrations usam a conexão direta (5432), porque o pooler não aguenta comandos de DDL.
+
+O passo a passo de publicar está em [docs/DEPLOY.md](docs/DEPLOY.md).
+
+---
+
 ## Scripts disponíveis
 
 Rodando na **raiz** do projeto:
