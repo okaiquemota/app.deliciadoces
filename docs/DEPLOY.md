@@ -101,32 +101,30 @@ Duas coisas para combinar com o grupo antes do uso real:
 
 ---
 
-## ⚠️ Dados de demonstração em produção
+## Dados em produção
 
-O banco de produção foi populado com **uma semana de operação fictícia** — 6 ingredientes, 4 doces, 6 lotes de produção, 14 vendas, 8 despesas e 51 movimentações de estoque — para a apresentação acadêmica.
+**O banco de produção contém apenas dados reais**, e é assim que deve continuar:
 
-**Nada disso é dado da cliente.** Antes de a Dalila começar a usar o sistema de verdade, isso precisa sair, senão o caixa dela nasce com R$ 2,7 mil de venda que nunca aconteceu.
+| O que tem | Por quê |
+|---|---|
+| A conta da Dalila | Acesso dela ao sistema |
+| As 8 categorias de despesa | Configuração levantada com ela no questionário |
 
-Para limpar, com a `DATABASE_URL` de produção no `.env`:
+Nenhuma venda, produto, insumo ou despesa fictícia. Os números que aparecerem na tela serão os que a cliente (ou vocês, testando) realmente lançarem.
+
+> Já houve dado de demonstração aqui e foi removido. A lição vale registrar: dado inventado em banco de produção parece inofensivo até alguém esquecer de limpar — e aí o primeiro fechamento de caixa da cliente vem com milhares de reais que nunca existiram.
+
+### Se precisar de dados para testar
+
+Existe um gerador (`npm run db:seed:demo`) que cria uma semana de operação fictícia: ingredientes, doces, produção, vendas e despesas. Ele passa pelos mesmos serviços que a interface usa, então os saldos ficam coerentes com o razão.
+
+**Use só no banco local.** Para desfazer, no mesmo banco onde rodou:
 
 ```bash
 npm run db:seed:demo -- --limpar
 ```
 
-O comando remove produtos, insumos, vendas, produções, despesas e movimentações, **preservando a conta da Dalila e as categorias de despesa** — que são configuração real, não demonstração.
-
-Também dá para limpar pelo SQL Editor do Supabase, na ordem dos vínculos:
-
-```sql
-DELETE FROM movimentacoes_estoque;
-DELETE FROM itens_venda;
-DELETE FROM vendas;
-DELETE FROM producoes;
-DELETE FROM despesas;
-DELETE FROM ficha_tecnica_itens;
-DELETE FROM produtos;
-DELETE FROM insumos;
-```
+Remove tudo que ele criou, preservando usuária e categorias.
 
 ---
 
