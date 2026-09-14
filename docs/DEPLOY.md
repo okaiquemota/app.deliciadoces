@@ -31,13 +31,26 @@ Configuradas em **Vercel → Settings → Environment Variables**. Nunca ficam n
 | `JWT_SECRET` | Assina os tokens de sessão |
 | `CORS_ORIGIN` | URL do site em produção |
 
-As duas URLs saem de **Supabase → Project Settings → Database → Connection string**. A do pooler aparece como *Transaction pooler*; a direta, como *Direct connection*.
+As URLs saem do botão **Connect**, no topo da página do projeto no Supabase (a aba **ORM** já mostra no formato do Prisma).
+
+### ⚠️ Na Vercel, use o pooler nas duas — nunca a "Direct connection"
+
+A Vercel só faz conexão **IPv4**. A *Direct connection* do Supabase (`db.<ref>.supabase.co:5432`) é **IPv6** no plano gratuito. Usar ela em produção resulta em erro de conexão com causa nada óbvia — parece banco fora do ar, mas é incompatibilidade de rede.
+
+O pooler (Supavisor) é IPv4 em qualquer plano, e é por isso que as duas variáveis apontam para ele:
+
+| Variável | Qual copiar | Porta |
+|---|---|---|
+| `DATABASE_URL` | **Transaction pooler** | `6543` |
+| `DIRECT_DATABASE_URL` | **Session pooler** | `5432` |
+
+A *Direct connection* continua servindo para rodar migration e `pg_dump` **da máquina de vocês**, se a rede tiver IPv6.
 
 ### Por que duas URLs de banco
 
-O pooler em modo transação distribui poucas conexões reais entre muitas chamadas — é o que permite ao serverless não estourar o limite do Postgres. Mas ele não suporta os comandos de DDL (`CREATE TABLE`, `ALTER TABLE`) que a migration precisa. Daí a conexão direta em separado.
+O modo transação distribui poucas conexões reais entre muitas chamadas — é o que permite ao serverless não estourar o limite do Postgres. Em compensação, ele não suporta os comandos de DDL (`CREATE TABLE`, `ALTER TABLE`) de que a migration precisa, nem *prepared statements* nomeados. Daí a segunda URL, em modo sessão.
 
-Localmente as duas apontam para o mesmo lugar, e o código já trata isso: se `DIRECT_DATABASE_URL` não existir, ele usa `DATABASE_URL`.
+Localmente as duas apontam para o mesmo Postgres, e o código já trata isso: se `DIRECT_DATABASE_URL` não existir, ele usa `DATABASE_URL`.
 
 ---
 
@@ -102,9 +115,13 @@ Para revisar: **Supabase → Advisors → Security**. O esperado é zero erro. A
 
 ## Quando der problema
 
+> **Variável nova exige deploy novo.** A Vercel congela as variáveis no momento do build: adicionar uma não afeta um deploy que já existe. Depois de mexer nelas, faça **Redeploy** (ou um push qualquer na `main`).
+
 | Sintoma | Causa provável | Onde olhar |
 |---|---|---|
-| Site abre, login dá erro 500 | Variável de ambiente faltando ou errada | Vercel → Logs |
+| Site abre, login dá erro 500 | Variável faltando, errada, ou adicionada sem redeploy | Vercel → Logs |
+| `FUNCTION_INVOCATION_FAILED` sem log nenhum | A função morreu ao carregar — quase sempre variável obrigatória ausente | Vercel → Runtime Logs |
+| Erro de conexão só em produção | Usou a *Direct connection* (IPv6) em vez do pooler | Trocar pela Transaction pooler |
 | `Can't reach database server` | Projeto do Supabase pausado | Painel do Supabase → despausar |
 | Deploy falha no build | Erro de compilação | Vercel → Deployments → log do build |
 | Login diz senha inválida | Seed não rodou neste banco | Conferir a tabela `usuarios` |
