@@ -19,8 +19,16 @@ export const registrarSchema = z.object({
   papel: z.enum(['ADMIN', 'OPERADOR']).default('ADMIN'),
 });
 
+/**
+ * No LOGIN o identificador não precisa ser um e-mail válido.
+ *
+ * O cadastro (acima) continua exigindo e-mail de verdade, porque é dado
+ * que fica gravado. Aqui é só uma busca: exigir formato de e-mail
+ * impediria contas de usuário simples, como a de apresentação, de sequer
+ * chegar na verificação de senha.
+ */
 export const loginSchema = z.object({
-  email: z.email('E-mail inválido.').trim().toLowerCase(),
+  email: z.string().trim().toLowerCase().min(1, 'Informe o e-mail ou usuário.'),
   senha: z.string().min(1, 'Informe a senha.'),
 });
 
