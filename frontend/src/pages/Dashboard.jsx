@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { dashboard } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { data as formatarData, moeda, quantidade, ROTULO_PAGAMENTO } from '../utils/formato.js';
+import { data as formatarData, moeda, paraInput, quantidade, ROTULO_PAGAMENTO } from '../utils/formato.js';
 
 /**
  * Dashboard.
@@ -10,8 +10,51 @@ import { data as formatarData, moeda, quantidade, ROTULO_PAGAMENTO } from '../ut
  * A cliente confere o caixa todo dia, mas olha o RESULTADO por semana —
  * por isso o período padrão é a semana corrente, definido no backend.
  */
+/**
+ * Períodos que a cliente usa de verdade.
+ *
+ * Ela confere o caixa todo dia, mas olha o RESULTADO por semana — e o que
+ * ela quer saber é se esta semana foi melhor que a passada. Por isso a
+ * comparação entre semanas está a um clique, e não escondida num filtro
+ * de datas.
+ */
+function inicioDaSemana(deslocamentoEmSemanas = 0) {
+  const d = new Date();
+  const diaDaSemana = d.getDay(); // 0 = domingo
+  d.setDate(d.getDate() - (diaDaSemana === 0 ? 6 : diaDaSemana - 1) + deslocamentoEmSemanas * 7);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function fimDaSemana(deslocamentoEmSemanas = 0) {
+  const d = inicioDaSemana(deslocamentoEmSemanas);
+  d.setDate(d.getDate() + 6);
+  return d;
+}
+
+const PERIODOS = {
+  semana: {
+    rotulo: 'Esta semana',
+    calcular: () => ({ inicio: inicioDaSemana(0), fim: fimDaSemana(0) }),
+  },
+  anterior: {
+    rotulo: 'Semana passada',
+    calcular: () => ({ inicio: inicioDaSemana(-1), fim: fimDaSemana(-1) }),
+  },
+  mes: {
+    rotulo: 'Este mês',
+    calcular: () => {
+      const inicio = new Date();
+      inicio.setDate(1);
+      inicio.setHours(0, 0, 0, 0);
+      return { inicio, fim: new Date() };
+    },
+  },
+};
+
 export function Dashboard() {
   const { usuario } = useAuth();
+  const [periodo, setPeriodo] = useState('semana');
   const [resumo, setResumo] = useState(null);
   const [serie, setSerie] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -20,7 +63,9 @@ export function Dashboard() {
   const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      const [r, s] = await Promise.all([dashboard.resumo(), dashboard.porDia()]);
+      const { inicio, fim } = PERIODOS[periodo].calcular();
+      const params = { inicio: paraInput(inicio), fim: paraInput(fim) };
+      const [r, s] = await Promise.all([dashboard.resumo(params), dashboard.porDia(params)]);
       setResumo(r);
       setSerie(s);
       setErro('');
@@ -29,30 +74,53 @@ export function Dashboard() {
     } finally {
       setCarregando(false);
     }
-  }, []);
+  }, [periodo]);
 
   useEffect(() => {
     carregar();
   }, [carregar]);
-
-  if (carregando) return <p className="tabela__aviso">Carregando...</p>;
-  if (erro) return <p className="alerta alerta--erro">{erro}</p>;
-  if (!resumo) return null;
-
-  const alertas = resumo.alertas.detalhe;
+  // Lidos com segurança: o primeiro render acontece antes de a API responder,
+  // e a troca de período zera o resumo enquanto recarrega.
+  const alertas = resumo?.alertas.detalhe;
   const temAlerta =
-    resumo.alertas.insumosBaixos + resumo.alertas.produtosBaixos + resumo.alertas.validadeProxima >
+    (resumo?.alertas.insumosBaixos ?? 0) +
+      (resumo?.alertas.produtosBaixos ?? 0) +
+      (resumo?.alertas.validadeProxima ?? 0) >
     0;
 
   return (
     <section>
-      <h1 className="pagina__titulo">Olá, {usuario?.nome?.split(' ')[0]} 👋</h1>
-      <p className="pagina__texto">
-        Semana de {formatarData(resumo.periodo.inicio)} a {formatarData(resumo.periodo.fim)}
-      </p>
+      <header className="pagina__cabecalho">
+        <div>
+          <h1 className="pagina__titulo">Olá, {usuario?.nome?.split(' ')[0]} 👋</h1>
+          <p className="pagina__texto">
+            {resumo
+              ? `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`
+              : 'Carregando...'}
+          </p>
+        </div>
+        <nav className="seletor-periodo">
+          {Object.entries(PERIODOS).map(([id, p]) => (
+            <button
+              key={id}
+              type="button"
+              className={periodo === id ? 'seletor-periodo__item seletor-periodo__item--ativo' : 'seletor-periodo__item'}
+              onClick={() => setPeriodo(id)}
+            >
+              {p.rotulo}
+            </button>
+          ))}
+        </nav>
+      </header>
 
+      {erro && <p className="alerta alerta--erro">{erro}</p>}
+
+      {!resumo ? (
+        <p className="tabela__aviso">Carregando...</p>
+      ) : (
+        <>
       <div className="indicadores">
-        <Indicador rotulo="Vendas da semana" valor={moeda(resumo.vendas)} dica={`${resumo.quantidadeVendas} venda(s)`} />
+        <Indicador rotulo="Vendas" valor={moeda(resumo.vendas)} dica={`${resumo.quantidadeVendas} venda(s)`} />
         <Indicador rotulo="Custos do negócio" valor={moeda(resumo.custos)} dica="Ingredientes, contas, aluguel..." />
         <Indicador
           rotulo="Lucro"
@@ -122,6 +190,8 @@ export function Dashboard() {
             ))}
           </ul>
         </article>
+      )}
+        </>
       )}
     </section>
   );
