@@ -46,6 +46,9 @@ coverage/
 *.lcov
 .nyc_output/
 
+# ---------- Vercel ----------
+.vercel/
+
 # ---------- Cache de ferramentas ----------
 .cache/
 .parcel-cache/
