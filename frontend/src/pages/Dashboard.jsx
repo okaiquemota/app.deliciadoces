@@ -92,7 +92,7 @@ export function Dashboard() {
     <section>
       <header className="pagina__cabecalho">
         <div>
-          <h1 className="pagina__titulo">Olá, {usuario?.nome?.split(' ')[0]} 👋</h1>
+          <h1 className="pagina__titulo">Olá, {usuario?.nome?.split(' ')[0]}</h1>
           <p className="pagina__texto">
             {resumo
               ? `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`
@@ -168,7 +168,7 @@ export function Dashboard() {
 
       {temAlerta && (
         <article className="cartao cartao--alerta">
-          <h2 className="cartao__subtitulo">⚠️ Precisa de atenção</h2>
+          <h2 className="cartao__subtitulo">Precisa de atenção</h2>
           <ul className="lista-simples">
             {alertas.insumosBaixos.map((i) => (
               <li key={i.id}>

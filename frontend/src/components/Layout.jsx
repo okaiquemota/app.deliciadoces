@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { Marca } from './Marca.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
 /**
@@ -18,7 +19,9 @@ export function Layout() {
   return (
     <div className="layout">
       <header className="layout__topo">
-        <span className="layout__marca">🍰 Delícia Doces</span>
+        <span className="layout__marca">
+          <Marca />
+        </span>
 
         <nav className="layout__menu">
           {itensMenu.map((item) => (

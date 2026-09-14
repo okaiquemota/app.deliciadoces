@@ -6,10 +6,10 @@ import { prisma } from './lib/prisma.js';
  * Ponto de entrada do backend.
  */
 const servidor = app.listen(env.port, () => {
-  console.log(`\n  🍰 API Delícia Doces`);
-  console.log(`  ➜  http://localhost:${env.port}/api`);
-  console.log(`  ➜  Health: http://localhost:${env.port}/api/health`);
-  console.log(`  ➜  Ambiente: ${env.nodeEnv}\n`);
+  console.log(`\n  API Delicia Doces`);
+  console.log(`  API:    http://localhost:${env.port}/api`);
+  console.log(`  Health: http://localhost:${env.port}/api/health`);
+  console.log(`  Ambiente: ${env.nodeEnv}\n`);
 });
 
 /**

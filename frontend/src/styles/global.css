@@ -725,3 +725,27 @@ body {
   color: #fff;
   font-weight: 600;
 }
+
+/* ---------- Marca ----------
+   A logo entra aqui quando chegar: o tamanho máximo evita que uma imagem
+   grande quebre o cabeçalho, e o alinhamento já fica pronto. */
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.marca__logo {
+  height: 28px;
+  width: auto;
+}
+
+.marca--grande .marca__logo {
+  height: 56px;
+}
+
+.marca__nome {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}

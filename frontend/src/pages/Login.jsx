@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { mensagemDeErro } from '../services/api.js';
+import { Marca } from '../components/Marca.jsx';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -34,14 +35,22 @@ export function Login() {
   return (
     <div className="login">
       <form className="login__caixa" onSubmit={aoEnviar}>
-        <h1 className="login__marca">🍰 Delícia Doces</h1>
+        <h1 className="login__marca">
+          <Marca tamanho="grande" />
+        </h1>
         <p className="login__subtitulo">Sistema de gestão</p>
 
         <label className="campo">
-          <span className="campo__rotulo">E-mail</span>
+          <span className="campo__rotulo">E-mail ou usuário</span>
           <input
             className="campo__entrada"
-            type="email"
+            /*
+             * `text` e não `email`: com `type="email"` o próprio navegador
+             * barra qualquer valor sem "@" antes de a requisição sair, e a
+             * conta de apresentação nunca chegaria no servidor. Quem valida
+             * é o backend, que aceita e-mail ou usuário no login.
+             */
+            type="text"
             value={email}
             onChange={(evento) => setEmail(evento.target.value)}
             autoComplete="username"
