@@ -1,10 +1,10 @@
 # 🍰 app.deliciadoces
 
-Sistema de gestão empresarial para a **Delícia Doces**, confeitaria com mais de 20 anos de mercado — controle de fluxo de caixa, estoque e contas a pagar/receber, com dashboard financeiro.
+Sistema de gestão para a **Delícia Doces**, confeitaria com mais de 20 anos de mercado — controle de caixa, estoque em dois níveis (ingredientes e doces prontos), produção e resultado semanal.
 
 Projeto acadêmico da disciplina de **Fábrica de Software**.
 
-> ⚠️ **Status: setup inicial.** A reunião de levantamento de requisitos com a cliente (Dalila) **ainda não aconteceu**. O modelo de dados e o escopo dos módulos são um primeiro rascunho e devem ser revisados após a reunião.
+> **Status: setup concluído, módulos a construir.** O levantamento de requisitos com a cliente (Dalila) foi feito em 14/09 e o modelo de dados já reflete as respostas dela. O que existe hoje é a base: monorepo, banco, autenticação e seed. Os módulos de caixa, estoque, produção e dashboard ainda não foram implementados.
 
 ---
 
@@ -27,23 +27,32 @@ Projeto acadêmico da disciplina de **Fábrica de Software**.
 
 | Módulo | Descrição |
 |---|---|
-| **Financeiro / Fluxo de caixa** | Lançamento e acompanhamento de entradas e saídas |
-| **Estoque** | Cadastro de produtos e controle de movimentações |
-| **Relatórios / Dashboard** | Visão consolidada e exportação de dados |
+| **Caixa** | Vendas (sempre à vista) e despesas, com edição e exclusão |
+| **Estoque** | Ingredientes e doces prontos, movimentações, perdas e aviso de item acabando |
+| **Produção** | Lote produzido consome ingrediente e gera doce pronto; ficha técnica opcional |
+| **Dashboard** | Resultado por semana, que é como a cliente prefere olhar |
 
-## Estratégia de entrega
+## O que a cliente definiu
 
-O prazo vai até o fim do semestre letivo, então o escopo foi dividido em duas fases. A ideia é ter algo **funcionando de ponta a ponta** cedo, em vez de vários módulos pela metade.
+O levantamento com a Dalila fechou pontos que moldam o sistema inteiro:
 
-**Fase 1 — MVP**
-- Lançamento de entradas e saídas de caixa
-- Estoque básico (cadastro de produtos + movimentações)
-- Dashboard simples com os números consolidados
+- **Não vende fiado.** O cliente paga tudo na entrega — não existe conta a receber, parcela nem sinal. Toda venda é à vista.
+- **Produz em lote antes de vender.** Por isso a venda baixa o *doce pronto*, e quem consome ingrediente é a *produção*.
+- **Controla os dois níveis:** ingredientes e doces prontos.
+- **Ficha técnica é opcional.** Ela sabe as quantidades de cabeça e só cadastraria "se for simples" — então o sistema tem que funcionar sem ficha nenhuma.
+- **Erra e corrige.** Editar e excluir lançamento é fluxo principal, não exceção.
+- **Mistura dinheiro pessoal e do negócio.** Daí a categoria "Retirada pessoal": sai do caixa, mas não conta como custo no lucro.
+- **Confere o caixa todo dia, mas olha o resultado por semana.**
+- **Quer simplicidade.** Ela não tem tempo de ficar mexendo no sistema.
 
-**Fase 2 — Avançado**
-- Alertas (estoque baixo, contas vencendo)
-- Relatórios exportáveis
-- Refinamentos de usabilidade
+## Ordem de construção
+
+1. **Caixa** — venda e despesa, com edição e exclusão
+2. **Estoque** — ingrediente, doce pronto, movimentação e perda
+3. **Produção e ficha técnica**
+4. **Dashboard semanal**
+
+O detalhamento técnico de cada etapa está em [docs/PROXIMOS-PASSOS.md](docs/PROXIMOS-PASSOS.md).
 
 ---
 
@@ -212,8 +221,8 @@ npm run db:seed           # cria o usuário admin e produtos de exemplo
 O seed mostra as credenciais de acesso ao final:
 
 ```
-e-mail: admin@deliciadoces.local
-senha:  admin123
+e-mail: dalila@deliciadoces.com.br
+senha:  deliciadoces123  (provisória — trocar no primeiro uso real)
 ```
 
 ### 6. Rodar o projeto
@@ -267,42 +276,40 @@ Rodando na **raiz** do projeto:
 
 ## Modelo de dados
 
-> 🚧 **Rascunho v0.1** — criado antes da reunião com a cliente. Foi mantido simples de propósito, para ser fácil de mudar.
+O `schema.prisma` reflete as respostas da cliente. As entidades:
 
-```
-Usuario ──┬──< MovimentacaoCaixa >──── ContaPagarReceber
-          ├──< MovimentacaoEstoque >── Produto
-          └──< ContaPagarReceber
-```
-
-| Entidade | Representa | Observações |
-|---|---|---|
-| `Usuario` | Quem acessa o sistema | Papéis `ADMIN` e `OPERADOR` |
-| `Produto` | Item de estoque | Guarda o saldo atual e o estoque mínimo |
-| `MovimentacaoEstoque` | Entrada/saída de produto | Histórico completo, nunca apagado |
-| `MovimentacaoCaixa` | Lançamento financeiro | Pode estar ligado a uma conta |
-| `ContaPagarReceber` | Compromisso com vencimento | `PENDENTE`, `QUITADA` ou `CANCELADA` |
+| Entidade | Representa |
+|---|---|
+| `Usuario` | Quem acessa o sistema |
+| `Insumo` | Ingrediente ou embalagem |
+| `Produto` | Doce pronto, o que ela vende |
+| `FichaTecnicaItem` | Quanto de cada insumo um produto consome por lote (**opcional**) |
+| `Producao` | Lote produzido: consome insumo, gera produto pronto |
+| `Venda` / `ItemVenda` | Venda à vista e seus itens |
+| `CategoriaDespesa` / `Despesa` | Saídas, separadas entre custo do negócio e retirada pessoal |
+| `MovimentacaoEstoque` | O razão: tudo que entra e sai, de insumo ou de produto |
+| `FechamentoDiario` | Conferência de caixa do dia |
 
 ### Escolhas que valem explicar
 
-- **Nada é apagado de verdade.** `Usuario` e `Produto` têm uma flag `ativo` (*soft delete*). Apagar um produto que já tem movimentações destruiria o histórico financeiro.
-- **`dataMovimentacao` é diferente de `criadoEm`.** A cliente pode lançar hoje uma venda que aconteceu ontem. Uma data é a do fato, a outra é a do registro.
-- **Quantidades são `Decimal(10,3)`.** Confeitaria trabalha com peso: `0,250 kg` de chocolate não cabe em um número inteiro.
-- **Categoria e forma de pagamento são texto livre.** Viram lista fechada (`enum`) ou tabela própria só depois que soubermos os valores que a cliente realmente usa.
-- **O vínculo entre conta e caixa é uma lista.** Uma conta pode gerar vários lançamentos, caso a cliente pague parcelado.
+- **`MovimentacaoEstoque` é o razão de tudo.** Insumo e produto passam pela mesma tabela: `insumoId` e `produtoId` são opcionais e exatamente um é preenchido (validado na aplicação). O campo `tipo` diz a direção — a quantidade é sempre positiva.
+- **Validade fica na entrada de estoque, não no insumo.** Cada compra tem uma validade diferente.
+- **`custoUnitario` do insumo é custo médio**, recalculado a cada compra.
+- **Precisão monetária.** Dinheiro em `Decimal(10,2)`, quantidade em `Decimal(12,3)`, custo unitário em `Decimal(12,4)` — `Float` causaria divergência de centavos.
+- **`RETIRADA_PESSOAL` não polui o lucro.** O dinheiro sai do caixa, mas não entra na conta de custo do negócio.
+- **`precoUnitario` é congelado no `ItemVenda`.** Se o preço do brigadeiro mudar amanhã, a venda de ontem continua valendo o que valeu.
 
-### ⚠️ Perguntas a levar para a reunião com a Dalila
+### ⚠️ A armadilha do saldo em cache
 
-- Quantas pessoas usam o sistema? Precisam de permissões diferentes?
-- Quais unidades de medida ela usa no estoque? (kg, un, L, caixa...)
-- Ela controla insumos (farinha, açúcar) ou só produtos prontos? Os dois?
-- Como são as categorias de despesa e receita hoje?
-- Quais formas de pagamento aceita?
-- Ela precisa de cadastro de fornecedores e clientes, ou o nome em texto basta?
-- Contas parceladas acontecem? Com que frequência?
-- Qual relatório ela mais precisaria ter em mãos?
+`Insumo.quantidadeAtual` e `Produto.quantidadeAtual` são um **cache** do que a `MovimentacaoEstoque` diz. Isso deixa as telas rápidas, mas cria um risco real: as FKs de venda, produção e despesa usam `onDelete: Cascade`, então **apagar uma venda apaga as movimentações dela sem devolver a quantidade ao saldo**. O razão e o saldo passam a discordar em silêncio.
 
----
+Como editar e excluir é o fluxo principal da cliente, isso não é caso raro. A regra do projeto:
+
+- **Só o `estoqueService` escreve `quantidadeAtual`**, e sempre dentro de `$transaction`.
+- **Nenhum controller chama `prisma.venda.delete()` direto.**
+- Existe um `recalcularSaldo()` que rededuz o saldo a partir do razão — para corrigir divergência e para usar em teste.
+
+Pelo mesmo motivo, desfazer uma venda **não apaga**: a tela mostra "Excluir" (a palavra da cliente), mas por baixo marca `cancelada = true` e estorna o estoque na mesma transação. Nada some e dá para auditar.
 
 ## Autenticação
 

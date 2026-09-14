@@ -1,23 +1,18 @@
-// =====================================================================
-// Delícia Doces — Modelo de dados (RASCUNHO v0.1)
-// ---------------------------------------------------------------------
-// ATENÇÃO: este schema é uma PRIMEIRA VERSÃO, criada ANTES da reunião de
-// levantamento de requisitos com a cliente (Dalila). Ele foi mantido
-// deliberadamente simples e genérico para ser fácil de ajustar depois.
+// ---------------------------------------------------------------
+// app.deliciadoces — schema inicial
+// Decisões baseadas nas respostas da Dalila (Forms, 14/09):
+//  - não vende fiado, recebe tudo na entrega  -> sem contas a receber
+//  - produz em lote antes de vender           -> venda baixa produto pronto
+//  - controla insumo E produto pronto         -> estoque em dois níveis
+//  - ficha técnica "só se for simples"        -> opcional, não bloqueia nada
+//  - quer aviso de item acabando e validade   -> estoqueMinimo + validade por entrada
+//  - dinheiro pessoal e do negócio é tudo junto -> categoria RETIRADA_PESSOAL
 //
-// Decisões conscientes deste rascunho:
-//  - Sem regra de negócio embutida no banco (ex.: baixa automática de
-//    estoque, cálculo de saldo) — isso fica na camada de serviço, onde
-//    é barato mudar.
-//  - Valores monetários em Decimal(10,2) e não Float, para evitar erro
-//    de arredondamento em dinheiro.
-//  - Quantidades em Decimal(10,3) porque confeitaria trabalha com peso
-//    (0,250 kg de chocolate) e não só com unidades inteiras.
-//  - Relacionamentos com usuário são OPCIONais (`?`) para não travar
-//    importação de dados históricos que não têm autor conhecido.
-//  - Nada é apagado de fato: usamos flag `ativo` (soft delete) em
-//    Usuario e Produto para preservar o histórico de movimentações.
-// =====================================================================
+// Difere do rascunho original em dois pontos, ambos acordados:
+//  - `url` saiu do datasource (exigência do Prisma 7, ver comentário abaixo)
+//  - @@unique([nome]) em Insumo e Produto, para impedir cadastro duplicado
+//    ("Chocolate" duas vezes racharia o saldo em dois)
+// ---------------------------------------------------------------
 
 generator client {
   provider = "prisma-client-js"
@@ -25,199 +20,303 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // A URL de conexão NÃO fica mais aqui: no Prisma 7 ela vive em
+  // `prisma.config.js` (usado pela CLI nas migrations) e no driver
+  // adapter passado ao PrismaClient em `src/lib/prisma.js`.
+  // Este arquivo descreve só o MODELO.
 }
 
-// ---------------------------------------------------------------------
-// ENUMS
-// ---------------------------------------------------------------------
+// ---------------------------------------------------------------
+// Usuário
+// ---------------------------------------------------------------
 
-/// Perfil de acesso. Começamos com dois níveis; refinar após a reunião
-/// (a cliente pode precisar de perfis distintos p/ produção e caixa).
 enum PapelUsuario {
-  ADMIN
-  OPERADOR
+  ADMIN      // Dalila — acesso total
+  OPERADOR   // reservado: lança venda e estoque, não vê resultado financeiro
 }
-
-/// Direção de uma movimentação — serve tanto para caixa quanto p/ estoque.
-enum TipoMovimentacao {
-  ENTRADA
-  SAIDA
-}
-
-/// Diferencia contas a pagar de contas a receber.
-enum TipoConta {
-  PAGAR
-  RECEBER
-}
-
-/// Ciclo de vida de uma conta. "QUITADA" cobre tanto conta paga
-/// quanto conta recebida, evitando dois status redundantes.
-enum StatusConta {
-  PENDENTE
-  QUITADA
-  CANCELADA
-}
-
-// ---------------------------------------------------------------------
-// USUÁRIO — autenticação e autoria dos lançamentos
-// ---------------------------------------------------------------------
 
 model Usuario {
   id        String       @id @default(uuid())
   nome      String
   email     String       @unique
-  senhaHash String // hash bcrypt — a senha em texto puro nunca é persistida
-  papel     PapelUsuario @default(OPERADOR)
+  senhaHash String
+  papel     PapelUsuario @default(ADMIN)
   ativo     Boolean      @default(true)
+  criadoEm  DateTime     @default(now())
+  editadoEm DateTime     @updatedAt
 
-  criadoEm     DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
-
-  // Relações inversas: rastreiam quem registrou cada lançamento
-  movimentacoesEstoque MovimentacaoEstoque[]
-  movimentacoesCaixa   MovimentacaoCaixa[]
-  contas               ContaPagarReceber[]
+  vendas         Venda[]
+  despesas       Despesa[]
+  producoes      Producao[]
+  movimentacoes  MovimentacaoEstoque[]
+  fechamentos    FechamentoDiario[]
 
   @@map("usuarios")
 }
 
-// ---------------------------------------------------------------------
-// PRODUTO — itens de estoque da confeitaria
-// ---------------------------------------------------------------------
+// ---------------------------------------------------------------
+// Enums gerais
+// ---------------------------------------------------------------
+
+enum UnidadeMedida {
+  G
+  KG
+  ML
+  L
+  UNIDADE
+  PACOTE
+  LATA
+  CAIXA
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  PIX
+  CARTAO_DEBITO
+  CARTAO_CREDITO
+}
+
+enum TipoCategoria {
+  CUSTO_OPERACIONAL  // entra no cálculo de lucro do negócio
+  RETIRADA_PESSOAL   // sai do caixa mas não é custo — não polui o lucro
+}
+
+enum TipoMovimentacao {
+  ENTRADA_COMPRA     // chegou mercadoria
+  ENTRADA_PRODUCAO   // lote produzido virou produto pronto
+  SAIDA_PRODUCAO     // insumo consumido para produzir
+  SAIDA_VENDA        // produto pronto vendido
+  PERDA              // estragou, venceu, queimou
+  AJUSTE             // contagem manual corrigiu o saldo
+}
+
+// ---------------------------------------------------------------
+// Insumos (ingredientes, embalagem)
+// ---------------------------------------------------------------
+
+model Insumo {
+  id              String        @id @default(uuid())
+  nome            String
+  unidade         UnidadeMedida
+  quantidadeAtual Decimal       @default(0) @db.Decimal(12, 3)
+  estoqueMinimo   Decimal       @default(0) @db.Decimal(12, 3)
+  custoUnitario   Decimal       @default(0) @db.Decimal(12, 4) // custo médio, atualizado a cada compra
+  controlaValidade Boolean      @default(false)
+  fornecedorPadrao String?
+  ativo           Boolean       @default(true)
+  criadoEm        DateTime      @default(now())
+  editadoEm       DateTime      @updatedAt
+
+  movimentacoes    MovimentacaoEstoque[]
+  fichasTecnicas   FichaTecnicaItem[]
+
+  @@unique([nome])
+  @@index([ativo])
+  @@map("insumos")
+}
+
+// ---------------------------------------------------------------
+// Produtos prontos (os doces)
+// ---------------------------------------------------------------
 
 model Produto {
-  id        String  @id @default(uuid())
-  nome      String
-  descricao String?
+  id              String        @id @default(uuid())
+  nome            String
+  precoVenda      Decimal       @db.Decimal(10, 2)
+  unidade         UnidadeMedida @default(UNIDADE)
+  quantidadeAtual Decimal       @default(0) @db.Decimal(12, 3)
+  estoqueMinimo   Decimal       @default(0) @db.Decimal(12, 3)
+  // Quantos o lote rende quando a ficha técnica é executada uma vez.
+  // Null = produto sem ficha técnica cadastrada (perfeitamente válido).
+  rendimentoReceita Int?
+  ativo           Boolean       @default(true)
+  criadoEm        DateTime      @default(now())
+  editadoEm       DateTime      @updatedAt
 
-  /// Unidade livre por enquanto ("un", "kg", "L", "cx"). Vira enum
-  /// depois da reunião, quando soubermos a lista real usada pela cliente.
-  unidadeMedida String @default("un")
+  fichaTecnica   FichaTecnicaItem[]
+  itensVenda     ItemVenda[]
+  producoes      Producao[]
+  movimentacoes  MovimentacaoEstoque[]
 
-  /// Categoria como texto livre (ex.: "Insumo", "Bolo", "Embalagem").
-  /// Se a cliente precisar de hierarquia, isso vira uma tabela própria.
-  categoria String?
-
-  custoUnitario Decimal? @db.Decimal(10, 2)
-  precoVenda    Decimal? @db.Decimal(10, 2)
-
-  /// Saldo atual, mantido pela camada de serviço a cada movimentação.
-  /// É um "cache" do somatório de MovimentacaoEstoque — decisão tomada
-  /// para manter as telas de listagem rápidas e simples.
-  quantidadeEstoque Decimal @default(0) @db.Decimal(10, 3)
-
-  /// Usado na Fase 2 para disparar alerta de estoque baixo.
-  estoqueMinimo Decimal @default(0) @db.Decimal(10, 3)
-
-  ativo Boolean @default(true)
-
-  criadoEm     DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
-
-  movimentacoes MovimentacaoEstoque[]
-
-  @@index([nome])
+  @@unique([nome])
   @@index([ativo])
   @@map("produtos")
 }
 
-// ---------------------------------------------------------------------
-// MOVIMENTAÇÃO DE ESTOQUE — histórico de entradas e saídas de produtos
-// ---------------------------------------------------------------------
+// Ficha técnica: quanto de cada insumo o produto consome por lote.
+// Opcional — se estiver vazia, a produção é lançada informando os insumos na mão.
+model FichaTecnicaItem {
+  id         String  @id @default(uuid())
+  produtoId  String
+  insumoId   String
+  quantidade Decimal @db.Decimal(12, 3)
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  insumo  Insumo  @relation(fields: [insumoId], references: [id], onDelete: Restrict)
+
+  @@unique([produtoId, insumoId])
+  @@map("ficha_tecnica_itens")
+}
+
+// ---------------------------------------------------------------
+// Produção (lote)
+// ---------------------------------------------------------------
+
+model Producao {
+  id             String   @id @default(uuid())
+  data           DateTime @default(now())
+  produtoId      String
+  quantidade     Decimal  @db.Decimal(12, 3) // quanto de produto pronto gerou
+  custoEstimado  Decimal? @db.Decimal(10, 2) // soma dos insumos consumidos
+  observacao     String?
+  usuarioId      String?
+  criadoEm       DateTime @default(now())
+  editadoEm      DateTime @updatedAt
+
+  produto       Produto               @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  usuario       Usuario?              @relation(fields: [usuarioId], references: [id])
+  movimentacoes MovimentacaoEstoque[]
+
+  @@index([data])
+  @@map("producoes")
+}
+
+// ---------------------------------------------------------------
+// Vendas — sempre à vista (sem fiado, sem parcela, sem sinal)
+// ---------------------------------------------------------------
+
+model Venda {
+  id             String         @id @default(uuid())
+  data           DateTime       @default(now())
+  subtotal       Decimal        @db.Decimal(10, 2)
+  desconto       Decimal        @default(0) @db.Decimal(10, 2)
+  total          Decimal        @db.Decimal(10, 2)
+  formaPagamento FormaPagamento
+  clienteNome    String?        // opcional: ela não costuma anotar
+  observacao     String?
+  cancelada      Boolean        @default(false)
+  usuarioId      String?
+  criadoEm       DateTime       @default(now())
+  editadoEm      DateTime       @updatedAt
+
+  itens         ItemVenda[]
+  usuario       Usuario?              @relation(fields: [usuarioId], references: [id])
+  movimentacoes MovimentacaoEstoque[]
+
+  @@index([data])
+  @@index([cancelada])
+  @@map("vendas")
+}
+
+model ItemVenda {
+  id            String  @id @default(uuid())
+  vendaId       String
+  produtoId     String
+  quantidade    Decimal @db.Decimal(12, 3)
+  precoUnitario Decimal @db.Decimal(10, 2) // congelado no momento da venda
+  subtotal      Decimal @db.Decimal(10, 2)
+
+  venda   Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@map("itens_venda")
+}
+
+// ---------------------------------------------------------------
+// Despesas
+// ---------------------------------------------------------------
+
+model CategoriaDespesa {
+  id       String        @id @default(uuid())
+  nome     String        @unique
+  tipo     TipoCategoria @default(CUSTO_OPERACIONAL)
+  ativo    Boolean       @default(true)
+  criadoEm DateTime      @default(now())
+
+  despesas Despesa[]
+
+  @@map("categorias_despesa")
+}
+
+model Despesa {
+  id             String          @id @default(uuid())
+  data           DateTime        @default(now())
+  descricao      String
+  valor          Decimal         @db.Decimal(10, 2)
+  categoriaId    String
+  formaPagamento FormaPagamento?
+  recorrente     Boolean         @default(false) // aluguel, internet, luz
+  fornecedor     String?
+  usuarioId      String?
+  criadoEm       DateTime        @default(now())
+  editadoEm      DateTime        @updatedAt
+
+  categoria     CategoriaDespesa      @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  usuario       Usuario?              @relation(fields: [usuarioId], references: [id])
+  // Quando a despesa é compra de ingrediente, as entradas de estoque nascem junto
+  movimentacoes MovimentacaoEstoque[]
+
+  @@index([data])
+  @@map("despesas")
+}
+
+// ---------------------------------------------------------------
+// Movimentação de estoque — razão de tudo que entra e sai
+// ---------------------------------------------------------------
 
 model MovimentacaoEstoque {
-  id         String           @id @default(uuid())
-  tipo       TipoMovimentacao
-  quantidade Decimal          @db.Decimal(10, 3)
+  id            String           @id @default(uuid())
+  data          DateTime         @default(now())
+  tipo          TipoMovimentacao
+  // Exatamente um dos dois é preenchido (validado na aplicação)
+  insumoId      String?
+  produtoId     String?
+  quantidade    Decimal          @db.Decimal(12, 3) // sempre positiva; o tipo diz a direção
+  custoUnitario Decimal?         @db.Decimal(12, 4)
+  validade      DateTime?        // preenchida nas entradas de compra
+  motivo        String?          // obrigatório na aplicação quando tipo = PERDA ou AJUSTE
 
-  /// Motivo/observação em texto livre (ex.: "compra fornecedor",
-  /// "perda por validade", "usado na produção do bolo X").
-  observacao String?
-
-  /// Data do fato, separada de `criadoEm` (data do registro no sistema).
-  /// A cliente pode lançar hoje algo que aconteceu ontem.
-  dataMovimentacao DateTime @default(now())
-
-  produtoId String
-  produto   Produto @relation(fields: [produtoId], references: [id])
-
-  usuarioId String?
-  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+  // Rastreabilidade: de onde essa movimentação nasceu
+  vendaId    String?
+  producaoId String?
+  despesaId  String?
+  usuarioId  String?
 
   criadoEm DateTime @default(now())
 
+  insumo   Insumo?   @relation(fields: [insumoId], references: [id], onDelete: Restrict)
+  produto  Produto?  @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  venda    Venda?    @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  producao Producao? @relation(fields: [producaoId], references: [id], onDelete: Cascade)
+  despesa  Despesa?  @relation(fields: [despesaId], references: [id], onDelete: Cascade)
+  usuario  Usuario?  @relation(fields: [usuarioId], references: [id])
+
+  @@index([data])
+  @@index([insumoId])
   @@index([produtoId])
-  @@index([dataMovimentacao])
+  @@index([tipo])
   @@map("movimentacoes_estoque")
 }
 
-// ---------------------------------------------------------------------
-// MOVIMENTAÇÃO DE CAIXA — lançamentos financeiros (fluxo de caixa)
-// ---------------------------------------------------------------------
+// ---------------------------------------------------------------
+// Fechamento diário de caixa — ela confere todo dia
+// ---------------------------------------------------------------
 
-model MovimentacaoCaixa {
-  id        String           @id @default(uuid())
-  tipo      TipoMovimentacao
-  valor     Decimal          @db.Decimal(10, 2)
-  descricao String
+model FechamentoDiario {
+  id             String   @id @default(uuid())
+  data           DateTime @unique @db.Date
+  saldoInicial   Decimal  @default(0) @db.Decimal(10, 2)
+  totalEntradas  Decimal  @default(0) @db.Decimal(10, 2)
+  totalSaidas    Decimal  @default(0) @db.Decimal(10, 2)
+  saldoCalculado Decimal  @default(0) @db.Decimal(10, 2)
+  saldoConferido Decimal? @db.Decimal(10, 2) // o que ela contou de verdade
+  diferenca      Decimal? @db.Decimal(10, 2) // conferido - calculado
+  observacao     String?
+  usuarioId      String?
+  criadoEm       DateTime @default(now())
+  editadoEm      DateTime @updatedAt
 
-  /// Categoria como texto livre (ex.: "Vendas", "Fornecedores",
-  /// "Aluguel"). Vira tabela própria se a cliente pedir relatório
-  /// por categoria com lista fechada.
-  categoria String?
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
 
-  /// Forma de pagamento em texto livre por enquanto (dinheiro, pix,
-  /// cartão...). Aguardando a reunião para virar enum.
-  formaPagamento String?
-
-  dataMovimentacao DateTime @default(now())
-
-  /// Vínculo OPCIONAL com uma conta: quando a cliente quita uma conta,
-  /// o pagamento gera um lançamento de caixa ligado a ela. Lançamentos
-  /// avulsos (venda no balcão) ficam sem conta associada.
-  contaId String?
-  conta   ContaPagarReceber? @relation(fields: [contaId], references: [id])
-
-  usuarioId String?
-  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
-
-  criadoEm DateTime @default(now())
-
-  @@index([dataMovimentacao])
-  @@index([tipo])
-  @@map("movimentacoes_caixa")
-}
-
-// ---------------------------------------------------------------------
-// CONTA A PAGAR / RECEBER — compromissos com vencimento
-// ---------------------------------------------------------------------
-
-model ContaPagarReceber {
-  id        String      @id @default(uuid())
-  tipo      TipoConta
-  descricao String
-  valor     Decimal     @db.Decimal(10, 2)
-  status    StatusConta @default(PENDENTE)
-
-  /// Nome do fornecedor ou cliente, em texto livre. Só vira entidade
-  /// própria se a reunião mostrar que a cliente precisa de cadastro.
-  contraparte String?
-
-  dataVencimento DateTime
-  dataQuitacao   DateTime?
-
-  usuarioId String?
-  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
-
-  criadoEm     DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
-
-  /// Uma conta pode gerar mais de um lançamento de caixa (pagamento
-  /// parcelado). Modelado como lista para não fechar essa porta agora.
-  movimentacoes MovimentacaoCaixa[]
-
-  @@index([dataVencimento])
-  @@index([status])
-  @@index([tipo])
-  @@map("contas_pagar_receber")
+  @@map("fechamentos_diarios")
 }
