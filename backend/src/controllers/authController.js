@@ -13,7 +13,10 @@ export const registrarSchema = z.object({
   nome: z.string().trim().min(3, 'Nome deve ter ao menos 3 caracteres.'),
   email: z.email('E-mail inválido.').trim().toLowerCase(),
   senha: z.string().min(6, 'Senha deve ter ao menos 6 caracteres.'),
-  papel: z.enum(['ADMIN', 'OPERADOR']).default('OPERADOR'),
+  // Por ora só a Dalila usa o sistema e todo mundo entra como ADMIN.
+  // OPERADOR fica reservado para quando uma ajudante passar a lançar
+  // venda e estoque sem ver o resultado financeiro.
+  papel: z.enum(['ADMIN', 'OPERADOR']).default('ADMIN'),
 });
 
 export const loginSchema = z.object({

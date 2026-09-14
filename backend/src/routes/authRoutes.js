@@ -18,9 +18,13 @@ router.post('/login', validar(loginSchema), authController.login);
  * POST /api/auth/registrar — restrita a ADMIN.
  *
  * Decisão: este é um sistema interno da confeitaria, não um SaaS com
- * cadastro aberto. Quem cria contas é a administração. O primeiro ADMIN
+ * cadastro aberto. Quem cria contas é a administração. A conta da Dalila
  * nasce do seed (`npm run db:seed`), resolvendo o problema do "ovo e da
  * galinha" sem deixar uma rota pública de criação de admin.
+ *
+ * Hoje a trava de papel é efetivamente um no-op, já que só existe ADMIN.
+ * Ela fica no lugar porque é a regra correta e não custa nada: no dia em
+ * que existir um OPERADOR, esta rota já está protegida.
  */
 router.post(
   '/registrar',

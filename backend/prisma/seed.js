@@ -2,55 +2,73 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../src/lib/prisma.js';
 
 /**
- * Seed — popula o banco com dados mínimos para o time conseguir usar o
- * sistema logo após clonar o repositório.
+ * Seed — dados mínimos para o sistema ser utilizável logo após o clone.
  *
- * É idempotente (usa `upsert`): rodar duas vezes não duplica nada.
+ * É idempotente (usa `upsert`): rodar duas vezes não duplica nada e não
+ * sobrescreve o que já existe. Em particular, NÃO reseta a senha da Dalila
+ * se ela já tiver trocado.
  *
- * ATENÇÃO: os produtos abaixo são exemplos genéricos de confeitaria,
- * inventados apenas para desenvolvimento. Os dados reais virão da
- * reunião com a cliente.
+ * Só entra aqui o que a cliente confirmou no levantamento. Nada de insumo
+ * ou produto inventado: o cadastro real é dela.
  */
 
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'admin@deliciadoces.local';
-const ADMIN_SENHA = process.env.SEED_ADMIN_SENHA ?? 'admin123';
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'dalila@deliciadoces.com.br';
+const ADMIN_SENHA = process.env.SEED_ADMIN_SENHA ?? 'deliciadoces123';
+
+/**
+ * Categorias de despesa levantadas com a cliente.
+ *
+ * A distinção entre os dois tipos é o que faz o lucro não mentir:
+ * RETIRADA_PESSOAL sai do caixa (o dinheiro realmente saiu) mas não conta
+ * como custo do negócio. Ela mistura dinheiro pessoal e da confeitaria,
+ * então sem isso o resultado apareceria pior do que é.
+ */
+const CATEGORIAS = [
+  { nome: 'Ingredientes', tipo: 'CUSTO_OPERACIONAL' },
+  { nome: 'Embalagem', tipo: 'CUSTO_OPERACIONAL' },
+  { nome: 'Contas (gás/luz/água)', tipo: 'CUSTO_OPERACIONAL' },
+  { nome: 'Transporte e entrega', tipo: 'CUSTO_OPERACIONAL' },
+  { nome: 'Ajudante', tipo: 'CUSTO_OPERACIONAL' },
+  { nome: 'Aluguel', tipo: 'CUSTO_OPERACIONAL' },
+  { nome: 'Internet', tipo: 'CUSTO_OPERACIONAL' },
+  { nome: 'Retirada pessoal', tipo: 'RETIRADA_PESSOAL' },
+];
 
 async function main() {
   const senhaHash = await bcrypt.hash(ADMIN_SENHA, 10);
 
-  const admin = await prisma.usuario.upsert({
+  const dalila = await prisma.usuario.upsert({
     where: { email: ADMIN_EMAIL },
-    update: {},
+    update: {}, // não mexe em quem já existe — preserva senha trocada
     create: {
-      nome: 'Administrador',
+      nome: 'Dalila',
       email: ADMIN_EMAIL,
       senhaHash,
       papel: 'ADMIN',
     },
   });
 
-  console.log(`[seed] Usuário administrador pronto: ${admin.email}`);
+  console.log(`[seed] Usuária administradora pronta: ${dalila.email}`);
 
-  const produtosExemplo = [
-    { nome: 'Farinha de trigo', unidadeMedida: 'kg', categoria: 'Insumo', custoUnitario: 4.5, estoqueMinimo: 5 },
-    { nome: 'Açúcar refinado', unidadeMedida: 'kg', categoria: 'Insumo', custoUnitario: 3.9, estoqueMinimo: 5 },
-    { nome: 'Chocolate meio amargo', unidadeMedida: 'kg', categoria: 'Insumo', custoUnitario: 32.0, estoqueMinimo: 2 },
-    { nome: 'Caixa para bolo P', unidadeMedida: 'un', categoria: 'Embalagem', custoUnitario: 1.2, estoqueMinimo: 20 },
-    { nome: 'Brigadeiro tradicional', unidadeMedida: 'un', categoria: 'Produto final', precoVenda: 3.5, estoqueMinimo: 0 },
-  ];
-
-  for (const produto of produtosExemplo) {
-    const existente = await prisma.produto.findFirst({ where: { nome: produto.nome } });
-
-    if (!existente) {
-      await prisma.produto.create({ data: produto });
-    }
+  for (const categoria of CATEGORIAS) {
+    await prisma.categoriaDespesa.upsert({
+      where: { nome: categoria.nome },
+      update: {},
+      create: categoria,
+    });
   }
 
-  console.log(`[seed] ${produtosExemplo.length} produtos de exemplo verificados.`);
-  console.log('\n[seed] Concluído. Credenciais de acesso local:');
+  const operacionais = CATEGORIAS.filter((c) => c.tipo === 'CUSTO_OPERACIONAL').length;
+  const retiradas = CATEGORIAS.length - operacionais;
+
+  console.log(
+    `[seed] ${CATEGORIAS.length} categorias de despesa prontas ` +
+      `(${operacionais} de custo operacional, ${retiradas} de retirada pessoal).`
+  );
+
+  console.log('\n[seed] Concluído. Acesso local:');
   console.log(`       e-mail: ${ADMIN_EMAIL}`);
-  console.log(`       senha:  ${ADMIN_SENHA}\n`);
+  console.log(`       senha:  ${ADMIN_SENHA}  (provisória — trocar no primeiro uso real)\n`);
 }
 
 main()
