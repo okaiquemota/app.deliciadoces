@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { env, emProducao } from './config/env.js';
 import rotas from './routes/index.js';
+import { prisma } from './lib/prisma.js';
 import { errorHandler, rotaNaoEncontrada } from './middlewares/errorHandler.js';
 
 /**
@@ -25,14 +26,33 @@ app.use(express.json());
 
 /**
  * Health check — sem autenticação, de propósito.
- * Útil para conferir rapidamente se a API subiu, e para monitoramento
- * caso o projeto vá para um serviço de deploy.
+ *
+ * Verifica também o BANCO, não só se o processo subiu. Um health check que
+ * responde "ok" com o Postgres fora do ar não serve para nada: esconde
+ * justamente a falha mais provável em produção, onde a aplicação e o banco
+ * são serviços separados.
+ *
+ * Devolve 503 quando o banco não responde, para que monitoramento (e a
+ * própria Vercel) enxerguem o problema.
  */
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'ok',
+app.get('/api/health', async (_req, res) => {
+  let banco = 'ok';
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (erro) {
+    banco = 'indisponivel';
+    // Loga o motivo real para quem tem acesso ao painel, mas nunca o
+    // devolve na resposta: a mensagem do driver costuma trazer host,
+    // usuário e porta do banco.
+    console.error('[health] Banco inacessível:', erro.message);
+  }
+
+  res.status(banco === 'ok' ? 200 : 503).json({
+    status: banco === 'ok' ? 'ok' : 'degradado',
     servico: 'api-deliciadoces',
     ambiente: env.nodeEnv,
+    banco,
     horario: new Date().toISOString(),
   });
 });
