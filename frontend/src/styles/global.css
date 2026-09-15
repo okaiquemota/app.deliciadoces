@@ -752,19 +752,38 @@ body {
 .marca {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .marca__logo {
-  height: 28px;
+  height: 34px;
   width: auto;
-}
-
-.marca--grande .marca__logo {
-  height: 56px;
+  /* A logo tem fundo branco. No creme do sistema isso apareceria como um
+     quadrado claro em volta; o arredondamento disfarça, já que a medalha
+     é circular. */
+  border-radius: 50%;
 }
 
 .marca__nome {
   font-weight: 700;
+  font-size: 1.05rem;
   letter-spacing: -0.01em;
+  color: var(--cor-texto);
+  white-space: nowrap;
+}
+
+/* Na tela de login a marca é o elemento principal: a medalha aparece
+   grande, onde o detalhe dela finalmente se lê, e o nome vai embaixo. */
+.marca--grande {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.marca--grande .marca__logo {
+  height: 132px;
+  border-radius: 0;
+}
+
+.marca--grande .marca__nome {
+  font-size: 1.5rem;
 }
