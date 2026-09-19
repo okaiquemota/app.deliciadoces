@@ -380,6 +380,7 @@ O fluxo é o padrão JWT:
 | `POST` | `/api/auth/login` | Público | Autentica e devolve o token |
 | `GET` | `/api/auth/eu` | Autenticado | Dados do usuário logado |
 | `POST` | `/api/auth/registrar` | Apenas `ADMIN` | Cadastra um novo usuário |
+| `PATCH` | `/api/auth/senha` | Autenticado | Troca a própria senha |
 
 ### Cuidados de segurança já aplicados
 

@@ -91,7 +91,7 @@ DELETE FROM usuarios WHERE email NOT LIKE '%@%';
 
 A conta da Dalila em produção tem senha própria, forte, diferente da do seed local.
 
-> **Falta implementar:** o sistema ainda não tem tela de "trocar senha". Enquanto não existir, a troca é feita gerando um novo hash e atualizando o registro no banco. Vale priorizar isso antes de entregar o sistema para uso diário dela.
+A cliente troca a própria senha pelo sistema, em **Minha conta** (o nome dela no cabeçalho). A senha atual é exigida mesmo com a sessão aberta, para que quem encontre a tela destravada não consiga tomar a conta.
 
 ---
 

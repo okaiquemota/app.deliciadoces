@@ -784,3 +784,22 @@ body {
 .marca--grande .marca__nome {
   font-size: 1.5rem;
 }
+
+.cartao--estreito {
+  max-width: 520px;
+}
+
+.layout__usuario-link {
+  color: var(--cor-texto-suave);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--cor-borda);
+}
+
+.layout__usuario-link:hover {
+  color: var(--cor-primaria);
+}
+
+.alerta--ok {
+  background-color: #e8f5ec;
+  color: #1b5e34;
+}

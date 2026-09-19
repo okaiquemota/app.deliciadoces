@@ -6,6 +6,7 @@ import { Dashboard } from '../pages/Dashboard.jsx';
 import { Estoque } from '../pages/Estoque.jsx';
 import { Caixa } from '../pages/Caixa.jsx';
 import { Producao } from '../pages/Producao.jsx';
+import { MinhaConta } from '../pages/MinhaConta.jsx';
 import { NaoEncontrada } from '../pages/NaoEncontrada.jsx';
 
 /**
@@ -28,6 +29,7 @@ export function AppRoutes() {
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/caixa" element={<Caixa />} />
             <Route path="/producao" element={<Producao />} />
+            <Route path="/minha-conta" element={<MinhaConta />} />
           </Route>
         </Route>
 

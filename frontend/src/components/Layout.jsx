@@ -38,7 +38,9 @@ export function Layout() {
         </nav>
 
         <div className="layout__usuario">
-          <span>{usuario?.nome}</span>
+          <NavLink to="/minha-conta" className="layout__usuario-link">
+            {usuario?.nome}
+          </NavLink>
           <button type="button" className="botao botao--texto" onClick={sair}>
             Sair
           </button>

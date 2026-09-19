@@ -3,6 +3,7 @@ import {
   authController,
   loginSchema,
   registrarSchema,
+  trocarSenhaSchema,
 } from '../controllers/authController.js';
 import { autenticar, autorizar } from '../middlewares/auth.js';
 import { validar } from '../middlewares/validate.js';
@@ -39,5 +40,18 @@ router.post(
  * token guardado ainda é válido e quem é o usuário.
  */
 router.get('/eu', autenticar, authController.eu);
+
+/**
+ * PATCH /api/auth/senha — o usuário troca a própria senha.
+ *
+ * Só mexe na conta de quem está autenticado: o id vem do token, nunca do
+ * corpo da requisição. Assim ninguém troca a senha de outra pessoa.
+ */
+router.patch(
+  '/senha',
+  autenticar,
+  validar(trocarSenhaSchema),
+  authController.trocarSenha
+);
 
 export default router;

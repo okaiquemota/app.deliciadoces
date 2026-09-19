@@ -81,6 +81,48 @@ export const authService = {
     };
   },
 
+  /**
+   * Troca a senha do próprio usuário.
+   *
+   * Exige a senha atual mesmo estando autenticado: se alguém pegar a
+   * máquina dela com a sessão aberta, não consegue trocar a senha e
+   * tomar a conta. É a mesma razão pela qual bancos pedem a senha de
+   * novo em operação sensível.
+   */
+  async trocarSenha(usuarioId, { senhaAtual, senhaNova }) {
+    const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } });
+
+    if (!usuario) {
+      throw AppError.naoEncontrado('Usuário não encontrado.');
+    }
+
+    const confere = await bcrypt.compare(senhaAtual, usuario.senhaHash);
+
+    if (!confere) {
+      /*
+       * 422 e não 401 de propósito.
+       *
+       * A requisição ESTÁ autenticada — a sessão é válida, o que falhou
+       * foi o dado enviado. Devolver 401 faria o frontend entender que o
+       * token morreu e deslogar a usuária no meio da troca de senha, em
+       * vez de mostrar "senha atual incorreta". Foi exatamente o que
+       * acontecia antes desta correção.
+       */
+      throw new AppError('Senha atual incorreta.', 422);
+    }
+
+    if (senhaAtual === senhaNova) {
+      throw new AppError('A nova senha precisa ser diferente da atual.', 422);
+    }
+
+    await prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { senhaHash: await bcrypt.hash(senhaNova, CUSTO_HASH) },
+    });
+
+    return { trocada: true };
+  },
+
   /** Dados do usuário logado — usado pelo frontend para restaurar a sessão. */
   async perfil(usuarioId) {
     const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } });
