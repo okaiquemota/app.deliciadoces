@@ -72,11 +72,7 @@ router.put(
 
 // ---------------------------------------------------------------- estoque
 router.get('/estoque/movimentacoes', estoqueController.listarMovimentacoes);
-router.post(
-  '/estoque/movimentacoes',
-  validar(movimentacaoSchema),
-  estoqueController.movimentar
-);
+router.post('/estoque/movimentacoes', validar(movimentacaoSchema), estoqueController.movimentar);
 router.get('/estoque/alertas', estoqueController.alertas);
 router.post('/estoque/recalcular', estoqueController.recalcular);
 
@@ -86,7 +82,10 @@ router
   .get(vendaController.listar)
   .post(validar(vendaSchema), vendaController.criar);
 
-router.route('/vendas/:id').get(vendaController.porId).put(validar(vendaSchema), vendaController.atualizar);
+router
+  .route('/vendas/:id')
+  .get(vendaController.porId)
+  .put(validar(vendaSchema), vendaController.atualizar);
 
 /**
  * O botão "Excluir" da tela chama `cancelar`, não um DELETE.

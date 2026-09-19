@@ -3,7 +3,14 @@ import { prisma } from '../src/lib/prisma.js';
 import { producaoService } from '../src/services/producaoService.js';
 import { estoqueService } from '../src/services/estoqueService.js';
 import { dashboardService } from '../src/services/dashboardService.js';
-import { limparTudo, criarInsumo, criarProduto, saldoInsumo, saldoProduto, razaoDe } from './apoio.js';
+import {
+  limparTudo,
+  criarInsumo,
+  criarProduto,
+  saldoInsumo,
+  saldoProduto,
+  razaoDe,
+} from './apoio.js';
 
 beforeEach(limparTudo);
 afterAll(() => prisma.$disconnect());
@@ -11,7 +18,12 @@ afterAll(() => prisma.$disconnect());
 async function insumoComEstoque(qtd, custo = 10) {
   const i = await criarInsumo({ custoUnitario: custo });
   await prisma.$transaction((tx) =>
-    estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: i.id, quantidade: qtd, custoUnitario: custo })
+    estoqueService.movimentar(tx, {
+      tipo: 'ENTRADA_COMPRA',
+      insumoId: i.id,
+      quantidade: qtd,
+      custoUnitario: custo,
+    })
   );
   return i;
 }
@@ -41,7 +53,7 @@ describe('produção com ficha técnica', () => {
     });
 
     const lote = await producaoService.registrar({ produtoId: produto.id, quantidade: 50 }, null);
-    expect(Number(lote.custoEstimado)).toBeCloseTo(40, 2);   // 5 receitas x 1kg x R$8
+    expect(Number(lote.custoEstimado)).toBeCloseTo(40, 2); // 5 receitas x 1kg x R$8
   });
 });
 
@@ -53,7 +65,8 @@ describe('produção sem ficha técnica', () => {
     const produto = await criarProduto({ rendimentoReceita: null });
 
     await producaoService.registrar(
-      { produtoId: produto.id, quantidade: 30, insumos: [{ insumoId: insumo.id, quantidade: 4 }] }, null
+      { produtoId: produto.id, quantidade: 30, insumos: [{ insumoId: insumo.id, quantidade: 4 }] },
+      null
     );
     expect(await saldoInsumo(insumo.id)).toBe(46);
     expect(await saldoProduto(produto.id)).toBe(30);
@@ -71,7 +84,8 @@ describe('excluir produção', () => {
     const insumo = await insumoComEstoque(100);
     const produto = await criarProduto({ rendimentoReceita: null });
     const lote = await producaoService.registrar(
-      { produtoId: produto.id, quantidade: 60, insumos: [{ insumoId: insumo.id, quantidade: 10 }] }, null
+      { produtoId: produto.id, quantidade: 60, insumos: [{ insumoId: insumo.id, quantidade: 10 }] },
+      null
     );
 
     await producaoService.excluir(lote.id);
@@ -101,10 +115,17 @@ describe('dashboard', () => {
       estoqueService.movimentar(tx, { tipo: 'ENTRADA_PRODUCAO', produtoId: p.id, quantidade: 10 })
     );
     const { vendaService } = await import('../src/services/caixaService.js');
-    await vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' }, null);
+    await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' },
+      null
+    );
 
-    await prisma.despesa.create({ data: { descricao: 'compra', valor: 300, categoriaId: custo.id } });
-    await prisma.despesa.create({ data: { descricao: 'mercado', valor: 200, categoriaId: retirada.id } });
+    await prisma.despesa.create({
+      data: { descricao: 'compra', valor: 300, categoriaId: custo.id },
+    });
+    await prisma.despesa.create({
+      data: { descricao: 'mercado', valor: 200, categoriaId: retirada.id },
+    });
 
     const ontem = new Date(Date.now() - 86400000);
     const amanha = new Date(Date.now() + 86400000);
@@ -113,8 +134,8 @@ describe('dashboard', () => {
     expect(r.vendas).toBe(1000);
     expect(r.custos).toBe(300);
     expect(r.retiradas).toBe(200);
-    expect(r.lucro).toBe(700);        // vendas - custos, SEM a retirada
-    expect(r.saldoCaixa).toBe(500);   // o que de fato sobrou
+    expect(r.lucro).toBe(700); // vendas - custos, SEM a retirada
+    expect(r.saldoCaixa).toBe(500); // o que de fato sobrou
   });
 
   it('não conta venda cancelada', async () => {
@@ -123,12 +144,19 @@ describe('dashboard', () => {
       estoqueService.movimentar(tx, { tipo: 'ENTRADA_PRODUCAO', produtoId: p.id, quantidade: 10 })
     );
     const { vendaService } = await import('../src/services/caixaService.js');
-    const v = await vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 2 }], formaPagamento: 'PIX' }, null);
-    await vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 1 }], formaPagamento: 'PIX' }, null);
+    const v = await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 2 }], formaPagamento: 'PIX' },
+      null
+    );
+    await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 1 }], formaPagamento: 'PIX' },
+      null
+    );
     await vendaService.cancelar(v.id);
 
     const r = await dashboardService.resumo({
-      inicio: new Date(Date.now() - 86400000), fim: new Date(Date.now() + 86400000),
+      inicio: new Date(Date.now() - 86400000),
+      fim: new Date(Date.now() + 86400000),
     });
     expect(r.vendas).toBe(50);
     expect(r.quantidadeVendas).toBe(1);

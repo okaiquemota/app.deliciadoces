@@ -2,11 +2,11 @@
 
 Como o sistema vai para o ar e como cuidar dele depois.
 
-| Peça | Onde | Custo |
-|---|---|---|
-| Frontend + backend | Vercel (time `MovCode`, plano Hobby) | R$ 0 |
-| Banco de dados | Supabase, projeto `app-deliciadoces`, região `sa-east-1` (São Paulo) | R$ 0 |
-| Domínio | — (usa a URL da Vercel) | R$ 0 |
+| Peça               | Onde                                                                 | Custo |
+| ------------------ | -------------------------------------------------------------------- | ----- |
+| Frontend + backend | Vercel (time `MovCode`, plano Hobby)                                 | R$ 0  |
+| Banco de dados     | Supabase, projeto `app-deliciadoces`, região `sa-east-1` (São Paulo) | R$ 0  |
+| Domínio            | — (usa a URL da Vercel)                                              | R$ 0  |
 
 Região São Paulo foi escolhida de propósito: o banco perto de quem usa significa resposta mais rápida para a cliente.
 
@@ -16,7 +16,7 @@ Região São Paulo foi escolhida de propósito: o banco perto de quem usa signif
 
 A `main` está ligada ao projeto na Vercel. **Todo push na `main` gera um deploy automático.** Não existe passo manual: mesclou a PR, o site atualiza sozinho em cerca de um minuto.
 
-Pull requests geram um *preview* com URL própria, o que permite mostrar uma tela para o grupo (ou para a Dalila) antes de mesclar.
+Pull requests geram um _preview_ com URL própria, o que permite mostrar uma tela para o grupo (ou para a Dalila) antes de mesclar.
 
 ---
 
@@ -24,31 +24,31 @@ Pull requests geram um *preview* com URL própria, o que permite mostrar uma tel
 
 Configuradas em **Vercel → Settings → Environment Variables**. Nunca ficam no repositório.
 
-| Variável | Para que serve |
-|---|---|
-| `DATABASE_URL` | Conexão do dia a dia, via **pooler** (porta 6543) |
+| Variável              | Para que serve                                          |
+| --------------------- | ------------------------------------------------------- |
+| `DATABASE_URL`        | Conexão do dia a dia, via **pooler** (porta 6543)       |
 | `DIRECT_DATABASE_URL` | Conexão **direta** (porta 5432), usada só por migration |
-| `JWT_SECRET` | Assina os tokens de sessão |
-| `CORS_ORIGIN` | URL do site em produção |
+| `JWT_SECRET`          | Assina os tokens de sessão                              |
+| `CORS_ORIGIN`         | URL do site em produção                                 |
 
 As URLs saem do botão **Connect**, no topo da página do projeto no Supabase (a aba **ORM** já mostra no formato do Prisma).
 
 ### ⚠️ Na Vercel, use o pooler nas duas — nunca a "Direct connection"
 
-A Vercel só faz conexão **IPv4**. A *Direct connection* do Supabase (`db.<ref>.supabase.co:5432`) é **IPv6** no plano gratuito. Usar ela em produção resulta em erro de conexão com causa nada óbvia — parece banco fora do ar, mas é incompatibilidade de rede.
+A Vercel só faz conexão **IPv4**. A _Direct connection_ do Supabase (`db.<ref>.supabase.co:5432`) é **IPv6** no plano gratuito. Usar ela em produção resulta em erro de conexão com causa nada óbvia — parece banco fora do ar, mas é incompatibilidade de rede.
 
 O pooler (Supavisor) é IPv4 em qualquer plano, e é por isso que as duas variáveis apontam para ele:
 
-| Variável | Qual copiar | Porta |
-|---|---|---|
-| `DATABASE_URL` | **Transaction pooler** | `6543` |
-| `DIRECT_DATABASE_URL` | **Session pooler** | `5432` |
+| Variável              | Qual copiar            | Porta  |
+| --------------------- | ---------------------- | ------ |
+| `DATABASE_URL`        | **Transaction pooler** | `6543` |
+| `DIRECT_DATABASE_URL` | **Session pooler**     | `5432` |
 
-A *Direct connection* continua servindo para rodar migration e `pg_dump` **da máquina de vocês**, se a rede tiver IPv6.
+A _Direct connection_ continua servindo para rodar migration e `pg_dump` **da máquina de vocês**, se a rede tiver IPv6.
 
 ### Por que duas URLs de banco
 
-O modo transação distribui poucas conexões reais entre muitas chamadas — é o que permite ao serverless não estourar o limite do Postgres. Em compensação, ele não suporta os comandos de DDL (`CREATE TABLE`, `ALTER TABLE`) de que a migration precisa, nem *prepared statements* nomeados. Daí a segunda URL, em modo sessão.
+O modo transação distribui poucas conexões reais entre muitas chamadas — é o que permite ao serverless não estourar o limite do Postgres. Em compensação, ele não suporta os comandos de DDL (`CREATE TABLE`, `ALTER TABLE`) de que a migration precisa, nem _prepared statements_ nomeados. Daí a segunda URL, em modo sessão.
 
 Localmente as duas apontam para o mesmo Postgres, e o código já trata isso: se `DIRECT_DATABASE_URL` não existir, ele usa `DATABASE_URL`.
 
@@ -124,9 +124,9 @@ Duas coisas para combinar com o grupo antes do uso real:
 
 **O banco de produção contém apenas dados reais**, e é assim que deve continuar:
 
-| O que tem | Por quê |
-|---|---|
-| A conta da Dalila | Acesso dela ao sistema |
+| O que tem                  | Por quê                                        |
+| -------------------------- | ---------------------------------------------- |
+| A conta da Dalila          | Acesso dela ao sistema                         |
 | As 8 categorias de despesa | Configuração levantada com ela no questionário |
 
 Nenhuma venda, produto, insumo ou despesa fictícia. Os números que aparecerem na tela serão os que a cliente (ou vocês, testando) realmente lançarem.
@@ -163,13 +163,13 @@ Para revisar: **Supabase → Advisors → Security**. O esperado é zero erro. A
 
 > **Variável nova exige deploy novo.** A Vercel congela as variáveis no momento do build: adicionar uma não afeta um deploy que já existe. Depois de mexer nelas, faça **Redeploy** (ou um push qualquer na `main`).
 
-| Sintoma | Causa provável | Onde olhar |
-|---|---|---|
-| Site abre, login dá erro 500 | Variável faltando, errada, ou adicionada sem redeploy | Vercel → Logs |
-| `FUNCTION_INVOCATION_FAILED` sem log nenhum | A função morreu ao carregar — quase sempre variável obrigatória ausente | Vercel → Runtime Logs |
-| Erro de conexão só em produção | Usou a *Direct connection* (IPv6) em vez do pooler | Trocar pela Transaction pooler |
-| `Can't reach database server` | Projeto do Supabase pausado | Painel do Supabase → despausar |
-| Deploy falha no build | Erro de compilação | Vercel → Deployments → log do build |
-| Login diz senha inválida | Seed não rodou neste banco | Conferir a tabela `usuarios` |
+| Sintoma                                     | Causa provável                                                          | Onde olhar                          |
+| ------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
+| Site abre, login dá erro 500                | Variável faltando, errada, ou adicionada sem redeploy                   | Vercel → Logs                       |
+| `FUNCTION_INVOCATION_FAILED` sem log nenhum | A função morreu ao carregar — quase sempre variável obrigatória ausente | Vercel → Runtime Logs               |
+| Erro de conexão só em produção              | Usou a _Direct connection_ (IPv6) em vez do pooler                      | Trocar pela Transaction pooler      |
+| `Can't reach database server`               | Projeto do Supabase pausado                                             | Painel do Supabase → despausar      |
+| Deploy falha no build                       | Erro de compilação                                                      | Vercel → Deployments → log do build |
+| Login diz senha inválida                    | Seed não rodou neste banco                                              | Conferir a tabela `usuarios`        |
 
 Os logs do backend em produção ficam em **Vercel → o deploy → Runtime Logs**. Todo erro não tratado cai lá com a stack completa.

@@ -89,7 +89,9 @@ export function MinhaConta() {
           </Linha>
 
           {erro && <p className="alerta alerta--erro">{erro}</p>}
-          {sucesso && <p className="alerta alerta--ok">Senha trocada. Use a nova no próximo acesso.</p>}
+          {sucesso && (
+            <p className="alerta alerta--ok">Senha trocada. Use a nova no próximo acesso.</p>
+          )}
 
           <button type="submit" className="botao botao--primario" disabled={salvando}>
             {salvando ? 'Trocando...' : 'Trocar senha'}
@@ -97,8 +99,8 @@ export function MinhaConta() {
         </form>
 
         <p className="cartao__aviso">
-          A senha atual é pedida mesmo você já estando dentro do sistema: assim, quem encontrar
-          esta tela aberta não consegue trocar a senha e tomar a conta.
+          A senha atual é pedida mesmo você já estando dentro do sistema: assim, quem encontrar esta
+          tela aberta não consegue trocar a senha e tomar a conta.
         </p>
       </article>
     </section>

@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { dashboard } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { data as formatarData, moeda, paraInput, quantidade, ROTULO_PAGAMENTO } from '../utils/formato.js';
+import {
+  data as formatarData,
+  moeda,
+  paraInput,
+  quantidade,
+  ROTULO_PAGAMENTO,
+} from '../utils/formato.js';
 
 /**
  * Dashboard.
@@ -104,7 +110,11 @@ export function Dashboard() {
             <button
               key={id}
               type="button"
-              className={periodo === id ? 'seletor-periodo__item seletor-periodo__item--ativo' : 'seletor-periodo__item'}
+              className={
+                periodo === id
+                  ? 'seletor-periodo__item seletor-periodo__item--ativo'
+                  : 'seletor-periodo__item'
+              }
               onClick={() => setPeriodo(id)}
             >
               {p.rotulo}
@@ -119,78 +129,91 @@ export function Dashboard() {
         <p className="tabela__aviso">Carregando...</p>
       ) : (
         <div className={carregando ? 'conteudo--atualizando' : undefined}>
-      <div className="indicadores">
-        <Indicador rotulo="Vendas" valor={moeda(resumo.vendas)} dica={`${resumo.quantidadeVendas} venda(s)`} />
-        <Indicador rotulo="Custos do negócio" valor={moeda(resumo.custos)} dica="Ingredientes, contas, aluguel..." />
-        <Indicador
-          rotulo="Lucro"
-          valor={moeda(resumo.lucro)}
-          dica="Vendas menos custos"
-          destaque={resumo.lucro >= 0 ? 'positivo' : 'negativo'}
-        />
-        <Indicador
-          rotulo="Retirada pessoal"
-          valor={moeda(resumo.retiradas)}
-          dica="Sai do caixa, mas não é custo do negócio"
-        />
-      </div>
+          <div className="indicadores">
+            <Indicador
+              rotulo="Vendas"
+              valor={moeda(resumo.vendas)}
+              dica={`${resumo.quantidadeVendas} venda(s)`}
+            />
+            <Indicador
+              rotulo="Custos do negócio"
+              valor={moeda(resumo.custos)}
+              dica="Ingredientes, contas, aluguel..."
+            />
+            <Indicador
+              rotulo="Lucro"
+              valor={moeda(resumo.lucro)}
+              dica="Vendas menos custos"
+              destaque={resumo.lucro >= 0 ? 'positivo' : 'negativo'}
+            />
+            <Indicador
+              rotulo="Retirada pessoal"
+              valor={moeda(resumo.retiradas)}
+              dica="Sai do caixa, mas não é custo do negócio"
+            />
+          </div>
 
-      <div className="painel-duplo">
-        <article className="cartao">
-          <h2 className="cartao__subtitulo">Movimento por dia</h2>
-          <GraficoSemana serie={serie} />
-        </article>
+          <div className="painel-duplo">
+            <article className="cartao">
+              <h2 className="cartao__subtitulo">Movimento por dia</h2>
+              <GraficoSemana serie={serie} />
+            </article>
 
-        <article className="cartao">
-          <h2 className="cartao__subtitulo">Como receberam</h2>
-          {Object.keys(resumo.vendasPorFormaPagamento).length === 0 ? (
-            <p className="cartao__texto">Nenhuma venda nesta semana.</p>
-          ) : (
-            <ul className="lista-simples">
-              {Object.entries(resumo.vendasPorFormaPagamento).map(([forma, valor]) => (
-                <li key={forma}>
-                  <span>{ROTULO_PAGAMENTO[forma] ?? forma}</span>
-                  <strong>{moeda(valor)}</strong>
-                </li>
-              ))}
-            </ul>
+            <article className="cartao">
+              <h2 className="cartao__subtitulo">Como receberam</h2>
+              {Object.keys(resumo.vendasPorFormaPagamento).length === 0 ? (
+                <p className="cartao__texto">Nenhuma venda nesta semana.</p>
+              ) : (
+                <ul className="lista-simples">
+                  {Object.entries(resumo.vendasPorFormaPagamento).map(([forma, valor]) => (
+                    <li key={forma}>
+                      <span>{ROTULO_PAGAMENTO[forma] ?? forma}</span>
+                      <strong>{moeda(valor)}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <h2 className="cartao__subtitulo">Saldo do caixa</h2>
+              <p className="cartao__texto">
+                Entrou {moeda(resumo.vendas)}, saiu {moeda(resumo.saidaDeCaixa)} (custos +
+                retiradas).
+              </p>
+              <p
+                className={
+                  resumo.saldoCaixa >= 0 ? 'saldo-grande' : 'saldo-grande saldo-grande--negativo'
+                }
+              >
+                {moeda(resumo.saldoCaixa)}
+              </p>
+            </article>
+          </div>
+
+          {temAlerta && (
+            <article className="cartao cartao--alerta">
+              <h2 className="cartao__subtitulo">Precisa de atenção</h2>
+              <ul className="lista-simples">
+                {alertas.insumosBaixos.map((i) => (
+                  <li key={i.id}>
+                    <span>{i.nome} está acabando</span>
+                    <strong>{quantidade(i.quantidadeAtual, i.unidade)}</strong>
+                  </li>
+                ))}
+                {alertas.produtosBaixos.map((p) => (
+                  <li key={p.id}>
+                    <span>{p.nome} está acabando</span>
+                    <strong>{quantidade(p.quantidadeAtual, p.unidade)}</strong>
+                  </li>
+                ))}
+                {alertas.validadeProxima.map((m) => (
+                  <li key={m.id}>
+                    <span>{m.insumo?.nome} vence em breve</span>
+                    <strong>{formatarData(m.validade)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </article>
           )}
-
-          <h2 className="cartao__subtitulo">Saldo do caixa</h2>
-          <p className="cartao__texto">
-            Entrou {moeda(resumo.vendas)}, saiu {moeda(resumo.saidaDeCaixa)} (custos + retiradas).
-          </p>
-          <p className={resumo.saldoCaixa >= 0 ? 'saldo-grande' : 'saldo-grande saldo-grande--negativo'}>
-            {moeda(resumo.saldoCaixa)}
-          </p>
-        </article>
-      </div>
-
-      {temAlerta && (
-        <article className="cartao cartao--alerta">
-          <h2 className="cartao__subtitulo">Precisa de atenção</h2>
-          <ul className="lista-simples">
-            {alertas.insumosBaixos.map((i) => (
-              <li key={i.id}>
-                <span>{i.nome} está acabando</span>
-                <strong>{quantidade(i.quantidadeAtual, i.unidade)}</strong>
-              </li>
-            ))}
-            {alertas.produtosBaixos.map((p) => (
-              <li key={p.id}>
-                <span>{p.nome} está acabando</span>
-                <strong>{quantidade(p.quantidadeAtual, p.unidade)}</strong>
-              </li>
-            ))}
-            {alertas.validadeProxima.map((m) => (
-              <li key={m.id}>
-                <span>{m.insumo?.nome} vence em breve</span>
-                <strong>{formatarData(m.validade)}</strong>
-              </li>
-            ))}
-          </ul>
-        </article>
-      )}
         </div>
       )}
     </section>
@@ -240,8 +263,12 @@ function GraficoSemana({ serie }) {
         ))}
       </div>
       <div className="grafico__legenda">
-        <span><i className="ponto ponto--venda" /> vendas</span>
-        <span><i className="ponto ponto--despesa" /> despesas</span>
+        <span>
+          <i className="ponto ponto--venda" /> vendas
+        </span>
+        <span>
+          <i className="ponto ponto--despesa" /> despesas
+        </span>
       </div>
     </>
   );

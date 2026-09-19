@@ -35,7 +35,9 @@ export function Fechamento() {
       setPrevia(p);
       setHistorico(h);
       // Se o dia já foi fechado, a tela abre com o que ela tinha contado.
-      setContado(p.fechamento?.saldoConferido != null ? String(Number(p.fechamento.saldoConferido)) : '');
+      setContado(
+        p.fechamento?.saldoConferido != null ? String(Number(p.fechamento.saldoConferido)) : ''
+      );
       setObservacao(p.fechamento?.observacao ?? '');
     } catch (e) {
       setErro(mensagemDeErro(e));
@@ -157,7 +159,11 @@ export function Fechamento() {
 
               <ul className="conta">
                 <LinhaConta rotulo="Sobrou de ontem" valor={previa.saldoInicial} />
-                <LinhaConta rotulo="Vendas em dinheiro" valor={previa.detalhe.vendasDinheiro} sinal="+" />
+                <LinhaConta
+                  rotulo="Vendas em dinheiro"
+                  valor={previa.detalhe.vendasDinheiro}
+                  sinal="+"
+                />
                 <LinhaConta rotulo="Saídas em dinheiro" valor={-previa.totalSaidas} sinal="-" />
                 <li className="conta__total">
                   <span>Esperado</span>
@@ -220,7 +226,11 @@ export function Fechamento() {
               </button>
 
               {previa.fechamento && (
-                <button className="botao botao--texto botao--perigo" type="button" onClick={reabrir}>
+                <button
+                  className="botao botao--texto botao--perigo"
+                  type="button"
+                  onClick={reabrir}
+                >
                   Apagar este fechamento
                 </button>
               )}
@@ -228,11 +238,7 @@ export function Fechamento() {
           </div>
 
           <h2 className="cartao__subtitulo">Últimos dias</h2>
-          <Tabela
-            colunas={colunas}
-            dados={historico}
-            vazio="Nenhum dia fechado ainda."
-          />
+          <Tabela colunas={colunas} dados={historico} vazio="Nenhum dia fechado ainda." />
         </>
       )}
     </section>

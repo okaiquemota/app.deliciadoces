@@ -26,8 +26,16 @@ describe('direção das movimentações', () => {
   it('saída subtrai do saldo', async () => {
     const insumo = await criarInsumo();
     await prisma.$transaction(async (tx) => {
-      await estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 10 });
-      await estoqueService.movimentar(tx, { tipo: 'SAIDA_PRODUCAO', insumoId: insumo.id, quantidade: 3 });
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: insumo.id,
+        quantidade: 10,
+      });
+      await estoqueService.movimentar(tx, {
+        tipo: 'SAIDA_PRODUCAO',
+        insumoId: insumo.id,
+        quantidade: 3,
+      });
     });
     expect(await saldoInsumo(insumo.id)).toBe(7);
   });
@@ -37,8 +45,17 @@ describe('direção das movimentações', () => {
     // entrada por acidente.
     const insumo = await criarInsumo();
     await prisma.$transaction(async (tx) => {
-      await estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 10 });
-      await estoqueService.movimentar(tx, { tipo: 'PERDA', insumoId: insumo.id, quantidade: -3, motivo: 'teste' });
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: insumo.id,
+        quantidade: 10,
+      });
+      await estoqueService.movimentar(tx, {
+        tipo: 'PERDA',
+        insumoId: insumo.id,
+        quantidade: -3,
+        motivo: 'teste',
+      });
     });
     const movs = await prisma.movimentacaoEstoque.findMany({ where: { tipo: 'PERDA' } });
     expect(Number(movs[0].quantidade)).toBe(3);
@@ -48,13 +65,27 @@ describe('direção das movimentações', () => {
   it('ajuste é o único tipo que aceita as duas direções', async () => {
     const insumo = await criarInsumo();
     await prisma.$transaction(async (tx) => {
-      await estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 10 });
-      await estoqueService.movimentar(tx, { tipo: 'AJUSTE', insumoId: insumo.id, quantidade: -2, motivo: 'contagem' });
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: insumo.id,
+        quantidade: 10,
+      });
+      await estoqueService.movimentar(tx, {
+        tipo: 'AJUSTE',
+        insumoId: insumo.id,
+        quantidade: -2,
+        motivo: 'contagem',
+      });
     });
     expect(await saldoInsumo(insumo.id)).toBe(8);
 
     await prisma.$transaction((tx) =>
-      estoqueService.movimentar(tx, { tipo: 'AJUSTE', insumoId: insumo.id, quantidade: 5, motivo: 'contagem' })
+      estoqueService.movimentar(tx, {
+        tipo: 'AJUSTE',
+        insumoId: insumo.id,
+        quantidade: 5,
+        motivo: 'contagem',
+      })
     );
     expect(await saldoInsumo(insumo.id)).toBe(13);
   });
@@ -63,7 +94,9 @@ describe('direção das movimentações', () => {
 describe('regras que protegem o dado', () => {
   it('recusa movimentação sem insumo nem produto', async () => {
     await expect(
-      prisma.$transaction((tx) => estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', quantidade: 1 }))
+      prisma.$transaction((tx) =>
+        estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', quantidade: 1 })
+      )
     ).rejects.toThrow(/exatamente um/i);
   });
 
@@ -71,7 +104,12 @@ describe('regras que protegem o dado', () => {
     const [i, p] = [await criarInsumo(), await criarProduto()];
     await expect(
       prisma.$transaction((tx) =>
-        estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: i.id, produtoId: p.id, quantidade: 1 })
+        estoqueService.movimentar(tx, {
+          tipo: 'ENTRADA_COMPRA',
+          insumoId: i.id,
+          produtoId: p.id,
+          quantidade: 1,
+        })
       )
     ).rejects.toThrow(/exatamente um/i);
   });
@@ -98,7 +136,11 @@ describe('regras que protegem o dado', () => {
     const insumo = await criarInsumo();
     await expect(
       prisma.$transaction((tx) =>
-        estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 0 })
+        estoqueService.movimentar(tx, {
+          tipo: 'ENTRADA_COMPRA',
+          insumoId: insumo.id,
+          quantidade: 0,
+        })
       )
     ).rejects.toThrow(/zero/i);
   });
@@ -116,7 +158,11 @@ describe('transação: saldo e razão mudam juntos ou não mudam', () => {
 
     await expect(
       prisma.$transaction(async (tx) => {
-        await estoqueService.movimentar(tx, { tipo: 'SAIDA_PRODUCAO', insumoId: insumo.id, quantidade: 4 });
+        await estoqueService.movimentar(tx, {
+          tipo: 'SAIDA_PRODUCAO',
+          insumoId: insumo.id,
+          quantidade: 4,
+        });
         // Falha depois de já ter mexido no saldo
         await estoqueService.movimentar(tx, { tipo: 'PERDA', insumoId: insumo.id, quantidade: 1 });
       })
@@ -149,10 +195,12 @@ describe('custo médio do insumo', () => {
     // 10kg a R$ 10 + 30kg a R$ 20 -> R$ 17,50 (e não R$ 15)
     const insumo = await criarInsumo({ custoUnitario: 0 });
     await movimentacaoService.registrar(
-      { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 10, custoUnitario: 10 }, null
+      { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 10, custoUnitario: 10 },
+      null
     );
     await movimentacaoService.registrar(
-      { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 30, custoUnitario: 20 }, null
+      { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 30, custoUnitario: 20 },
+      null
     );
     const atual = await prisma.insumo.findUnique({ where: { id: insumo.id } });
     expect(Number(atual.custoUnitario)).toBeCloseTo(17.5, 2);
@@ -165,13 +213,21 @@ describe('alertas de estoque', () => {
     const baixo = await criarInsumo({ estoqueMinimo: 5 });
     const ok = await criarInsumo({ estoqueMinimo: 5 });
     await prisma.$transaction(async (tx) => {
-      await estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: baixo.id, quantidade: 5 });
-      await estoqueService.movimentar(tx, { tipo: 'ENTRADA_COMPRA', insumoId: ok.id, quantidade: 50 });
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: baixo.id,
+        quantidade: 5,
+      });
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: ok.id,
+        quantidade: 50,
+      });
     });
 
     const { insumosBaixos } = await estoqueService.alertas();
     const ids = insumosBaixos.map((i) => i.id);
-    expect(ids).toContain(baixo.id);   // no mínimo já conta como acabando
+    expect(ids).toContain(baixo.id); // no mínimo já conta como acabando
     expect(ids).not.toContain(ok.id);
   });
 

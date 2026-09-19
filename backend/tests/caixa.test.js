@@ -24,14 +24,18 @@ async function produtoComEstoque(qtd, preco = 10) {
 describe('venda', () => {
   it('baixa o estoque do doce vendido', async () => {
     const p = await produtoComEstoque(100);
-    await vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' }, null);
+    await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' },
+      null
+    );
     expect(await saldoProduto(p.id)).toBe(90);
   });
 
   it('calcula o total no servidor a partir do preço cadastrado', async () => {
     const p = await produtoComEstoque(100, 3.5);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 4 }], formaPagamento: 'DINHEIRO' }, null
+      { itens: [{ produtoId: p.id, quantidade: 4 }], formaPagamento: 'DINHEIRO' },
+      null
     );
     expect(Number(venda.total)).toBe(14);
   });
@@ -40,7 +44,8 @@ describe('venda', () => {
     // Impede venda adulterada: quem chama a API não decide o preço.
     const p = await produtoComEstoque(100, 3.5);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 2, precoUnitario: 0.01 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 2, precoUnitario: 0.01 }], formaPagamento: 'PIX' },
+      null
     );
     expect(Number(venda.total)).toBe(7);
   });
@@ -48,7 +53,8 @@ describe('venda', () => {
   it('congela o preço no item: mudar o cadastro não altera venda antiga', async () => {
     const p = await produtoComEstoque(100, 10);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 2 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 2 }], formaPagamento: 'PIX' },
+      null
     );
     await prisma.produto.update({ where: { id: p.id }, data: { precoVenda: 99 } });
 
@@ -60,12 +66,17 @@ describe('venda', () => {
   it('recusa desconto maior que o subtotal', async () => {
     const p = await produtoComEstoque(100, 10);
     await expect(
-      vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 1 }], desconto: 50, formaPagamento: 'PIX' }, null)
+      vendaService.criar(
+        { itens: [{ produtoId: p.id, quantidade: 1 }], desconto: 50, formaPagamento: 'PIX' },
+        null
+      )
     ).rejects.toThrow(/desconto/i);
   });
 
   it('recusa venda sem itens', async () => {
-    await expect(vendaService.criar({ itens: [], formaPagamento: 'PIX' }, null)).rejects.toThrow(/item/i);
+    await expect(vendaService.criar({ itens: [], formaPagamento: 'PIX' }, null)).rejects.toThrow(
+      /item/i
+    );
   });
 });
 
@@ -75,11 +86,16 @@ describe('editar venda', () => {
     // anterior: 100 - 10 - 25 = 65 em vez do correto 75.
     const p = await produtoComEstoque(100);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' },
+      null
     );
     expect(await saldoProduto(p.id)).toBe(90);
 
-    await vendaService.atualizar(venda.id, { itens: [{ produtoId: p.id, quantidade: 25 }], formaPagamento: 'PIX' }, null);
+    await vendaService.atualizar(
+      venda.id,
+      { itens: [{ produtoId: p.id, quantidade: 25 }], formaPagamento: 'PIX' },
+      null
+    );
     expect(await saldoProduto(p.id)).toBe(75);
     expect(await razaoDe({ produtoId: p.id })).toBe(75);
   });
@@ -87,9 +103,14 @@ describe('editar venda', () => {
   it('editar para menos devolve ao estoque', async () => {
     const p = await produtoComEstoque(100);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 40 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 40 }], formaPagamento: 'PIX' },
+      null
     );
-    await vendaService.atualizar(venda.id, { itens: [{ produtoId: p.id, quantidade: 5 }], formaPagamento: 'PIX' }, null);
+    await vendaService.atualizar(
+      venda.id,
+      { itens: [{ produtoId: p.id, quantidade: 5 }], formaPagamento: 'PIX' },
+      null
+    );
     expect(await saldoProduto(p.id)).toBe(95);
   });
 
@@ -97,9 +118,14 @@ describe('editar venda', () => {
     const a = await produtoComEstoque(50);
     const b = await produtoComEstoque(50);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: a.id, quantidade: 10 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: a.id, quantidade: 10 }], formaPagamento: 'PIX' },
+      null
     );
-    await vendaService.atualizar(venda.id, { itens: [{ produtoId: b.id, quantidade: 10 }], formaPagamento: 'PIX' }, null);
+    await vendaService.atualizar(
+      venda.id,
+      { itens: [{ produtoId: b.id, quantidade: 10 }], formaPagamento: 'PIX' },
+      null
+    );
 
     expect(await saldoProduto(a.id)).toBe(50);
     expect(await saldoProduto(b.id)).toBe(40);
@@ -108,11 +134,16 @@ describe('editar venda', () => {
   it('não deixa editar venda cancelada', async () => {
     const p = await produtoComEstoque(100);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 5 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 5 }], formaPagamento: 'PIX' },
+      null
     );
     await vendaService.cancelar(venda.id);
     await expect(
-      vendaService.atualizar(venda.id, { itens: [{ produtoId: p.id, quantidade: 1 }], formaPagamento: 'PIX' }, null)
+      vendaService.atualizar(
+        venda.id,
+        { itens: [{ produtoId: p.id, quantidade: 1 }], formaPagamento: 'PIX' },
+        null
+      )
     ).rejects.toThrow(/cancelada/i);
   });
 });
@@ -121,13 +152,14 @@ describe('cancelar venda', () => {
   it('devolve o estoque e preserva o registro', async () => {
     const p = await produtoComEstoque(100);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 30 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 30 }], formaPagamento: 'PIX' },
+      null
     );
     await vendaService.cancelar(venda.id);
 
     expect(await saldoProduto(p.id)).toBe(100);
     const guardada = await prisma.venda.findUnique({ where: { id: venda.id } });
-    expect(guardada).not.toBeNull();          // nada some
+    expect(guardada).not.toBeNull(); // nada some
     expect(guardada.cancelada).toBe(true);
   });
 
@@ -135,7 +167,8 @@ describe('cancelar venda', () => {
     // Cancelar de novo devolveria estoque que já voltou.
     const p = await produtoComEstoque(100);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' },
+      null
     );
     await vendaService.cancelar(venda.id);
     await expect(vendaService.cancelar(venda.id)).rejects.toThrow(/já está cancelada/i);
@@ -145,7 +178,8 @@ describe('cancelar venda', () => {
   it('reabrir volta a baixar o estoque', async () => {
     const p = await produtoComEstoque(100);
     const venda = await vendaService.criar(
-      { itens: [{ produtoId: p.id, quantidade: 20 }], formaPagamento: 'PIX' }, null
+      { itens: [{ produtoId: p.id, quantidade: 20 }], formaPagamento: 'PIX' },
+      null
     );
     await vendaService.cancelar(venda.id);
     await vendaService.reabrir(venda.id);
@@ -155,8 +189,14 @@ describe('cancelar venda', () => {
 
   it('venda cancelada não entra no total listado', async () => {
     const p = await produtoComEstoque(100, 10);
-    const v1 = await vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 2 }], formaPagamento: 'PIX' }, null);
-    await vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 3 }], formaPagamento: 'PIX' }, null);
+    const v1 = await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 2 }], formaPagamento: 'PIX' },
+      null
+    );
+    await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 3 }], formaPagamento: 'PIX' },
+      null
+    );
     await vendaService.cancelar(v1.id);
 
     const ativas = await vendaService.listar({});
@@ -168,12 +208,27 @@ describe('cancelar venda', () => {
 describe('sequência longa: cache e razão continuam iguais', () => {
   it('sobrevive a criar, editar, cancelar e reabrir em sequência', async () => {
     const p = await produtoComEstoque(500);
-    const v = await vendaService.criar({ itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' }, null);
-    await vendaService.atualizar(v.id, { itens: [{ produtoId: p.id, quantidade: 30 }], formaPagamento: 'PIX' }, null);
-    await vendaService.atualizar(v.id, { itens: [{ produtoId: p.id, quantidade: 7 }], formaPagamento: 'DINHEIRO' }, null);
+    const v = await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 10 }], formaPagamento: 'PIX' },
+      null
+    );
+    await vendaService.atualizar(
+      v.id,
+      { itens: [{ produtoId: p.id, quantidade: 30 }], formaPagamento: 'PIX' },
+      null
+    );
+    await vendaService.atualizar(
+      v.id,
+      { itens: [{ produtoId: p.id, quantidade: 7 }], formaPagamento: 'DINHEIRO' },
+      null
+    );
     await vendaService.cancelar(v.id);
     await vendaService.reabrir(v.id);
-    await vendaService.atualizar(v.id, { itens: [{ produtoId: p.id, quantidade: 12 }], formaPagamento: 'PIX' }, null);
+    await vendaService.atualizar(
+      v.id,
+      { itens: [{ produtoId: p.id, quantidade: 12 }], formaPagamento: 'PIX' },
+      null
+    );
 
     expect(await saldoProduto(p.id)).toBe(488);
     expect(await razaoDe({ produtoId: p.id })).toBe(488);

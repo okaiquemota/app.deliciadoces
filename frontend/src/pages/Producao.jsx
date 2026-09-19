@@ -131,7 +131,10 @@ function FormularioProducao({ catalogo, aoFechar, aoSalvar }) {
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    insumos.listar().then(setListaInsumos).catch(() => setListaInsumos([]));
+    insumos
+      .listar()
+      .then(setListaInsumos)
+      .catch(() => setListaInsumos([]));
   }, []);
 
   // Busca a prévia da ficha técnica sempre que produto ou quantidade mudam

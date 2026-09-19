@@ -127,11 +127,19 @@ export const producaoSchema = z.object({
  */
 export const fechamentoSchema = z.object({
   data: dataOpcional,
-  saldoConferido: z.coerce.number().min(0, 'O valor contado não pode ser negativo.').optional().nullable(),
+  saldoConferido: z.coerce
+    .number()
+    .min(0, 'O valor contado não pode ser negativo.')
+    .optional()
+    .nullable(),
   observacao: z.string().trim().optional().nullable(),
 });
 
 export const conferenciaSchema = z.object({
-  saldoConferido: z.coerce.number().min(0, 'O valor contado não pode ser negativo.').optional().nullable(),
+  saldoConferido: z.coerce
+    .number()
+    .min(0, 'O valor contado não pode ser negativo.')
+    .optional()
+    .nullable(),
   observacao: z.string().trim().optional().nullable(),
 });

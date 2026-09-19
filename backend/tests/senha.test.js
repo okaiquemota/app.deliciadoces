@@ -21,7 +21,10 @@ const buscar = () => prisma.usuario.findUnique({ where: { email: EMAIL } });
 describe('trocar senha', () => {
   it('troca quando a senha atual confere', async () => {
     const u = await buscar();
-    await authService.trocarSenha(u.id, { senhaAtual: 'senha-antiga', senhaNova: 'senha-nova-123' });
+    await authService.trocarSenha(u.id, {
+      senhaAtual: 'senha-antiga',
+      senhaNova: 'senha-nova-123',
+    });
 
     const depois = await buscar();
     expect(await bcrypt.compare('senha-nova-123', depois.senhaHash)).toBe(true);
@@ -48,7 +51,10 @@ describe('trocar senha', () => {
 
   it('guarda hash, nunca a senha em texto', async () => {
     const u = await buscar();
-    await authService.trocarSenha(u.id, { senhaAtual: 'senha-antiga', senhaNova: 'texto-puro-nao' });
+    await authService.trocarSenha(u.id, {
+      senhaAtual: 'senha-antiga',
+      senhaNova: 'texto-puro-nao',
+    });
     const depois = await buscar();
     expect(depois.senhaHash).not.toContain('texto-puro-nao');
     expect(depois.senhaHash.startsWith('$2')).toBe(true);

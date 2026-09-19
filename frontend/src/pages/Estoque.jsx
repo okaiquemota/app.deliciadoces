@@ -5,7 +5,13 @@ import { Modal } from '../components/Modal.jsx';
 import { Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { estoque, insumos, produtos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { dataHora, moeda, quantidade, ROTULO_MOVIMENTACAO, UNIDADE_CURTA } from '../utils/formato.js';
+import {
+  dataHora,
+  moeda,
+  quantidade,
+  ROTULO_MOVIMENTACAO,
+  UNIDADE_CURTA,
+} from '../utils/formato.js';
 
 const UNIDADES = Object.entries(UNIDADE_CURTA).map(([valor, rotulo]) => ({
   valor,
@@ -180,7 +186,12 @@ function FormularioInsumo({ insumo, aoFechar, aoSalvar }) {
       <form onSubmit={enviar}>
         <Texto rotulo="Nome" value={form.nome} onChange={campo('nome')} required />
         <Linha>
-          <Selecao rotulo="Unidade" value={form.unidade} onChange={campo('unidade')} opcoes={UNIDADES} />
+          <Selecao
+            rotulo="Unidade"
+            value={form.unidade}
+            onChange={campo('unidade')}
+            opcoes={UNIDADES}
+          />
           <Texto
             rotulo="Estoque mínimo"
             type="number"
@@ -206,7 +217,9 @@ function FormularioInsumo({ insumo, aoFechar, aoSalvar }) {
         </label>
 
         {erro && <p className="alerta alerta--erro">{erro}</p>}
-        <button type="submit" className="botao botao--primario">Salvar</button>
+        <button type="submit" className="botao botao--primario">
+          Salvar
+        </button>
       </form>
     </Modal>
   );
@@ -352,7 +365,9 @@ function FormularioProduto({ produto, aoFechar, aoSalvar }) {
         />
 
         {erro && <p className="alerta alerta--erro">{erro}</p>}
-        <button type="submit" className="botao botao--primario">Salvar</button>
+        <button type="submit" className="botao botao--primario">
+          Salvar
+        </button>
       </form>
     </Modal>
   );
@@ -443,7 +458,9 @@ function FormularioMovimentacao({ alvo, tipoAlvo, aoFechar, aoSalvar }) {
         )}
 
         {erro && <p className="alerta alerta--erro">{erro}</p>}
-        <button type="submit" className="botao botao--primario">Registrar</button>
+        <button type="submit" className="botao botao--primario">
+          Registrar
+        </button>
       </form>
     </Modal>
   );
@@ -483,8 +500,7 @@ function Historico() {
             chave: 'quantidade',
             titulo: 'Qtd.',
             alinhar: 'right',
-            render: (m) =>
-              quantidade(m.quantidade, m.insumo?.unidade ?? m.produto?.unidade ?? ''),
+            render: (m) => quantidade(m.quantidade, m.insumo?.unidade ?? m.produto?.unidade ?? ''),
           },
           { chave: 'motivo', titulo: 'Motivo', render: (m) => m.motivo ?? '' },
         ]}

@@ -72,9 +72,7 @@ export const dashboardService = {
 
     const totalVendas = Number(vendas._sum.total ?? 0);
 
-    const custos = Number(
-      despesasPorTipo.find((l) => l.tipo === 'CUSTO_OPERACIONAL')?.total ?? 0
-    );
+    const custos = Number(despesasPorTipo.find((l) => l.tipo === 'CUSTO_OPERACIONAL')?.total ?? 0);
     const retiradas = Number(
       despesasPorTipo.find((l) => l.tipo === 'RETIRADA_PESSOAL')?.total ?? 0
     );

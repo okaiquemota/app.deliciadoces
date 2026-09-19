@@ -47,11 +47,6 @@ router.get('/eu', autenticar, authController.eu);
  * Só mexe na conta de quem está autenticado: o id vem do token, nunca do
  * corpo da requisição. Assim ninguém troca a senha de outra pessoa.
  */
-router.patch(
-  '/senha',
-  autenticar,
-  validar(trocarSenhaSchema),
-  authController.trocarSenha
-);
+router.patch('/senha', autenticar, validar(trocarSenhaSchema), authController.trocarSenha);
 
 export default router;

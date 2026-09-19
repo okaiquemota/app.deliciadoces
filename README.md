@@ -25,19 +25,19 @@ Projeto acadêmico da disciplina de **Fábrica de Software**.
 
 ## Módulos do sistema
 
-| Módulo | Descrição |
-|---|---|
-| **Caixa** | Vendas (sempre à vista) e despesas, com edição e exclusão |
-| **Estoque** | Ingredientes e doces prontos, movimentações, perdas e aviso de item acabando |
-| **Produção** | Lote produzido consome ingrediente e gera doce pronto; ficha técnica opcional |
-| **Dashboard** | Resultado por semana, que é como a cliente prefere olhar |
+| Módulo        | Descrição                                                                     |
+| ------------- | ----------------------------------------------------------------------------- |
+| **Caixa**     | Vendas (sempre à vista) e despesas, com edição e exclusão                     |
+| **Estoque**   | Ingredientes e doces prontos, movimentações, perdas e aviso de item acabando  |
+| **Produção**  | Lote produzido consome ingrediente e gera doce pronto; ficha técnica opcional |
+| **Dashboard** | Resultado por semana, que é como a cliente prefere olhar                      |
 
 ## O que a cliente definiu
 
 O levantamento com a Dalila fechou pontos que moldam o sistema inteiro:
 
 - **Não vende fiado.** O cliente paga tudo na entrega — não existe conta a receber, parcela nem sinal. Toda venda é à vista.
-- **Produz em lote antes de vender.** Por isso a venda baixa o *doce pronto*, e quem consome ingrediente é a *produção*.
+- **Produz em lote antes de vender.** Por isso a venda baixa o _doce pronto_, e quem consome ingrediente é a _produção_.
 - **Controla os dois níveis:** ingredientes e doces prontos.
 - **Ficha técnica é opcional.** Ela sabe as quantidades de cabeça e só cadastraria "se for simples" — então o sistema tem que funcionar sem ficha nenhuma.
 - **Erra e corrige.** Editar e excluir lançamento é fluxo principal, não exceção.
@@ -58,16 +58,16 @@ O detalhamento técnico de cada etapa está em [docs/PROXIMOS-PASSOS.md](docs/PR
 
 ## Stack
 
-| Camada | Tecnologia | Versão | Por quê |
-|---|---|---|---|
-| Backend | Node.js + Express | 5.x | Stack definida pelo grupo; Express 5 já trata erros de `async` automaticamente |
-| Banco | PostgreSQL | 16+ | Relacional, adequado a dados financeiros |
-| ORM | Prisma | 7.x | Schema declarativo e migrations versionadas |
-| Autenticação | JWT | — | Stateless, simples de consumir pelo React |
-| Frontend | React + Vite | 19.x / 8.x | Vite substitui o Create React App, que foi descontinuado |
-| Roteamento | React Router | 7.x | Padrão de mercado para SPA |
-| HTTP | Axios | 1.x | Interceptors facilitam anexar o token JWT |
-| Validação | Zod | 4.x | Valida a entrada da API antes de chegar na regra de negócio |
+| Camada       | Tecnologia        | Versão     | Por quê                                                                        |
+| ------------ | ----------------- | ---------- | ------------------------------------------------------------------------------ |
+| Backend      | Node.js + Express | 5.x        | Stack definida pelo grupo; Express 5 já trata erros de `async` automaticamente |
+| Banco        | PostgreSQL        | 16+        | Relacional, adequado a dados financeiros                                       |
+| ORM          | Prisma            | 7.x        | Schema declarativo e migrations versionadas                                    |
+| Autenticação | JWT               | —          | Stateless, simples de consumir pelo React                                      |
+| Frontend     | React + Vite      | 19.x / 8.x | Vite substitui o Create React App, que foi descontinuado                       |
+| Roteamento   | React Router      | 7.x        | Padrão de mercado para SPA                                                     |
+| HTTP         | Axios             | 1.x        | Interceptors facilitam anexar o token JWT                                      |
+| Validação    | Zod               | 4.x        | Valida a entrada da API antes de chegar na regra de negócio                    |
 
 ### Decisões de arquitetura
 
@@ -239,26 +239,26 @@ npm run dev:frontend
 
 Acesse **http://localhost:5173** e faça login com as credenciais acima. 🎉
 
-> 💡 O frontend chama a API através de um *proxy* configurado no Vite, então não é preciso mexer em CORS durante o desenvolvimento.
+> 💡 O frontend chama a API através de um _proxy_ configurado no Vite, então não é preciso mexer em CORS durante o desenvolvimento.
 
 ### Deu problema?
 
-| Erro | Causa provável | Solução |
-|---|---|---|
-| `Variáveis de ambiente obrigatórias não definidas` | Falta o `.env` | Refaça o passo 4 |
-| `Can't reach database server` | PostgreSQL parado ou senha errada | Confira se o serviço está no ar e revise a `DATABASE_URL` |
-| `Database deliciadoces does not exist` | Banco não foi criado | Refaça o passo 3 |
-| Tela de login não carrega | Backend fora do ar | Confira o Terminal 1 e acesse http://localhost:3333/api/health |
-| `port 5173 is in use` | Outra aplicação na porta | Feche a outra ou mude a porta em `frontend/vite.config.js` |
-| `Named export 'PrismaClient' not found` | Prisma Client não foi gerado | `npm run prisma:generate` |
-| `relation "usuarios" does not exist` | Migrations não aplicadas | `npm run prisma:migrate` |
-| Login diz "E-mail ou senha inválidos" com a senha certa | Seed não rodou | `npm run db:seed` |
+| Erro                                                    | Causa provável                    | Solução                                                        |
+| ------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------- |
+| `Variáveis de ambiente obrigatórias não definidas`      | Falta o `.env`                    | Refaça o passo 4                                               |
+| `Can't reach database server`                           | PostgreSQL parado ou senha errada | Confira se o serviço está no ar e revise a `DATABASE_URL`      |
+| `Database deliciadoces does not exist`                  | Banco não foi criado              | Refaça o passo 3                                               |
+| Tela de login não carrega                               | Backend fora do ar                | Confira o Terminal 1 e acesse http://localhost:3333/api/health |
+| `port 5173 is in use`                                   | Outra aplicação na porta          | Feche a outra ou mude a porta em `frontend/vite.config.js`     |
+| `Named export 'PrismaClient' not found`                 | Prisma Client não foi gerado      | `npm run prisma:generate`                                      |
+| `relation "usuarios" does not exist`                    | Migrations não aplicadas          | `npm run prisma:migrate`                                       |
+| Login diz "E-mail ou senha inválidos" com a senha certa | Seed não rodou                    | `npm run db:seed`                                              |
 
 ---
 
 ## Onde este sistema vive
 
-Uma dúvida que bate em todo mundo que clona o projeto: *"cadê o sistema? tem algo no ar?"*
+Uma dúvida que bate em todo mundo que clona o projeto: _"cadê o sistema? tem algo no ar?"_
 
 Existem **dois lugares diferentes**, e eles não se misturam:
 
@@ -272,7 +272,7 @@ seu PC:  frontend (localhost:5173)  →  backend (localhost:3333)  →  PostgreS
 
 O banco é **seu**: os dados que você cadastrar testando não aparecem para mais ninguém do grupo, e os dados do colega não aparecem para você. **O que o grupo compartilha é o código, não os dados.** Isso é o normal em desenvolvimento.
 
-O banco não vem pronto no repositório — o que está versionado é a *receita* dele (a pasta `prisma/migrations`). O comando `prisma:migrate` lê essa receita e constrói as tabelas vazias na hora. O `db:seed` cria a conta da Dalila e as categorias.
+O banco não vem pronto no repositório — o que está versionado é a _receita_ dele (a pasta `prisma/migrations`). O comando `prisma:migrate` lê essa receita e constrói as tabelas vazias na hora. O `db:seed` cria a conta da Dalila e as categorias.
 
 ### 2. Em produção (o que a cliente usa)
 
@@ -295,16 +295,16 @@ O passo a passo de publicar está em [docs/DEPLOY.md](docs/DEPLOY.md).
 
 Rodando na **raiz** do projeto:
 
-| Comando | O que faz |
-|---|---|
-| `npm run dev:backend` | Sobe a API em modo de desenvolvimento (reinicia ao salvar) |
-| `npm run dev:frontend` | Sobe a interface em modo de desenvolvimento |
-| `npm run build` | Gera a build de produção do frontend |
-| `npm run prisma:migrate` | Cria/aplica migrations no banco |
-| `npm run prisma:generate` | Regera o Prisma Client após mudar o schema |
-| `npm run prisma:studio` | Abre uma interface visual para navegar no banco |
-| `npm run db:seed` | Popula o banco com dados iniciais |
-| `npm test` | Roda os testes automatizados |
+| Comando                   | O que faz                                                  |
+| ------------------------- | ---------------------------------------------------------- |
+| `npm run dev:backend`     | Sobe a API em modo de desenvolvimento (reinicia ao salvar) |
+| `npm run dev:frontend`    | Sobe a interface em modo de desenvolvimento                |
+| `npm run build`           | Gera a build de produção do frontend                       |
+| `npm run prisma:migrate`  | Cria/aplica migrations no banco                            |
+| `npm run prisma:generate` | Regera o Prisma Client após mudar o schema                 |
+| `npm run prisma:studio`   | Abre uma interface visual para navegar no banco            |
+| `npm run db:seed`         | Popula o banco com dados iniciais                          |
+| `npm test`                | Roda os testes automatizados                               |
 
 > Depois de **qualquer alteração** no `schema.prisma`, rode `npm run prisma:migrate`.
 
@@ -330,17 +330,17 @@ A qualidade dos testes foi verificada quebrando o código de propósito: inverte
 
 O `schema.prisma` reflete as respostas da cliente. As entidades:
 
-| Entidade | Representa |
-|---|---|
-| `Usuario` | Quem acessa o sistema |
-| `Insumo` | Ingrediente ou embalagem |
-| `Produto` | Doce pronto, o que ela vende |
-| `FichaTecnicaItem` | Quanto de cada insumo um produto consome por lote (**opcional**) |
-| `Producao` | Lote produzido: consome insumo, gera produto pronto |
-| `Venda` / `ItemVenda` | Venda à vista e seus itens |
-| `CategoriaDespesa` / `Despesa` | Saídas, separadas entre custo do negócio e retirada pessoal |
-| `MovimentacaoEstoque` | O razão: tudo que entra e sai, de insumo ou de produto |
-| `FechamentoDiario` | Conferência de caixa do dia |
+| Entidade                       | Representa                                                       |
+| ------------------------------ | ---------------------------------------------------------------- |
+| `Usuario`                      | Quem acessa o sistema                                            |
+| `Insumo`                       | Ingrediente ou embalagem                                         |
+| `Produto`                      | Doce pronto, o que ela vende                                     |
+| `FichaTecnicaItem`             | Quanto de cada insumo um produto consome por lote (**opcional**) |
+| `Producao`                     | Lote produzido: consome insumo, gera produto pronto              |
+| `Venda` / `ItemVenda`          | Venda à vista e seus itens                                       |
+| `CategoriaDespesa` / `Despesa` | Saídas, separadas entre custo do negócio e retirada pessoal      |
+| `MovimentacaoEstoque`          | O razão: tudo que entra e sai, de insumo ou de produto           |
+| `FechamentoDiario`             | Conferência de caixa do dia                                      |
 
 ### Escolhas que valem explicar
 
@@ -374,13 +374,13 @@ O fluxo é o padrão JWT:
 
 ### Endpoints já disponíveis
 
-| Método | Rota | Acesso | Descrição |
-|---|---|---|---|
-| `GET` | `/api/health` | Público | Verifica se a API está no ar |
-| `POST` | `/api/auth/login` | Público | Autentica e devolve o token |
-| `GET` | `/api/auth/eu` | Autenticado | Dados do usuário logado |
-| `POST` | `/api/auth/registrar` | Apenas `ADMIN` | Cadastra um novo usuário |
-| `PATCH` | `/api/auth/senha` | Autenticado | Troca a própria senha |
+| Método  | Rota                  | Acesso         | Descrição                    |
+| ------- | --------------------- | -------------- | ---------------------------- |
+| `GET`   | `/api/health`         | Público        | Verifica se a API está no ar |
+| `POST`  | `/api/auth/login`     | Público        | Autentica e devolve o token  |
+| `GET`   | `/api/auth/eu`        | Autenticado    | Dados do usuário logado      |
+| `POST`  | `/api/auth/registrar` | Apenas `ADMIN` | Cadastra um novo usuário     |
+| `PATCH` | `/api/auth/senha`     | Autenticado    | Troca a própria senha        |
 
 ### Cuidados de segurança já aplicados
 
@@ -408,7 +408,7 @@ O `npm audit` aponta alertas nas dependências **internas do CLI do Prisma** (`m
 
 - de **desenvolvimento** apenas (não vão para produção);
 - referentes a um driver de **MySQL que este projeto não usa** (usamos PostgreSQL);
-- **sem correção disponível** no momento — `npm audit fix --force` só faria *downgrade* do Prisma para uma versão mais antiga, que tem o mesmo alerta.
+- **sem correção disponível** no momento — `npm audit fix --force` só faria _downgrade_ do Prisma para uma versão mais antiga, que tem o mesmo alerta.
 
 Ou seja: é ruído conhecido, não uma falha do nosso código. Vale reavaliar quando o Prisma publicar uma correção.
 

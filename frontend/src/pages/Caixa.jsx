@@ -392,7 +392,9 @@ function Despesas({ periodo }) {
             render: (d) => (
               <span
                 className={
-                  d.categoria.tipo === 'RETIRADA_PESSOAL' ? 'etiqueta etiqueta--retirada' : 'etiqueta'
+                  d.categoria.tipo === 'RETIRADA_PESSOAL'
+                    ? 'etiqueta etiqueta--retirada'
+                    : 'etiqueta'
                 }
               >
                 {d.categoria.nome}
@@ -490,7 +492,11 @@ function FormularioDespesa({ despesa, categorias, aoFechar, aoSalvar }) {
             }))}
           />
         </Linha>
-        <Texto rotulo="Fornecedor (opcional)" value={form.fornecedor} onChange={campo('fornecedor')} />
+        <Texto
+          rotulo="Fornecedor (opcional)"
+          value={form.fornecedor}
+          onChange={campo('fornecedor')}
+        />
 
         {erro && <p className="alerta alerta--erro">{erro}</p>}
 
