@@ -304,8 +304,25 @@ Rodando na **raiz** do projeto:
 | `npm run prisma:generate` | Regera o Prisma Client após mudar o schema |
 | `npm run prisma:studio` | Abre uma interface visual para navegar no banco |
 | `npm run db:seed` | Popula o banco com dados iniciais |
+| `npm test` | Roda os testes automatizados |
 
 > Depois de **qualquer alteração** no `schema.prisma`, rode `npm run prisma:migrate`.
+
+---
+
+## Testes
+
+```bash
+npm test
+```
+
+36 testes cobrindo onde um erro corrompe dado em vez de só quebrar tela: direção das movimentações, transação, estorno na edição de venda, custo médio, ficha técnica opcional e a separação entre lucro e saldo de caixa.
+
+Rodam contra um **PostgreSQL de verdade**, não contra simulação. O que está sendo verificado é justamente o comportamento transacional — saldo e razão mudando juntos — e um banco falso apenas confirmaria a nossa suposição em vez do comportamento real.
+
+> ⚠️ **Os testes apagam todas as tabelas de negócio.** Existe uma trava que recusa rodar contra qualquer banco que não seja local, porque apontar para produção por engano destruiria os dados da cliente.
+
+A qualidade dos testes foi verificada quebrando o código de propósito: inverter a direção das movimentações, remover a exigência de motivo na perda, esquecer o estorno ao editar venda e trocar o custo médio por média simples. **Todas as sabotagens foram detectadas** — teste que passa em código quebrado não serve para nada.
 
 ---
 

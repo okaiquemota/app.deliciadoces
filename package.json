@@ -21,6 +21,7 @@
     "prisma:studio": "npm run prisma:studio --workspace=backend",
     "db:seed": "npm run db:seed --workspace=backend",
     "vercel-build": "npm run prisma:generate --workspace=backend && npm run build --workspace=frontend",
-    "db:seed:demo": "npm run db:seed:demo --workspace=backend"
+    "db:seed:demo": "npm run db:seed:demo --workspace=backend",
+    "test": "npm run test --workspace=backend"
   }
 }
