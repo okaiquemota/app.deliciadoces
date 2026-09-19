@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { prisma } from '../src/lib/prisma.js';
 import { estoqueService } from '../src/services/estoqueService.js';
 import { movimentacaoService } from '../src/services/cadastroService.js';
-import { limparTudo, criarInsumo, criarProduto, saldoInsumo, saldoProduto, razaoDe } from './apoio.js';
+import { limparTudo, criarInsumo, criarProduto, saldoInsumo, razaoDe } from './apoio.js';
 
 /**
  * O estoqueService é o único autorizado a escrever `quantidadeAtual`,

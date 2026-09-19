@@ -857,6 +857,20 @@ body {
   font-style: italic;
 }
 
+/* Conteúdo que continua na tela enquanto dados novos chegam. Ao trocar o
+   período, os números antigos ficam visíveis — esmaecer avisa que aquilo
+   ainda não é a resposta do que ela acabou de pedir. */
+.conteudo--atualizando {
+  opacity: 0.55;
+  transition: opacity 120ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conteudo--atualizando {
+    transition: none;
+  }
+}
+
 
 /* =====================================================================
    Celular

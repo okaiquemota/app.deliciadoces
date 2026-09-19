@@ -94,9 +94,9 @@ export function Dashboard() {
         <div>
           <h1 className="pagina__titulo">Olá, {usuario?.nome?.split(' ')[0]}</h1>
           <p className="pagina__texto">
-            {resumo
-              ? `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`
-              : 'Carregando...'}
+            {carregando || !resumo
+              ? 'Carregando...'
+              : `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`}
           </p>
         </div>
         <nav className="seletor-periodo">
@@ -118,7 +118,7 @@ export function Dashboard() {
       {!resumo ? (
         <p className="tabela__aviso">Carregando...</p>
       ) : (
-        <>
+        <div className={carregando ? 'conteudo--atualizando' : undefined}>
       <div className="indicadores">
         <Indicador rotulo="Vendas" valor={moeda(resumo.vendas)} dica={`${resumo.quantidadeVendas} venda(s)`} />
         <Indicador rotulo="Custos do negócio" valor={moeda(resumo.custos)} dica="Ingredientes, contas, aluguel..." />
@@ -191,7 +191,7 @@ export function Dashboard() {
           </ul>
         </article>
       )}
-        </>
+        </div>
       )}
     </section>
   );
