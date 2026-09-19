@@ -10,6 +10,7 @@ import {
   despesaController,
   producaoController,
   dashboardController,
+  fechamentoController,
 } from '../controllers/index.js';
 import {
   insumoSchema,
@@ -22,6 +23,8 @@ import {
   despesaSchema,
   despesaUpdateSchema,
   producaoSchema,
+  fechamentoSchema,
+  conferenciaSchema,
 } from '../controllers/schemas.js';
 
 /**
@@ -117,5 +120,17 @@ router.delete('/producoes/:id', producaoController.excluir);
 // -------------------------------------------------------------- dashboard
 router.get('/dashboard', dashboardController.resumo);
 router.get('/dashboard/por-dia', dashboardController.porDia);
+
+// ------------------------------------------------------- fechamento diário
+// `/previa` antes de `/:id` — senão "previa" seria lido como um id.
+router.get('/fechamentos/previa', fechamentoController.previa);
+router
+  .route('/fechamentos')
+  .get(fechamentoController.listar)
+  .post(validar(fechamentoSchema), fechamentoController.fechar);
+router
+  .route('/fechamentos/:id')
+  .put(validar(conferenciaSchema), fechamentoController.conferir)
+  .delete(fechamentoController.excluir);
 
 export default router;

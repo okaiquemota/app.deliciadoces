@@ -59,3 +59,11 @@ export const dashboard = {
   resumo: (params) => dados(api.get('/dashboard', { params })),
   porDia: (params) => dados(api.get('/dashboard/por-dia', { params })),
 };
+
+export const fechamentos = {
+  listar: (params) => dados(api.get('/fechamentos', { params })),
+  previa: (data) => dados(api.get('/fechamentos/previa', { params: { data } })),
+  fechar: (corpo) => dados(api.post('/fechamentos', corpo)),
+  conferir: (id, corpo) => dados(api.put(`/fechamentos/${id}`, corpo)),
+  excluir: (id) => dados(api.delete(`/fechamentos/${id}`)),
+};

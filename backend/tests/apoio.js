@@ -10,6 +10,7 @@ import { prisma } from '../src/lib/prisma.js';
  */
 
 export async function limparTudo() {
+  await prisma.fechamentoDiario.deleteMany({});
   await prisma.movimentacaoEstoque.deleteMany({});
   await prisma.itemVenda.deleteMany({});
   await prisma.venda.deleteMany({});
@@ -63,3 +64,14 @@ export async function razaoDe({ insumoId = null, produtoId = null }) {
     return total + (somam.has(m.tipo) ? Math.abs(q) : -Math.abs(q));
   }, 0);
 }
+
+/**
+ * Categoria de despesa com o tipo pedido.
+ *
+ * O tipo importa no fechamento: retirada pessoal sai da gaveta igual a
+ * qualquer despesa, mesmo não sendo custo do negócio.
+ */
+export const criarCategoria = (tipo = 'CUSTO_OPERACIONAL', nome) =>
+  prisma.categoriaDespesa.create({
+    data: { nome: nome ?? `Categoria ${Math.random().toString(36).slice(2, 9)}`, tipo },
+  });

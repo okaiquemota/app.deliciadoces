@@ -797,6 +797,66 @@ body {
   color: #1b5e34;
 }
 
+/* ---------- Fechamento de caixa ---------- */
+
+/* A conta aparece linha a linha, do jeito que ela faria no papel: o que
+   sobrou de ontem, o que entrou, o que saiu, e o total embaixo. Mostrar
+   só o resultado final esconderia de onde veio o número. */
+.conta {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.conta__linha,
+.conta__total {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.conta__linha {
+  color: var(--cor-texto-suave);
+}
+
+.conta__total {
+  border-bottom: none;
+  padding-top: 14px;
+  font-size: 1.15rem;
+}
+
+.conta__sinal {
+  margin-right: 4px;
+  color: var(--cor-texto-suave);
+}
+
+.alerta--atencao {
+  background-color: #fdf3e2;
+  color: #8a5a10;
+}
+
+.fechamento__falta {
+  color: var(--cor-erro);
+  font-weight: 600;
+}
+
+.fechamento__sobra {
+  color: #8a5a10;
+  font-weight: 600;
+}
+
+.fechamento__certo {
+  color: var(--cor-positivo);
+  font-weight: 600;
+}
+
+.fechamento__neutro {
+  color: var(--cor-texto-suave);
+  font-style: italic;
+}
+
 
 /* =====================================================================
    Celular
@@ -823,20 +883,18 @@ body {
      significa `flex-basis: 0%`, e dentro de um flex container a base
      vence a largura. Com `width: 100%` o menu ficava com 119px de 390,
      espremido no canto direito. Como o topo tem `flex-wrap`, basis 100%
-     força a quebra. Se ainda assim não couber (telas de 360px), rola
-     dentro de si mesmo em vez de esticar a página — e a barra de
-     rolagem some, que aqui só atrapalharia. */
+     força a quebra.
+
+     O menu QUEBRA em duas linhas em vez de rolar de lado. Com cinco
+     módulos os dois últimos não cabiam em 390px, e numa barra que rola
+     sem mostrar barra de rolagem eles simplesmente sumiam: a cliente não
+     teria como saber que existe Estoque ali. Cabeçalho um pouco mais
+     alto é preço barato por nenhum item escondido. */
   .layout__menu {
     order: 3;
     flex: 1 0 100%;
+    flex-wrap: wrap;
     gap: 2px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .layout__menu::-webkit-scrollbar {
-    display: none;
   }
 
   /* O menu é o controle mais tocado do sistema, então os itens dividem a
