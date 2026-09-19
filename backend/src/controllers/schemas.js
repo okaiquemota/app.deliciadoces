@@ -118,3 +118,28 @@ export const producaoSchema = z.object({
   observacao: z.string().trim().optional().nullable(),
   data: dataOpcional,
 });
+
+// ------------------------------------------------------- fechamento diário
+/**
+ * `saldoConferido` aceita zero: gaveta vazia é contagem legítima, e um
+ * `min(0.01)` como o dos outros valores recusaria o fechamento de um dia
+ * em que ela levou todo o dinheiro para o banco.
+ */
+export const fechamentoSchema = z.object({
+  data: dataOpcional,
+  saldoConferido: z.coerce
+    .number()
+    .min(0, 'O valor contado não pode ser negativo.')
+    .optional()
+    .nullable(),
+  observacao: z.string().trim().optional().nullable(),
+});
+
+export const conferenciaSchema = z.object({
+  saldoConferido: z.coerce
+    .number()
+    .min(0, 'O valor contado não pode ser negativo.')
+    .optional()
+    .nullable(),
+  observacao: z.string().trim().optional().nullable(),
+});

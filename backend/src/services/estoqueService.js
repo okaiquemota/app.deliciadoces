@@ -33,10 +33,7 @@ function calcularDelta(tipo, quantidade) {
 
 function validarAlvo({ insumoId, produtoId }) {
   if (Boolean(insumoId) === Boolean(produtoId)) {
-    throw new AppError(
-      'Informe exatamente um entre insumo e produto na movimentação.',
-      422
-    );
+    throw new AppError('Informe exatamente um entre insumo e produto na movimentação.', 422);
   }
 }
 
@@ -123,11 +120,7 @@ export const estoqueService = {
    * sobrar depois. O razão continua batendo com o saldo.
    */
   async estornarPorOrigem(tx, { vendaId = null, producaoId = null, despesaId = null }) {
-    const filtro = vendaId
-      ? { vendaId }
-      : producaoId
-        ? { producaoId }
-        : { despesaId };
+    const filtro = vendaId ? { vendaId } : producaoId ? { producaoId } : { despesaId };
 
     const movimentacoes = await tx.movimentacaoEstoque.findMany({ where: filtro });
 

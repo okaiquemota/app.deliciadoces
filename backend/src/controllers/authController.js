@@ -32,6 +32,16 @@ export const loginSchema = z.object({
   senha: z.string().min(1, 'Informe a senha.'),
 });
 
+export const trocarSenhaSchema = z
+  .object({
+    senhaAtual: z.string().min(1, 'Informe a senha atual.'),
+    senhaNova: z.string().min(6, 'A nova senha precisa ter ao menos 6 caracteres.'),
+  })
+  .refine((d) => d.senhaAtual !== d.senhaNova, {
+    message: 'A nova senha precisa ser diferente da atual.',
+    path: ['senhaNova'],
+  });
+
 export const authController = {
   async registrar(req, res) {
     const usuario = await authService.registrar(req.body);
@@ -41,6 +51,10 @@ export const authController = {
   async login(req, res) {
     const resultado = await authService.login(req.body);
     res.json(resultado);
+  },
+
+  async trocarSenha(req, res) {
+    res.json(await authService.trocarSenha(req.usuario.id, req.body));
   },
 
   /** GET /auth/eu — devolve o usuário do token. */

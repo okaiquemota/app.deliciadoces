@@ -12,6 +12,7 @@ export function Layout() {
   const itensMenu = [
     { para: '/dashboard', rotulo: 'Dashboard' },
     { para: '/caixa', rotulo: 'Caixa' },
+    { para: '/fechamento', rotulo: 'Fechamento' },
     { para: '/producao', rotulo: 'Produção' },
     { para: '/estoque', rotulo: 'Estoque' },
   ];
@@ -38,7 +39,9 @@ export function Layout() {
         </nav>
 
         <div className="layout__usuario">
-          <span>{usuario?.nome}</span>
+          <NavLink to="/minha-conta" className="layout__usuario-link">
+            {usuario?.nome}
+          </NavLink>
           <button type="button" className="botao botao--texto" onClick={sair}>
             Sair
           </button>

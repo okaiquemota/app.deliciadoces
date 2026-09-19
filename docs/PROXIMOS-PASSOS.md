@@ -19,7 +19,9 @@ Como a Dalila edita e exclui o tempo todo, isso acontece cedo. As regras:
 
 ```js
 await prisma.$transaction(async (tx) => {
-  await tx.movimentacaoEstoque.create({ data: { tipo: 'SAIDA_VENDA', produtoId, quantidade, vendaId } });
+  await tx.movimentacaoEstoque.create({
+    data: { tipo: 'SAIDA_VENDA', produtoId, quantidade, vendaId },
+  });
   await tx.produto.update({
     where: { id: produtoId },
     data: { quantidadeAtual: { decrement: quantidade } },
@@ -45,6 +47,7 @@ O primeiro módulo, e o que a cliente mais usa.
 **Combinado sobre desfazer venda:** a tela mostra "Excluir" (a palavra da cliente), mas por baixo marca `cancelada = true` e estorna o estoque. Nada é apagado de verdade — ela erra com frequência e precisa poder voltar atrás. `prisma.venda.delete()` não deve aparecer no código.
 
 Cuidados:
+
 - `precoUnitario` é **congelado** no item no momento da venda; nunca leia do `Produto` na hora de exibir uma venda antiga
 - `subtotal`, `desconto` e `total` são calculados no servidor, nunca aceitos do cliente
 - Venda sempre à vista: **não** existe conta a receber, parcela ou sinal
@@ -97,11 +100,11 @@ Ela confere o caixa todo dia, mas **olha o resultado por semana**. A tela princi
 
 ```json
 {
-  "vendas": 1850.00,
-  "custos": 620.00,
-  "retiradas": 300.00,
-  "lucro": 1230.00,
-  "vendasPorFormaPagamento": { "DINHEIRO": 900.00, "PIX": 700.00, "CARTAO_DEBITO": 250.00 },
+  "vendas": 1850.0,
+  "custos": 620.0,
+  "retiradas": 300.0,
+  "lucro": 1230.0,
+  "vendasPorFormaPagamento": { "DINHEIRO": 900.0, "PIX": 700.0, "CARTAO_DEBITO": 250.0 },
   "itensEstoqueBaixo": 4,
   "validadeProxima": 2
 }

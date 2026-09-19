@@ -10,6 +10,7 @@ import {
   despesaController,
   producaoController,
   dashboardController,
+  fechamentoController,
 } from '../controllers/index.js';
 import {
   insumoSchema,
@@ -22,6 +23,8 @@ import {
   despesaSchema,
   despesaUpdateSchema,
   producaoSchema,
+  fechamentoSchema,
+  conferenciaSchema,
 } from '../controllers/schemas.js';
 
 /**
@@ -69,11 +72,7 @@ router.put(
 
 // ---------------------------------------------------------------- estoque
 router.get('/estoque/movimentacoes', estoqueController.listarMovimentacoes);
-router.post(
-  '/estoque/movimentacoes',
-  validar(movimentacaoSchema),
-  estoqueController.movimentar
-);
+router.post('/estoque/movimentacoes', validar(movimentacaoSchema), estoqueController.movimentar);
 router.get('/estoque/alertas', estoqueController.alertas);
 router.post('/estoque/recalcular', estoqueController.recalcular);
 
@@ -83,7 +82,10 @@ router
   .get(vendaController.listar)
   .post(validar(vendaSchema), vendaController.criar);
 
-router.route('/vendas/:id').get(vendaController.porId).put(validar(vendaSchema), vendaController.atualizar);
+router
+  .route('/vendas/:id')
+  .get(vendaController.porId)
+  .put(validar(vendaSchema), vendaController.atualizar);
 
 /**
  * O botão "Excluir" da tela chama `cancelar`, não um DELETE.
@@ -117,5 +119,17 @@ router.delete('/producoes/:id', producaoController.excluir);
 // -------------------------------------------------------------- dashboard
 router.get('/dashboard', dashboardController.resumo);
 router.get('/dashboard/por-dia', dashboardController.porDia);
+
+// ------------------------------------------------------- fechamento diário
+// `/previa` antes de `/:id` — senão "previa" seria lido como um id.
+router.get('/fechamentos/previa', fechamentoController.previa);
+router
+  .route('/fechamentos')
+  .get(fechamentoController.listar)
+  .post(validar(fechamentoSchema), fechamentoController.fechar);
+router
+  .route('/fechamentos/:id')
+  .put(validar(conferenciaSchema), fechamentoController.conferir)
+  .delete(fechamentoController.excluir);
 
 export default router;

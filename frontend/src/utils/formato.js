@@ -61,6 +61,18 @@ export const dataHora = (valor) =>
     minute: '2-digit',
   });
 
-/** Data no formato que o <input type="date"> espera. */
-export const paraInput = (valor = new Date()) =>
-  new Date(valor).toISOString().slice(0, 10);
+/**
+ * Data no formato que o <input type="date"> espera.
+ *
+ * Montada com os componentes LOCAIS, não com `toISOString()`. O ISO
+ * converte para UTC, e no Brasil (UTC-3) qualquer hora a partir das 21h
+ * já cai no dia seguinte: às 21h30 de 19/09 o ISO devolve "2026-09-20".
+ * A cliente fecha o caixa justamente nesse horário — o movimento do dia
+ * iria parar na data errada.
+ */
+export function paraInput(valor = new Date()) {
+  const d = new Date(valor);
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}

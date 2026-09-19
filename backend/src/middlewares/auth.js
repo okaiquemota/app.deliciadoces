@@ -24,9 +24,7 @@ export function autenticar(req, _res, next) {
   const [esquema, token] = header.split(' ');
 
   if (esquema !== 'Bearer' || !token) {
-    return next(
-      AppError.naoAutorizado('Formato de token inválido. Use: Bearer <token>.')
-    );
+    return next(AppError.naoAutorizado('Formato de token inválido. Use: Bearer <token>.'));
   }
 
   try {
@@ -60,9 +58,7 @@ export function autorizar(...papeisPermitidos) {
     }
 
     if (!papeisPermitidos.includes(req.usuario.papel)) {
-      return next(
-        AppError.proibido('Seu perfil não tem permissão para esta operação.')
-      );
+      return next(AppError.proibido('Seu perfil não tem permissão para esta operação.'));
     }
 
     return next();

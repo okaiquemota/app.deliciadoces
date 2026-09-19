@@ -21,6 +21,20 @@
     "prisma:studio": "npm run prisma:studio --workspace=backend",
     "db:seed": "npm run db:seed --workspace=backend",
     "vercel-build": "npm run prisma:generate --workspace=backend && npm run build --workspace=frontend",
-    "db:seed:demo": "npm run db:seed:demo --workspace=backend"
+    "db:seed:demo": "npm run db:seed:demo --workspace=backend",
+    "test": "npm run test --workspace=backend",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^16.5.0",
+    "prettier": "^3.9.8"
   }
 }

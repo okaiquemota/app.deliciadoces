@@ -3,6 +3,7 @@ import { vendaService, despesaService } from '../services/caixaService.js';
 import { producaoService } from '../services/producaoService.js';
 import { dashboardService } from '../services/dashboardService.js';
 import { estoqueService } from '../services/estoqueService.js';
+import { fechamentoService } from '../services/fechamentoService.js';
 
 /**
  * Controllers: traduzem HTTP <-> serviço. Nenhuma regra de negócio aqui.
@@ -179,5 +180,34 @@ export const dashboardController = {
   },
   async porDia(req, res) {
     res.json(await dashboardService.porDia(filtrosPeriodo(req.query)));
+  },
+};
+
+export const fechamentoController = {
+  async listar(req, res) {
+    res.json(await fechamentoService.listar(filtrosPeriodo(req.query)));
+  },
+  /**
+   * Prévia do dia: o que o sistema espera na gaveta, antes de a cliente
+   * contar. Junto vai o fechamento já gravado, se existir, para a tela
+   * saber se está abrindo ou revisando.
+   */
+  async previa(req, res) {
+    const data = req.query.data ? new Date(req.query.data) : new Date();
+    const [previa, gravado] = await Promise.all([
+      fechamentoService.previa(data),
+      fechamentoService.porData(data),
+    ]);
+    res.json({ ...previa, fechamento: gravado });
+  },
+  async fechar(req, res) {
+    res.status(201).json(await fechamentoService.fechar(req.body, req.usuario.id));
+  },
+  async conferir(req, res) {
+    res.json(await fechamentoService.conferir(req.params.id, req.body));
+  },
+  async excluir(req, res) {
+    await fechamentoService.excluir(req.params.id);
+    res.status(204).end();
   },
 };

@@ -19,7 +19,6 @@ export function rotaNaoEncontrada(req, res) {
  * identifica um middleware de erro. Remover o último parâmetro faz o
  * Express tratá-lo como middleware comum e ele nunca é chamado.
  */
-// eslint-disable-next-line no-unused-vars
 export function errorHandler(erro, _req, res, _next) {
   // 1) Erros esperados, lançados de propósito pela aplicação
   if (erro instanceof AppError) {

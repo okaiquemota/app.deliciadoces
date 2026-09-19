@@ -122,8 +122,16 @@ async function main() {
   await prisma.fichaTecnicaItem.deleteMany({ where: { produtoId: produtos.Brigadeiro.id } });
   await prisma.fichaTecnicaItem.createMany({
     data: [
-      { produtoId: produtos.Brigadeiro.id, insumoId: insumos['Leite condensado'].id, quantidade: 1 },
-      { produtoId: produtos.Brigadeiro.id, insumoId: insumos['Chocolate granulado'].id, quantidade: 0.15 },
+      {
+        produtoId: produtos.Brigadeiro.id,
+        insumoId: insumos['Leite condensado'].id,
+        quantidade: 1,
+      },
+      {
+        produtoId: produtos.Brigadeiro.id,
+        insumoId: insumos['Chocolate granulado'].id,
+        quantidade: 0.15,
+      },
       { produtoId: produtos.Brigadeiro.id, insumoId: insumos['Manteiga'].id, quantidade: 0.02 },
     ],
   });
@@ -132,11 +140,40 @@ async function main() {
   // --------------------------------------------------------- produção
   const lotes = [
     { produto: 'Brigadeiro', qtd: 400, dia: 6 },
-    { produto: 'Beijinho', qtd: 320, dia: 5, insumos: [{ nome: 'Leite condensado', q: 8 }, { nome: 'Açúcar refinado', q: 2 }] },
-    { produto: 'Bolo de pote', qtd: 60, dia: 4, insumos: [{ nome: 'Creme de leite', q: 3 }, { nome: 'Açúcar refinado', q: 1.2 }] },
-    { produto: 'Trufa de maracujá', qtd: 180, dia: 3, insumos: [{ nome: 'Chocolate granulado', q: 2.4 }] },
+    {
+      produto: 'Beijinho',
+      qtd: 320,
+      dia: 5,
+      insumos: [
+        { nome: 'Leite condensado', q: 8 },
+        { nome: 'Açúcar refinado', q: 2 },
+      ],
+    },
+    {
+      produto: 'Bolo de pote',
+      qtd: 60,
+      dia: 4,
+      insumos: [
+        { nome: 'Creme de leite', q: 3 },
+        { nome: 'Açúcar refinado', q: 1.2 },
+      ],
+    },
+    {
+      produto: 'Trufa de maracujá',
+      qtd: 180,
+      dia: 3,
+      insumos: [{ nome: 'Chocolate granulado', q: 2.4 }],
+    },
     { produto: 'Brigadeiro', qtd: 350, dia: 2 },
-    { produto: 'Beijinho', qtd: 200, dia: 1, insumos: [{ nome: 'Leite condensado', q: 5 }, { nome: 'Açúcar refinado', q: 1.2 }] },
+    {
+      produto: 'Beijinho',
+      qtd: 200,
+      dia: 1,
+      insumos: [
+        { nome: 'Leite condensado', q: 5 },
+        { nome: 'Açúcar refinado', q: 1.2 },
+      ],
+    },
   ];
 
   const { producaoService } = await import('../src/services/producaoService.js');
@@ -188,7 +225,8 @@ async function main() {
 
         // Vende no máximo um terço do que tem, para sobrar estoque na tela
         const teto = Math.max(1, Math.floor(saldo / 2));
-        const desejado = p.preco > 10 ? 2 + Math.floor(Math.random() * 5) : 25 + Math.floor(Math.random() * 60);
+        const desejado =
+          p.preco > 10 ? 2 + Math.floor(Math.random() * 5) : 25 + Math.floor(Math.random() * 60);
         itens.push({ produtoId: produtos[p.nome].id, quantidade: Math.min(desejado, teto) });
       }
 
@@ -212,7 +250,13 @@ async function main() {
   const despesas = [
     { descricao: 'Compra no atacado', valor: 612.8, categoria: 'Ingredientes', dia: 6 },
     { descricao: 'Forminhas e embalagens', valor: 117.0, categoria: 'Embalagem', dia: 5 },
-    { descricao: 'Conta de luz', valor: 214.3, categoria: 'Contas (gás/luz/água)', dia: 4, recorrente: true },
+    {
+      descricao: 'Conta de luz',
+      valor: 214.3,
+      categoria: 'Contas (gás/luz/água)',
+      dia: 4,
+      recorrente: true,
+    },
     { descricao: 'Gás de cozinha', valor: 130.0, categoria: 'Contas (gás/luz/água)', dia: 3 },
     { descricao: 'Entrega de encomenda', valor: 45.0, categoria: 'Transporte e entrega', dia: 2 },
     { descricao: 'Diária da ajudante', valor: 120.0, categoria: 'Ajudante', dia: 2 },
