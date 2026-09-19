@@ -4,13 +4,13 @@ import { useState } from 'react';
  * Identidade visual da Delícia Doces: a medalha ao lado do nome.
  *
  * Por que os dois juntos e não só a logo: a medalha é muito detalhada
- * (laço, fouet, rosas, texto em dois tamanhos). Com 30px de altura no
+ * (laço, fouet, rosas, texto em dois tamanhos). Com 34px de altura no
  * cabeçalho esse detalhe vira um borrão ilegível. Ela entra como selo —
- * dá a cara da marca — e quem carrega a leitura é o nome escrito ao lado.
+ * dá a cara da marca — e quem carrega a leitura é o nome ao lado.
  *
- * Se o arquivo da logo não existir, o componente mostra só o nome, sem
- * ícone quebrado. Assim o sistema funciona antes e depois de a imagem
- * entrar no projeto.
+ * O <picture> serve WebP (64 KB) e cai para PNG (270 KB) em navegador
+ * que não suporte. E se nenhum dos dois carregar, some a imagem e fica
+ * só o nome — nunca o ícone de imagem quebrada.
  */
 export function Marca({ tamanho = 'normal' }) {
   const [semLogo, setSemLogo] = useState(false);
@@ -18,15 +18,20 @@ export function Marca({ tamanho = 'normal' }) {
   return (
     <span className={tamanho === 'grande' ? 'marca marca--grande' : 'marca'}>
       {!semLogo && (
-        <img
-          src="/logo.png"
-          alt=""
-          className="marca__logo"
-          /* O nome já está escrito ao lado, então a imagem é decorativa:
-             alt vazio evita que o leitor de tela repita "Delícia Doces". */
-          aria-hidden="true"
-          onError={() => setSemLogo(true)}
-        />
+        <picture>
+          <source srcSet="/logo.webp" type="image/webp" />
+          <img
+            src="/logo.png"
+            alt=""
+            className="marca__logo"
+            /* O nome está escrito ao lado, então a imagem é decorativa:
+               alt vazio evita o leitor de tela repetir "Delícia Doces". */
+            aria-hidden="true"
+            width="400"
+            height="400"
+            onError={() => setSemLogo(true)}
+          />
+        </picture>
       )}
       <span className="marca__nome">Delícia Doces</span>
     </span>

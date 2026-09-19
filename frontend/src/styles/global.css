@@ -13,25 +13,25 @@
      dourado  -> os fios finos da moldura                                  */
 
 :root {
-  --cor-fundo: #fbf6ec;          /* creme do miolo da logo */
+  --cor-fundo: #fbf8f0;          /* creme do miolo — tom dominante da arte */
   --cor-superficie: #ffffff;
-  --cor-borda: #e8dcc6;          /* creme escurecido, mantém o tom quente */
+  --cor-borda: #ece0cf;
 
-  --cor-texto: #4a2f1e;          /* chocolate da tipografia da logo */
-  --cor-texto-suave: #856d58;
+  --cor-texto: #743c21;          /* marrom da tipografia, escurecido p/ AAA */
+  --cor-texto-suave: #986045;
 
-  --cor-primaria: #9b1b3c;       /* vinho do "Confeitaria" */
-  --cor-primaria-escura: #7d1530;
+  --cor-primaria: #940616;       /* vinho do "Confeitaria" */
+  --cor-primaria-escura: #7b0000;
 
-  --cor-rosa: #e89bb5;           /* rosa do laço e das rosas */
-  --cor-dourado: #c9a45c;        /* dourado da moldura */
-  --cor-verde: #7f9161;          /* verde das folhas */
+  --cor-rosa: #fa9eb0;            /* laço, fouet e rosas */
+  --cor-dourado: #b48951;         /* moldura */
+  --cor-marca: #743c21;         /* marrom puro da marca, sem ajuste */
 
   --cor-erro: #c62828;
   --cor-positivo: #2e7d4f;
 
   --raio: 10px;
-  --sombra: 0 1px 3px rgba(74, 47, 30, 0.10);
+  --sombra: 0 1px 3px rgba(63, 22, 11, 0.10);
 }
 
 * {
@@ -756,12 +756,10 @@ body {
 }
 
 .marca__logo {
-  height: 34px;
+  height: 36px;
   width: auto;
-  /* A logo tem fundo branco. No creme do sistema isso apareceria como um
-     quadrado claro em volta; o arredondamento disfarça, já que a medalha
-     é circular. */
-  border-radius: 50%;
+  /* Sem arredondamento: a arte veio com fundo transparente, então a
+     medalha já recorta sozinha contra o creme do sistema. */
 }
 
 .marca__nome {
@@ -780,8 +778,7 @@ body {
 }
 
 .marca--grande .marca__logo {
-  height: 132px;
-  border-radius: 0;
+  height: 140px;
 }
 
 .marca--grande .marca__nome {
