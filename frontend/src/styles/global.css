@@ -708,16 +708,6 @@ body {
   background-color: var(--cor-dourado);
 }
 
-@media (max-width: 600px) {
-  .form__linha {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .pagina__cabecalho {
-    align-items: stretch;
-  }
-}
-
 .seletor-periodo {
   display: flex;
   gap: 4px;
@@ -791,8 +781,11 @@ body {
 
 .layout__usuario-link {
   color: var(--cor-texto-suave);
-  text-decoration: none;
-  border-bottom: 1px dotted var(--cor-borda);
+  /* Sublinhado como decoração de texto e não como `border-bottom`: no
+     celular o link vira uma caixa de 44px e a borda ficaria solta lá
+     embaixo, longe da palavra. A decoração acompanha o texto. */
+  text-decoration: underline dotted var(--cor-borda);
+  text-underline-offset: 3px;
 }
 
 .layout__usuario-link:hover {
@@ -802,4 +795,210 @@ body {
 .alerta--ok {
   background-color: #e8f5ec;
   color: #1b5e34;
+}
+
+
+/* =====================================================================
+   Celular
+   ---------------------------------------------------------------------
+   A cliente lança venda no balcão, com o telefone na mão — não sentada
+   num desktop. Estas regras existem porque a tela rolava de lado em
+   390px: o cabeçalho somava 402px e o seletor de período 376px.
+   ===================================================================== */
+
+@media (max-width: 640px) {
+  /* Nada pode empurrar a página para os lados */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .layout__topo {
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  /* O menu ganha uma linha inteira, abaixo da marca e do usuário.
+     `flex-basis: 100%` e não `width`: a regra base usa `flex: 1`, que
+     significa `flex-basis: 0%`, e dentro de um flex container a base
+     vence a largura. Com `width: 100%` o menu ficava com 119px de 390,
+     espremido no canto direito. Como o topo tem `flex-wrap`, basis 100%
+     força a quebra. Se ainda assim não couber (telas de 360px), rola
+     dentro de si mesmo em vez de esticar a página — e a barra de
+     rolagem some, que aqui só atrapalharia. */
+  .layout__menu {
+    order: 3;
+    flex: 1 0 100%;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .layout__menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* O menu é o controle mais tocado do sistema, então os itens dividem a
+     linha por igual em vez de encolher a ponto de não dar para acertar. */
+  .layout__menu .layout__link {
+    flex: 1 0 auto;
+    padding: 8px 10px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .layout__marca {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .marca__logo {
+    height: 28px;
+  }
+
+  .marca__nome {
+    font-size: 0.95rem;
+  }
+
+  .layout__conteudo {
+    padding: 20px 14px;
+  }
+
+  /* Cabeçalho de página e seus filtros empilham */
+  .pagina__cabecalho {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filtro-periodo,
+  .seletor-periodo {
+    width: 100%;
+  }
+
+  .filtro-periodo .campo__entrada {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .seletor-periodo__item {
+    flex: 1;
+    padding: 8px 6px;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  /* Campos lado a lado viram um por linha: dedo não acerta campo estreito */
+  .form__linha {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  /* Um indicador por linha, para o número não espremer */
+  .indicadores {
+    grid-template-columns: 1fr;
+  }
+
+  .painel-duplo {
+    grid-template-columns: 1fr;
+  }
+
+  /* Ações empilham e o botão ocupa a linha inteira, fácil de acertar */
+  .barra-acoes {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .botao--auto {
+    width: 100%;
+  }
+
+  /* A tabela rola dentro do seu próprio quadro, nunca empurrando a página */
+  .tabela__rolagem {
+    max-width: 100%;
+  }
+
+  .tabela th,
+  .tabela td {
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
+
+  /* O modal vira tela cheia: em 390px, margem lateral é espaço perdido */
+  .modal {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .modal__caixa {
+    max-width: 100% !important;
+    min-height: 100%;
+    border-radius: 0;
+  }
+
+  .modal__corpo {
+    padding: 16px;
+  }
+
+  .grafico {
+    height: 130px;
+  }
+
+  .grafico__rotulo {
+    font-size: 0.6rem;
+  }
+
+  .login__caixa {
+    padding: 24px 20px;
+  }
+
+  .marca--grande .marca__logo {
+    height: 110px;
+  }
+}
+
+/* Alvos de toque: o padrão da plataforma é 44px. Campo baixo demais faz
+   a cliente errar o toque e desistir de lançar pelo celular. */
+@media (pointer: coarse) {
+  .campo__entrada,
+  .botao {
+    min-height: 44px;
+  }
+
+  /* `botao--texto` é ação secundária dentro de linha de tabela ("editar",
+     "cancelar"). Subir para 44px engordaria a tabela inteira sem
+     necessidade: ali o alvo já passa o mínimo de 24px da WCAG 2.5.8. */
+  .botao--texto {
+    min-height: 36px;
+    padding: 8px 10px;
+  }
+
+  /* O cabeçalho é a exceção: menu, conta e sair são tocados em pé, no
+     balcão, com uma mão só. Aqui vale os 44px padrão das plataformas. */
+  .layout__link,
+  .layout__usuario .botao--texto {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* Nenhum dos dois usa a classe `.botao`, então a regra acima não os
+     alcançava. São controles de uso constante: o seletor abre o dashboard
+     e as abas trocam vendas/despesas no caixa. */
+  .seletor-periodo__item,
+  .abas__item {
+    min-height: 44px;
+  }
+
+  /* Tinha 23px de altura: abaixo até do mínimo da WCAG. Vira alvo de
+     verdade sem virar botão, que mudaria o desenho do cabeçalho. */
+  .layout__usuario-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 4px;
+  }
 }
