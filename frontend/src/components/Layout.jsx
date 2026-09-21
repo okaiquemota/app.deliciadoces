@@ -10,9 +10,10 @@ export function Layout() {
   const { usuario, sair } = useAuth();
 
   const itensMenu = [
-    { para: '/dashboard', rotulo: 'Dashboard' },
+    { para: '/dashboard', rotulo: 'Início' },
     { para: '/caixa', rotulo: 'Caixa' },
     { para: '/fechamento', rotulo: 'Fechamento' },
+    { para: '/resumo', rotulo: 'Resumo' },
     { para: '/producao', rotulo: 'Produção' },
     { para: '/estoque', rotulo: 'Estoque' },
   ];

@@ -234,3 +234,75 @@ describe('sequência longa: cache e razão continuam iguais', () => {
     expect(await razaoDe({ produtoId: p.id })).toBe(488);
   });
 });
+
+/**
+ * Entrada de dinheiro sem produto.
+ *
+ * A cliente destacou que não tem tempo de mexer no sistema: quer digitar
+ * o valor e pronto. O risco é o estoque mentir em silêncio — por isso
+ * estes testes fixam que a entrada avulsa conta no caixa e NÃO encosta
+ * no saldo dos doces.
+ */
+describe('entrada de dinheiro avulsa', () => {
+  it('registra pelo valor digitado, sem produto', async () => {
+    const venda = await vendaService.criar({ valor: 50, formaPagamento: 'DINHEIRO' }, null);
+    expect(Number(venda.total)).toBe(50);
+    expect(venda.itens).toHaveLength(0);
+  });
+
+  it('NÃO mexe no estoque de nenhum doce', async () => {
+    // Sem saber o que saiu, chutar produto corromperia o saldo calado.
+    const p = await produtoComEstoque(100);
+    await vendaService.criar({ valor: 80, formaPagamento: 'PIX' }, null);
+
+    expect(await saldoProduto(p.id)).toBe(100);
+    expect(await razaoDe({ produtoId: p.id })).toBe(100);
+  });
+
+  it('conta no total de vendas do período, como qualquer venda', async () => {
+    await vendaService.criar({ valor: 30, formaPagamento: 'DINHEIRO' }, null);
+    const lista = await vendaService.listar({});
+    expect(lista.reduce((soma, v) => soma + Number(v.total), 0)).toBe(30);
+  });
+
+  it('recusa produtos e valor ao mesmo tempo', async () => {
+    // Com os dois não há resposta óbvia sobre quem manda no total, e
+    // deixar o cliente escolher reabriria a brecha de preço.
+    const p = await produtoComEstoque(100, 10);
+    await expect(
+      vendaService.criar(
+        { itens: [{ produtoId: p.id, quantidade: 1 }], valor: 999, formaPagamento: 'PIX' },
+        null
+      )
+    ).rejects.toMatchObject({ statusCode: 422 });
+  });
+
+  it('recusa valor zero ou negativo', async () => {
+    await expect(
+      vendaService.criar({ valor: 0, formaPagamento: 'DINHEIRO' }, null)
+    ).rejects.toMatchObject({ statusCode: 422 });
+    await expect(
+      vendaService.criar({ valor: -10, formaPagamento: 'DINHEIRO' }, null)
+    ).rejects.toMatchObject({ statusCode: 422 });
+  });
+
+  it('recusa venda sem itens e sem valor', async () => {
+    await expect(vendaService.criar({ formaPagamento: 'DINHEIRO' }, null)).rejects.toMatchObject({
+      statusCode: 422,
+    });
+  });
+
+  it('entra no fechamento quando é em dinheiro', async () => {
+    // O caminho rápido precisa aparecer na gaveta, senão o fechamento
+    // acusaria sobra toda vez que ela usasse o botão.
+    const { fechamentoService } = await import('../src/services/fechamentoService.js');
+    await vendaService.criar({ valor: 70, formaPagamento: 'DINHEIRO' }, null);
+    expect((await fechamentoService.previa(new Date())).totalEntradas).toBe(70);
+  });
+
+  it('NÃO entra na gaveta quando é no Pix', async () => {
+    const { fechamentoService } = await import('../src/services/fechamentoService.js');
+    await vendaService.criar({ valor: 70, formaPagamento: 'PIX' }, null);
+    expect((await fechamentoService.previa(new Date())).totalEntradas).toBe(0);
+  });
+});

@@ -875,6 +875,260 @@ body {
     transition: none;
   }
 }
+/* ---------- Tela inicial: ações rápidas ---------- */
+
+/* Quatro botões grandes no lugar dos quadrados de número. A cliente disse
+   que não tem tempo de mexer no sistema: o que ela abre no balcão precisa
+   ser alvo grande e óbvio, não painel.
+
+   As cores foram conferidas contra a WCAG com texto branco: vinho 9,14 /
+   verde 5,05 / marrom suave 5,13 / marrom 8,71. O dourado da marca ficou
+   de fora porque dá só 3,16 — passaria em título grande, mas a linha de
+   dica é texto pequeno e reprovaria. */
+.acoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.acao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 96px;
+  padding: 18px 20px;
+  border: none;
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  color: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 80ms ease-out,
+    filter 80ms ease-out;
+}
+
+.acao:hover {
+  filter: brightness(1.08);
+}
+
+.acao:active {
+  transform: scale(0.985);
+}
+
+.acao__rotulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.acao__dica {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.acao--venda {
+  background-color: var(--cor-primaria);
+}
+
+.acao--entrada {
+  background-color: var(--cor-positivo);
+}
+
+.acao--saida {
+  background-color: var(--cor-texto-suave);
+}
+
+.acao--retirada {
+  background-color: var(--cor-texto);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acao {
+    transition: none;
+  }
+  .acao:active {
+    transform: none;
+  }
+}
+
+/* Uma linha de confirmação, não um painel: só para ela ver que o que
+   lançou chegou onde devia. Os números de verdade estão em /resumo. */
+.resumo-dia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto);
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resumo-dia:hover {
+  border-color: var(--cor-primaria);
+}
+
+.resumo-dia__link {
+  color: var(--cor-primaria);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- Venda rápida ---------- */
+
+/* Os doces são botões, não um select. No celular um select abre uma
+   roleta que cobre a tela e exige três gestos; aqui é um toque. */
+.grade-produtos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.doce {
+  position: relative;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background-color: var(--cor-superficie);
+}
+
+.doce--escolhido {
+  border-color: var(--cor-primaria);
+  box-shadow: inset 0 0 0 1px var(--cor-primaria);
+}
+
+.doce__toque {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px;
+  border: none;
+  background: none;
+  border-radius: var(--raio);
+  color: var(--cor-texto);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.doce__nome {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* O contador fica sobreposto no canto. Sem reservar espaço, um doce de
+   nome comprido passa por baixo dele e fica ilegível justamente no item
+   que ela acabou de escolher. */
+.doce--escolhido .doce__nome {
+  padding-right: 52px;
+}
+
+.doce__preco {
+  color: var(--cor-primaria);
+  font-weight: 700;
+}
+
+.doce__estoque {
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+/* O contador só existe depois do primeiro toque: enquanto o doce não foi
+   escolhido, um "0" e um botão de menos seriam ruído. */
+.doce__contador {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 2px;
+  background-color: var(--cor-primaria);
+  border-radius: 999px;
+  color: #fff;
+}
+
+.doce__menos {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ---------- Formas de pagamento ---------- */
+
+.formas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 20px;
+}
+
+.forma {
+  flex: 1 0 auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background-color: var(--cor-superficie);
+  color: var(--cor-texto-suave);
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.forma--ativa {
+  background-color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: #fff;
+  font-weight: 600;
+}
+
+.barra-confirmar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.barra-confirmar__total {
+  flex: 1;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+}
+
+.barra-confirmar .botao--primario {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* Campo de valor: é o único dado de um lançamento rápido, então merece
+   ser o maior elemento do formulário. */
+.campo__entrada--grande {
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 14px 16px;
+}
 
 /* =====================================================================
    Celular

@@ -55,9 +55,57 @@ export const vendaService = {
    * O preço do item é CONGELADO aqui: se o preço do produto mudar amanhã,
    * a venda de hoje continua valendo o que valeu.
    */
-  async criar({ itens, desconto = 0, formaPagamento, clienteNome, observacao, data }, usuarioId) {
-    if (!itens?.length) {
-      throw new AppError('Informe ao menos um item na venda.', 422);
+  async criar(
+    { itens, valor, desconto = 0, formaPagamento, clienteNome, observacao, data },
+    usuarioId
+  ) {
+    const temItens = Boolean(itens?.length);
+    const temValor = valor !== undefined && valor !== null && valor !== '';
+
+    if (temItens && temValor) {
+      throw new AppError(
+        'Informe os produtos OU um valor avulso, não os dois: com produtos o total sai do cadastro.',
+        422
+      );
+    }
+
+    /**
+     * Entrada de dinheiro sem produto.
+     *
+     * A cliente pediu um caminho de um toque para a correria do balcão:
+     * digita o valor e pronto. Sem saber o que saiu, o estoque NÃO pode
+     * ser baixado — chutar produto seria pior que não mexer, porque
+     * corromperia o saldo em silêncio.
+     *
+     * Fica gravada como venda sem itens. A ausência de item é o próprio
+     * sinal, estrutural: não depende de texto na observação, que a
+     * cliente pode apagar sem querer. Continua contando no caixa, no
+     * lucro e no fechamento, que é o comportamento correto — só não
+     * movimenta estoque.
+     */
+    if (temValor) {
+      const total = Number(valor);
+      if (!Number.isFinite(total) || total <= 0) {
+        throw new AppError('Informe um valor maior que zero.', 422);
+      }
+
+      return prisma.venda.create({
+        data: {
+          subtotal: total.toFixed(2),
+          desconto: '0',
+          total: total.toFixed(2),
+          formaPagamento,
+          clienteNome: clienteNome || null,
+          observacao: observacao || null,
+          usuarioId,
+          ...(data ? { data } : {}),
+        },
+        include: { itens: true },
+      });
+    }
+
+    if (!temItens) {
+      throw new AppError('Informe ao menos um item na venda, ou um valor avulso.', 422);
     }
 
     return prisma.$transaction(async (tx) => {

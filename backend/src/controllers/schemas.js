@@ -74,21 +74,38 @@ export const movimentacaoSchema = z
   });
 
 // ----------------------------------------------------------------- venda
-export const vendaSchema = z.object({
-  itens: z
-    .array(
-      z.object({
-        produtoId: z.string().uuid('Produto inválido.'),
-        quantidade: numero(0.001),
-      })
-    )
-    .min(1, 'Informe ao menos um item.'),
-  desconto: numero().default(0),
-  formaPagamento: z.enum(FORMAS_PAGAMENTO),
-  clienteNome: z.string().trim().optional().nullable(),
-  observacao: z.string().trim().optional().nullable(),
-  data: dataOpcional,
-});
+/**
+ * Dois jeitos de registrar dinheiro entrando, e a validação aceita os dois:
+ *
+ *   - com `itens`: venda normal, baixa estoque, total sai do cadastro
+ *   - com `valor`: entrada avulsa da correria do balcão, sem produto
+ *
+ * Os dois juntos são recusados de propósito. Se viessem itens E valor, não
+ * haveria resposta óbvia sobre qual manda no total — e a que o cliente
+ * escolhesse abriria justamente a brecha de preço que o cálculo no
+ * servidor existe para fechar.
+ */
+export const vendaSchema = z
+  .object({
+    itens: z
+      .array(
+        z.object({
+          produtoId: z.string().uuid('Produto inválido.'),
+          quantidade: numero(0.001),
+        })
+      )
+      .optional(),
+    valor: numero(0.01, 'O valor precisa ser maior que zero.').optional(),
+    desconto: numero().default(0),
+    formaPagamento: z.enum(FORMAS_PAGAMENTO),
+    clienteNome: z.string().trim().optional().nullable(),
+    observacao: z.string().trim().optional().nullable(),
+    data: dataOpcional,
+  })
+  .refine((d) => Boolean(d.itens?.length) !== (d.valor !== undefined), {
+    message: 'Informe os produtos vendidos ou um valor avulso.',
+    path: ['itens'],
+  });
 
 // --------------------------------------------------------------- despesa
 export const despesaSchema = z.object({
