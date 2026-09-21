@@ -23,11 +23,6 @@ export function Estoque() {
 
   return (
     <section>
-      <h1 className="pagina__titulo">Estoque</h1>
-      <p className="pagina__texto">
-        Dois níveis: ingredientes e embalagens de um lado, doces prontos do outro.
-      </p>
-
       <Abas
         ativa={aba}
         aoTrocar={setAba}
@@ -479,7 +474,6 @@ function Historico() {
 
   return (
     <>
-      <p className="pagina__texto">Tudo que entrou e saiu, do mais recente para o mais antigo.</p>
       <Tabela
         carregando={carregando}
         dados={lista}

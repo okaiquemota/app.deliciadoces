@@ -88,14 +88,11 @@ export function Resumo() {
   return (
     <section>
       <header className="pagina__cabecalho">
-        <div>
-          <h1 className="pagina__titulo">Resumo</h1>
-          <p className="pagina__texto">
-            {carregando || !resumo
-              ? 'Carregando...'
-              : `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`}
-          </p>
-        </div>
+        <p className="pagina__periodo">
+          {carregando || !resumo
+            ? 'Carregando...'
+            : `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`}
+        </p>
         <nav className="seletor-periodo">
           {Object.entries(PERIODOS).map(([id, p]) => (
             <button

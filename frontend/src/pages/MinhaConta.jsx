@@ -50,12 +50,16 @@ export function MinhaConta() {
 
   return (
     <section>
-      <h1 className="pagina__titulo">Minha conta</h1>
-      <p className="pagina__texto">
-        {usuario?.nome} · {usuario?.email}
-      </p>
-
+      {/* Nome e e-mail são o ASSUNTO desta tela, não descrição dela —
+          por isso voltam como conteúdo do cartão, e não como subtítulo
+          de página junto com os que foram removidos. */}
       <article className="cartao cartao--estreito">
+        <h2 className="cartao__subtitulo">Seus dados</h2>
+        <p className="cartao__texto">
+          {usuario?.nome}
+          {usuario?.email ? ` · ${usuario.email}` : ''}
+        </p>
+
         <h2 className="cartao__subtitulo">Trocar senha</h2>
 
         <form onSubmit={enviar}>

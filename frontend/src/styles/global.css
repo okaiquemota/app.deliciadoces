@@ -54,46 +54,127 @@ body {
 
 /* ---------- Layout ---------- */
 
-.layout__topo {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-  padding: 12px 24px;
-  background-color: var(--cor-superficie);
-  border-bottom: 1px solid var(--cor-borda);
-}
+/* ---------- Hero: identidade, seção e navegação numa faixa só ----------
 
-.layout__marca {
-  font-weight: 700;
-}
+   Cada página repetia o próprio título e um parágrafo explicando o que
+   ela era. A cliente lê isso uma vez; depois é texto que empurra o
+   conteúdo útil para baixo toda vez que ela abre a tela no balcão.
 
-.layout__menu {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-}
+   O nome da seção passa a viver aqui, como `h1` — tirar de vez deixaria
+   a página sem cabeçalho nenhum para leitor de tela, que navega por essa
+   marcação.
 
-.layout__link {
-  padding: 6px 12px;
-  border-radius: var(--raio);
-  color: var(--cor-texto-suave);
-  text-decoration: none;
-}
+   Fundo vinho com texto branco dá 9,14 de contraste, bem acima do
+   mínimo da WCAG.                                                      */
 
-.layout__link:hover {
-  background-color: var(--cor-fundo);
-}
-
-.layout__link--ativo {
+.hero {
   background-color: var(--cor-primaria);
   color: #fff;
 }
 
-.layout__usuario {
+.hero__interno {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 0;
+}
+
+.hero__topo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* A medalha veio com fundo transparente e miolo creme, então continua
+   legível sobre o vinho. O nome ao lado é que precisa virar branco. */
+.hero__marca .marca__nome {
+  color: #fff;
+}
+
+.hero__marca .marca__logo {
+  height: 32px;
+}
+
+.hero__usuario {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.hero__conta,
+.hero__sair {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--raio);
+  background: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.hero__conta:hover,
+.hero__sair:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.hero__sair {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.hero__titulo {
+  margin: 18px 0 14px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* O menu fica colado na base da faixa: o item ativo se apoia na borda
+   entre o hero e o conteúdo, deixando claro que aquela aba é a tela
+   aberta embaixo. */
+.hero__menu {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.hero__menu::-webkit-scrollbar {
+  display: none;
+}
+
+.hero__link {
+  padding: 10px 14px;
+  border-radius: 10px 10px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.95rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hero__link:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.hero__link--ativo {
+  background-color: var(--cor-fundo);
+  color: var(--cor-primaria);
+  font-weight: 700;
+}
+
+.hero__link--ativo:hover {
+  background-color: var(--cor-fundo);
+  color: var(--cor-primaria);
+}
+
+/* Legenda do período no Resumo: é dado, não título de tela. */
+.pagina__periodo {
+  margin: 0;
   color: var(--cor-texto-suave);
   font-size: 0.9rem;
 }
@@ -784,19 +865,6 @@ body {
   max-width: 520px;
 }
 
-.layout__usuario-link {
-  color: var(--cor-texto-suave);
-  /* Sublinhado como decoração de texto e não como `border-bottom`: no
-     celular o link vira uma caixa de 44px e a borda ficaria solta lá
-     embaixo, longe da palavra. A decoração acompanha o texto. */
-  text-decoration: underline dotted var(--cor-borda);
-  text-underline-offset: 3px;
-}
-
-.layout__usuario-link:hover {
-  color: var(--cor-primaria);
-}
-
 .alerta--ok {
   background-color: #e8f5ec;
   color: #1b5e34;
@@ -1178,42 +1246,37 @@ body {
     overflow-x: hidden;
   }
 
-  .layout__topo {
-    gap: 10px;
-    padding: 10px 14px;
+  .hero__interno {
+    padding: 12px 14px 0;
   }
 
-  /* O menu ganha uma linha inteira, abaixo da marca e do usuário.
-     `flex-basis: 100%` e não `width`: a regra base usa `flex: 1`, que
-     significa `flex-basis: 0%`, e dentro de um flex container a base
-     vence a largura. Com `width: 100%` o menu ficava com 119px de 390,
-     espremido no canto direito. Como o topo tem `flex-wrap`, basis 100%
-     força a quebra.
-
-     O menu QUEBRA em duas linhas em vez de rolar de lado. Com cinco
-     módulos os dois últimos não cabiam em 390px, e numa barra que rola
-     sem mostrar barra de rolagem eles simplesmente sumiam: a cliente não
-     teria como saber que existe Estoque ali. Cabeçalho um pouco mais
-     alto é preço barato por nenhum item escondido. */
-  .layout__menu {
-    order: 3;
-    flex: 1 0 100%;
-    flex-wrap: wrap;
-    gap: 2px;
+  .hero__titulo {
+    margin: 14px 0 12px;
+    font-size: 1.35rem;
   }
 
-  /* O menu é o controle mais tocado do sistema, então os itens dividem a
-     linha por igual em vez de encolher a ponto de não dar para acertar. */
-  .layout__menu .layout__link {
-    flex: 1 0 auto;
-    padding: 8px 10px;
-    text-align: center;
+  /* No celular o menu rola de lado dentro da faixa em vez de quebrar em
+     duas linhas: aqui, diferente do cabeçalho antigo, o item ativo é
+     branco e a rolagem revela que há mais — não some item sem pista. */
+  .hero__menu {
+    margin: 0 -14px;
+    padding: 0 14px;
+  }
+
+  .hero__marca .marca__nome {
+    font-size: 0.95rem;
+  }
+
+  .hero__usuario {
+    gap: 4px;
+  }
+
+  .hero__conta {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .layout__marca {
-    flex: 1;
-    min-width: 0;
+    display: block;
   }
 
   .marca__logo {
@@ -1348,8 +1411,9 @@ body {
 
   /* O cabeçalho é a exceção: menu, conta e sair são tocados em pé, no
      balcão, com uma mão só. Aqui vale os 44px padrão das plataformas. */
-  .layout__link,
-  .layout__usuario .botao--texto {
+  .hero__link,
+  .hero__conta,
+  .hero__sair {
     display: flex;
     align-items: center;
     min-height: 44px;
@@ -1361,14 +1425,5 @@ body {
   .seletor-periodo__item,
   .abas__item {
     min-height: 44px;
-  }
-
-  /* Tinha 23px de altura: abaixo até do mínimo da WCAG. Vira alvo de
-     verdade sem virar botão, que mudaria o desenho do cabeçalho. */
-  .layout__usuario-link {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 4px;
   }
 }

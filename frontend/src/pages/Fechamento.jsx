@@ -128,13 +128,6 @@ export function Fechamento() {
   return (
     <section>
       <div className="pagina__cabecalho">
-        <div>
-          <h1 className="pagina__titulo">Fechamento de caixa</h1>
-          <p className="pagina__texto">
-            Conte o dinheiro da gaveta e compare com o que o sistema esperava.
-          </p>
-        </div>
-
         <label className="filtro-periodo">
           Dia
           <input

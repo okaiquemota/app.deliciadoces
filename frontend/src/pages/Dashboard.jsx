@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.jsx';
 import { dashboard, estoque } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { moeda, quantidade, data as formatarData } from '../utils/formato.js';
@@ -57,7 +56,6 @@ const PEQUENAS = [
 ];
 
 export function Dashboard() {
-  const { usuario } = useAuth();
   const navegar = useNavigate();
   const [aberto, setAberto] = useState(null);
   const [alertas, setAlertas] = useState(null);
@@ -93,13 +91,6 @@ export function Dashboard() {
 
   return (
     <section>
-      <div className="pagina__cabecalho">
-        <div>
-          <h1 className="pagina__titulo">Olá, {usuario?.nome?.split(' ')[0]}</h1>
-          <p className="pagina__texto">O que aconteceu agora?</p>
-        </div>
-      </div>
-
       {erro && <p className="alerta alerta--erro">{erro}</p>}
 
       <div className="acoes">
