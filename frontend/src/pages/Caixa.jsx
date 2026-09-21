@@ -23,12 +23,6 @@ export function Caixa() {
   return (
     <section>
       <header className="pagina__cabecalho">
-        <div>
-          <h1 className="pagina__titulo">Caixa</h1>
-          <p className="pagina__texto">
-            Vendas e despesas. Toda venda é à vista — a Delícia Doces não vende fiado.
-          </p>
-        </div>
         <div className="filtro-periodo">
           <input
             type="date"

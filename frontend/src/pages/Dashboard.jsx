@@ -1,275 +1,218 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx';
-import { dashboard } from '../services/recursos.js';
+import { useNavigate } from 'react-router-dom';
+import { dashboard, estoque } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
+import { moeda, quantidade, data as formatarData } from '../utils/formato.js';
+import { VendaRapida } from '../components/VendaRapida.jsx';
+import { DinheiroRapido } from '../components/DinheiroRapido.jsx';
 import {
-  data as formatarData,
-  moeda,
-  paraInput,
-  quantidade,
-  ROTULO_PAGAMENTO,
-} from '../utils/formato.js';
+  IconeVenda,
+  IconeEntrada,
+  IconeSaida,
+  IconeRetirada,
+  IconeFechamento,
+  IconeResumo,
+} from '../components/Icones.jsx';
 
 /**
- * Dashboard.
+ * Tela inicial: AÇÃO, não número.
  *
- * A cliente confere o caixa todo dia, mas olha o RESULTADO por semana —
- * por isso o período padrão é a semana corrente, definido no backend.
+ * A cliente destacou na reunião que não tem tempo de mexer no sistema.
+ * Antes esta tela abria com quatro quadrados de valores — bonito de ver e
+ * inútil no balcão, porque no meio da correria ela não precisa saber o
+ * lucro da semana: precisa registrar o que acabou de acontecer.
+ *
+ * Então os quadrados viraram botões grandes, e os números mudaram para
+ * /resumo, que ela abre quando senta para olhar o resultado.
+ *
+ * Os alertas ficaram aqui de propósito. São a única coisa que ela precisa
+ * NOTAR sem ter ido procurar — ingrediente acabando ou vencendo não pode
+ * depender de ela lembrar de abrir outra tela.
  */
+
 /**
- * Períodos que a cliente usa de verdade.
+ * As ações em três tamanhos, e o TAMANHO é toda a hierarquia.
  *
- * Ela confere o caixa todo dia, mas olha o RESULTADO por semana — e o que
- * ela quer saber é se esta semana foi melhor que a passada. Por isso a
- * comparação entre semanas está a um clique, e não escondida num filtro
- * de datas.
+ * Venda ocupa a largura inteira porque é o que ela faz dez vezes por dia;
+ * entrada e saída dividem a linha seguinte; retirada, fechar dia e resumo
+ * ficam na fileira menor, que é tarefa de fim de expediente.
+ *
+ * Nenhum cartão é preenchido de cor. A primeira versão destacava Venda
+ * com fundo vinho, mas a referência resolve isso só com a largura — e com
+ * um cartão colorido no meio de cinco brancos, a cor vira o assunto da
+ * tela em vez de ser a marca aparecendo discretamente.
  */
-function inicioDaSemana(deslocamentoEmSemanas = 0) {
-  const d = new Date();
-  const diaDaSemana = d.getDay(); // 0 = domingo
-  d.setDate(d.getDate() - (diaDaSemana === 0 ? 6 : diaDaSemana - 1) + deslocamentoEmSemanas * 7);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+const PRINCIPAL = { id: 'venda', rotulo: 'Venda', Icone: IconeVenda };
 
-function fimDaSemana(deslocamentoEmSemanas = 0) {
-  const d = inicioDaSemana(deslocamentoEmSemanas);
-  d.setDate(d.getDate() + 6);
-  return d;
-}
+const MEDIAS = [
+  { id: 'entrada', rotulo: 'Entrou dinheiro', Icone: IconeEntrada },
+  { id: 'saida', rotulo: 'Saiu dinheiro', Icone: IconeSaida },
+];
 
-const PERIODOS = {
-  semana: {
-    rotulo: 'Esta semana',
-    calcular: () => ({ inicio: inicioDaSemana(0), fim: fimDaSemana(0) }),
-  },
-  anterior: {
-    rotulo: 'Semana passada',
-    calcular: () => ({ inicio: inicioDaSemana(-1), fim: fimDaSemana(-1) }),
-  },
-  mes: {
-    rotulo: 'Este mês',
-    calcular: () => {
-      const inicio = new Date();
-      inicio.setDate(1);
-      inicio.setHours(0, 0, 0, 0);
-      return { inicio, fim: new Date() };
-    },
-  },
-};
+const PEQUENAS = [
+  { id: 'retirada', rotulo: 'Retirada', Icone: IconeRetirada },
+  { id: 'fechamento', rotulo: 'Fechar dia', Icone: IconeFechamento, rota: '/fechamento' },
+  { id: 'resumo', rotulo: 'Resumo', Icone: IconeResumo, rota: '/resumo' },
+];
 
 export function Dashboard() {
-  const { usuario } = useAuth();
-  const [periodo, setPeriodo] = useState('semana');
-  const [resumo, setResumo] = useState(null);
-  const [serie, setSerie] = useState([]);
-  const [carregando, setCarregando] = useState(true);
+  const navegar = useNavigate();
+  const [aberto, setAberto] = useState(null);
+  const [alertas, setAlertas] = useState(null);
+  const [hoje, setHoje] = useState(null);
   const [erro, setErro] = useState('');
 
   const carregar = useCallback(async () => {
-    setCarregando(true);
     try {
-      const { inicio, fim } = PERIODOS[periodo].calcular();
-      const params = { inicio: paraInput(inicio), fim: paraInput(fim) };
-      const [r, s] = await Promise.all([dashboard.resumo(params), dashboard.porDia(params)]);
-      setResumo(r);
-      setSerie(s);
+      const inicio = new Date();
+      inicio.setHours(0, 0, 0, 0);
+      const [a, r] = await Promise.all([
+        estoque.alertas(),
+        dashboard.resumo({ inicio: paraDia(inicio), fim: paraDia(new Date()) }),
+      ]);
+      setAlertas(a);
+      setHoje(r);
       setErro('');
     } catch (e) {
-      setErro(mensagemDeErro(e, 'Não foi possível carregar o resumo.'));
-    } finally {
-      setCarregando(false);
+      setErro(mensagemDeErro(e));
     }
-  }, [periodo]);
+  }, []);
 
   useEffect(() => {
     carregar();
   }, [carregar]);
-  // Lidos com segurança: o primeiro render acontece antes de a API responder,
-  // e a troca de período zera o resumo enquanto recarrega.
-  const alertas = resumo?.alertas.detalhe;
-  const temAlerta =
-    (resumo?.alertas.insumosBaixos ?? 0) +
-      (resumo?.alertas.produtosBaixos ?? 0) +
-      (resumo?.alertas.validadeProxima ?? 0) >
-    0;
+
+  function aoLancar() {
+    setAberto(null);
+    carregar();
+  }
+
+  const listaAlertas = montarAlertas(alertas);
 
   return (
     <section>
-      <header className="pagina__cabecalho">
-        <div>
-          <h1 className="pagina__titulo">Olá, {usuario?.nome?.split(' ')[0]}</h1>
-          <p className="pagina__texto">
-            {carregando || !resumo
-              ? 'Carregando...'
-              : `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`}
-          </p>
-        </div>
-        <nav className="seletor-periodo">
-          {Object.entries(PERIODOS).map(([id, p]) => (
-            <button
-              key={id}
-              type="button"
-              className={
-                periodo === id
-                  ? 'seletor-periodo__item seletor-periodo__item--ativo'
-                  : 'seletor-periodo__item'
-              }
-              onClick={() => setPeriodo(id)}
-            >
-              {p.rotulo}
-            </button>
-          ))}
-        </nav>
-      </header>
-
       {erro && <p className="alerta alerta--erro">{erro}</p>}
 
-      {!resumo ? (
-        <p className="tabela__aviso">Carregando...</p>
-      ) : (
-        <div className={carregando ? 'conteudo--atualizando' : undefined}>
-          <div className="indicadores">
-            <Indicador
-              rotulo="Vendas"
-              valor={moeda(resumo.vendas)}
-              dica={`${resumo.quantidadeVendas} venda(s)`}
-            />
-            <Indicador
-              rotulo="Custos do negócio"
-              valor={moeda(resumo.custos)}
-              dica="Ingredientes, contas, aluguel..."
-            />
-            <Indicador
-              rotulo="Lucro"
-              valor={moeda(resumo.lucro)}
-              dica="Vendas menos custos"
-              destaque={resumo.lucro >= 0 ? 'positivo' : 'negativo'}
-            />
-            <Indicador
-              rotulo="Retirada pessoal"
-              valor={moeda(resumo.retiradas)}
-              dica="Sai do caixa, mas não é custo do negócio"
-            />
-          </div>
+      <div className="acoes">
+        <Cartao acao={PRINCIPAL} tamanho="grande" onClick={() => setAberto(PRINCIPAL.id)} />
 
-          <div className="painel-duplo">
-            <article className="cartao">
-              <h2 className="cartao__subtitulo">Movimento por dia</h2>
-              <GraficoSemana serie={serie} />
-            </article>
-
-            <article className="cartao">
-              <h2 className="cartao__subtitulo">Como receberam</h2>
-              {Object.keys(resumo.vendasPorFormaPagamento).length === 0 ? (
-                <p className="cartao__texto">Nenhuma venda nesta semana.</p>
-              ) : (
-                <ul className="lista-simples">
-                  {Object.entries(resumo.vendasPorFormaPagamento).map(([forma, valor]) => (
-                    <li key={forma}>
-                      <span>{ROTULO_PAGAMENTO[forma] ?? forma}</span>
-                      <strong>{moeda(valor)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <h2 className="cartao__subtitulo">Saldo do caixa</h2>
-              <p className="cartao__texto">
-                Entrou {moeda(resumo.vendas)}, saiu {moeda(resumo.saidaDeCaixa)} (custos +
-                retiradas).
-              </p>
-              <p
-                className={
-                  resumo.saldoCaixa >= 0 ? 'saldo-grande' : 'saldo-grande saldo-grande--negativo'
-                }
-              >
-                {moeda(resumo.saldoCaixa)}
-              </p>
-            </article>
-          </div>
-
-          {temAlerta && (
-            <article className="cartao cartao--alerta">
-              <h2 className="cartao__subtitulo">Precisa de atenção</h2>
-              <ul className="lista-simples">
-                {alertas.insumosBaixos.map((i) => (
-                  <li key={i.id}>
-                    <span>{i.nome} está acabando</span>
-                    <strong>{quantidade(i.quantidadeAtual, i.unidade)}</strong>
-                  </li>
-                ))}
-                {alertas.produtosBaixos.map((p) => (
-                  <li key={p.id}>
-                    <span>{p.nome} está acabando</span>
-                    <strong>{quantidade(p.quantidadeAtual, p.unidade)}</strong>
-                  </li>
-                ))}
-                {alertas.validadeProxima.map((m) => (
-                  <li key={m.id}>
-                    <span>{m.insumo?.nome} vence em breve</span>
-                    <strong>{formatarData(m.validade)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          )}
+        <div className="acoes__linha acoes__linha--dupla">
+          {MEDIAS.map((a) => (
+            <Cartao key={a.id} acao={a} onClick={() => setAberto(a.id)} />
+          ))}
         </div>
+
+        <div className="acoes__linha acoes__linha--tripla">
+          {PEQUENAS.map((a) => (
+            <Cartao
+              key={a.id}
+              acao={a}
+              tamanho="pequeno"
+              onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Uma linha só: quanto entrou hoje. Não é painel, é confirmação de
+          que os lançamentos do dia chegaram onde deviam. */}
+      {hoje && (
+        <button type="button" className="resumo-dia" onClick={() => navegar('/resumo')}>
+          <span>
+            Hoje entraram <strong>{moeda(hoje.vendas)}</strong> em {hoje.quantidadeVendas} venda(s)
+          </span>
+          <span className="resumo-dia__link">ver o resumo</span>
+        </button>
       )}
+
+      {listaAlertas.length > 0 && (
+        <article className="cartao cartao--alerta">
+          <h2 className="cartao__subtitulo">Precisa de atenção</h2>
+          <ul className="lista-simples">
+            {listaAlertas.map((a) => (
+              <li key={a.chave}>
+                <span>{a.texto}</span>
+                <strong className={a.critico ? 'fechamento__falta' : undefined}>{a.valor}</strong>
+              </li>
+            ))}
+          </ul>
+        </article>
+      )}
+
+      <VendaRapida
+        aberto={aberto === 'venda'}
+        aoFechar={() => setAberto(null)}
+        aoLancar={aoLancar}
+      />
+      <DinheiroRapido
+        modo={aberto === 'entrada' || aberto === 'saida' || aberto === 'retirada' ? aberto : null}
+        aoFechar={() => setAberto(null)}
+        aoLancar={aoLancar}
+      />
     </section>
   );
 }
 
-function Indicador({ rotulo, valor, dica, destaque }) {
+/**
+ * Cartão de ação: ícone no alto, rótulo embaixo.
+ *
+ * O vão entre os dois é de propósito — é ele que faz o cartão virar alvo
+ * grande em vez de linha de lista. O dedo acerta o cartão inteiro, não só
+ * o texto.
+ */
+function Cartao({ acao, tamanho = 'medio', onClick }) {
+  const { Icone, rotulo } = acao;
   return (
-    <article className={destaque ? `indicador indicador--${destaque}` : 'indicador'}>
-      <span className="indicador__rotulo">{rotulo}</span>
-      <strong className="indicador__valor">{valor}</strong>
-      <span className="indicador__dica">{dica}</span>
-    </article>
+    <button type="button" className={`cartao-acao cartao-acao--${tamanho}`} onClick={onClick}>
+      <Icone tamanho={tamanho === 'pequeno' ? 24 : 28} />
+      <span className="cartao-acao__rotulo">{rotulo}</span>
+    </button>
   );
 }
 
+/** Data no formato do input, montada com componentes locais (fuso). */
+function paraDia(valor) {
+  const d = new Date(valor);
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mes}-${dia}`;
+}
+
 /**
- * Gráfico de barras em CSS puro.
+ * Junta os alertas numa lista só, já em linguagem de gente.
  *
- * Decisão: não trouxe biblioteca de gráfico só para isso. São sete barras
- * — uma dependência a mais custaria mais do que entrega.
+ * Lote VENCIDO é separado de lote VENCENDO: a ação é diferente — um se
+ * joga fora, o outro se usa primeiro. Chamar os dois de "vence em breve",
+ * como era antes, fazia o vencido há meses aparecer no topo com rótulo
+ * errado, empurrando para baixo o que ainda dava para salvar.
  */
-function GraficoSemana({ serie }) {
-  const maximo = Math.max(1, ...serie.map((d) => Math.max(d.vendas, d.despesas)));
+function montarAlertas(alertas) {
+  if (!alertas) return [];
+  const linhas = [];
 
-  if (!serie.length) return <p className="cartao__texto">Sem dados na semana.</p>;
-
-  return (
-    <>
-      <div className="grafico">
-        {serie.map((dia) => (
-          <div className="grafico__coluna" key={dia.dia}>
-            <div className="grafico__barras">
-              <div
-                className="grafico__barra grafico__barra--venda"
-                style={{ height: `${(dia.vendas / maximo) * 100}%` }}
-                title={`Vendas: ${moeda(dia.vendas)}`}
-              />
-              <div
-                className="grafico__barra grafico__barra--despesa"
-                style={{ height: `${(dia.despesas / maximo) * 100}%` }}
-                title={`Despesas: ${moeda(dia.despesas)}`}
-              />
-            </div>
-            <span className="grafico__rotulo">{formatarData(dia.dia)}</span>
-          </div>
-        ))}
-      </div>
-      <div className="grafico__legenda">
-        <span>
-          <i className="ponto ponto--venda" /> vendas
-        </span>
-        <span>
-          <i className="ponto ponto--despesa" /> despesas
-        </span>
-      </div>
-    </>
-  );
+  for (const i of alertas.insumosBaixos ?? []) {
+    linhas.push({
+      chave: `i-${i.id}`,
+      texto: `${i.nome} está acabando`,
+      valor: quantidade(i.quantidadeAtual, i.unidade),
+    });
+  }
+  for (const p of alertas.produtosBaixos ?? []) {
+    linhas.push({
+      chave: `p-${p.id}`,
+      texto: `${p.nome} está acabando`,
+      valor: quantidade(p.quantidadeAtual, p.unidade),
+    });
+  }
+  for (const m of alertas.validadeProxima ?? []) {
+    const vencido = new Date(m.validade) < new Date();
+    linhas.push({
+      chave: `v-${m.id}`,
+      texto: `${m.insumo?.nome} ${vencido ? 'está VENCIDO' : 'vence em breve'}`,
+      valor: formatarData(m.validade),
+      critico: vencido,
+    });
+  }
+  // Vencido primeiro: é o que exige ação hoje.
+  return linhas.sort((a, b) => Number(Boolean(b.critico)) - Number(Boolean(a.critico)));
 }

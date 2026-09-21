@@ -3,6 +3,7 @@ import { RotaProtegida } from './RotaProtegida.jsx';
 import { Layout } from '../components/Layout.jsx';
 import { Login } from '../pages/Login.jsx';
 import { Dashboard } from '../pages/Dashboard.jsx';
+import { Resumo } from '../pages/Resumo.jsx';
 import { Estoque } from '../pages/Estoque.jsx';
 import { Caixa } from '../pages/Caixa.jsx';
 import { Fechamento } from '../pages/Fechamento.jsx';
@@ -27,6 +28,7 @@ export function AppRoutes() {
           <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/resumo" element={<Resumo />} />
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/caixa" element={<Caixa />} />
             <Route path="/fechamento" element={<Fechamento />} />

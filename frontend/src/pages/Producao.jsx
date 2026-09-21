@@ -51,11 +51,6 @@ export function Producao() {
 
   return (
     <section>
-      <h1 className="pagina__titulo">Produção</h1>
-      <p className="pagina__texto">
-        O lote consome ingredientes e gera doces prontos. A venda depois baixa o doce.
-      </p>
-
       <div className="barra-acoes">
         <span className="barra-acoes__resumo">{lista.length} lote(s)</span>
         <button className="botao botao--primario botao--auto" onClick={() => setRegistrando(true)}>
