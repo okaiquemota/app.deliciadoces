@@ -126,11 +126,25 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.45);
 }
 
+/* O título da seção some da tela, mas NÃO do documento.
+   
+   Visualmente ele era redundante: a aba ativa no menu logo abaixo já diz
+   em que seção ela está, e os 64px que ele ocupava (altura mais margens)
+   fazem diferença de verdade numa tela de 844px.
+   
+   Continua no HTML porque leitor de tela navega por cabeçalho: sem `h1`
+   a página vira um bloco sem começo, e quem usa leitor perde a única
+   pista de onde está. Esconder pela tela e manter para a leitura é
+   diferente de `display: none`, que tira dos dois. */
 .hero__titulo {
-  margin: 18px 0 14px;
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* O menu fica colado na base da faixa: o item ativo se apoia na borda
@@ -138,6 +152,7 @@ body {
    aberta embaixo. */
 .hero__menu {
   display: flex;
+  margin-top: 14px;
   gap: 2px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -223,6 +238,35 @@ body {
 .layout__conteudo > * {
   max-width: 1100px;
   margin: 0 auto;
+}
+
+/* Só a tela QUE TEM TABELA vira coluna de altura cheia. `:has()` evita
+   marcar cada página com uma classe, e onde ele não existir a regra
+   simplesmente não aplica: a página volta a rolar inteira, que é o
+   comportamento antigo, não um defeito.
+
+   `height` e não `min-height`: o `flex` da tabela precisa de uma altura
+   DEFINIDA para descontar; com mínimo, a conta não fecha e a tabela
+   cresce sem limite, que era o que acontecia. */
+.layout__conteudo > *:has(.tabela__rolagem) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Abas, filtros e barra de ações não encolhem: são a moldura da tela e
+   precisam ficar do tamanho que são. Quem cede espaço é a tabela. */
+.layout__conteudo > *:has(.tabela__rolagem) > *:not(.tabela__rolagem) {
+  flex: 0 0 auto;
+}
+
+/* Piso para a tabela nunca virar uma fresta. No fechamento, por exemplo,
+   os dois painéis já ocupam 635px: sem o mínimo, a tabela ficaria com uns
+   50px e não caberia nem três linhas. Quando nem o mínimo couber, o
+   conjunto passa do quadro e o conteúdo rola como antes — degradar para
+   a rolagem da página é melhor que mostrar uma tabela ilegível. */
+.layout__conteudo > *:has(.tabela__rolagem) > .tabela__rolagem {
+  min-height: 180px;
 }
 
 /* Margem embaixo do último elemento é espaço morto: dentro de um quadro
@@ -515,12 +559,29 @@ body {
 
 /* ---------- Tabela ---------- */
 
+/* A tabela ocupa o espaço que sobra e rola DENTRO do próprio quadro.
+   Assim as abas, o filtro e a barra de ações ficam parados: ela nunca
+   precisa rolar de volta ao topo para trocar de aba ou lançar algo.
+   `min-height: 0` de novo, pelo mesmo motivo do conteúdo principal — sem
+   ele o filho flex se recusa a encolher e o `overflow` não entra. */
 .tabela__rolagem {
-  overflow-x: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   background-color: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   box-shadow: var(--sombra);
+}
+
+/* Com as linhas rolando por dentro, o cabeçalho tem que ficar: rolar
+   dez linhas e não saber mais qual coluna é qual é pior que rolar a
+   página inteira. */
+.tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--cor-superficie);
 }
 
 .tabela {
@@ -1002,11 +1063,13 @@ body {
    tela: 176 no grande, quadrado no médio, 135 no pequeno. O vão grande
    entre ícone e rótulo é o que faz o cartão ser alvo de dedo em vez de
    linha de lista — encolher isso devolve a tela para a leitura. */
+/* 14 e não 20 embaixo: num notebook de 800px a tela inicial passava por
+   exatos 5px, e este é o espaço que sobra sem apertar nada que se leia. */
 .acoes {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .acoes__linha {
@@ -1278,6 +1341,40 @@ body {
   font-weight: 700;
   padding: 14px 16px;
 }
+/* Faixa de alerta: uma linha, não uma lista. O que ela precisa notar sem
+   procurar cabe numa frase; a lista inteira mora no Estoque. */
+.faixa-alerta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--cor-dourado);
+  border-radius: var(--raio);
+  background-color: #fdf3e2;
+  color: #8a5a10;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.faixa-alerta--critica {
+  border-color: var(--cor-erro);
+  background-color: #fdecea;
+  color: var(--cor-erro);
+}
+
+.faixa-alerta__texto {
+  font-weight: 600;
+}
+
+.faixa-alerta__link {
+  flex: 0 0 auto;
+  text-decoration: underline;
+  white-space: nowrap;
+}
 
 /* =====================================================================
    Celular
@@ -1368,6 +1465,24 @@ body {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
+  }
+
+  /* As quatro abas precisavam de 438px e a tela dá 362: "Histórico"
+     ficava cortado e, como a casca tem `overflow: hidden`, não havia nem
+     como rolar até ele — o item existia e era inalcançável. Dividindo a
+     largura por igual, os quatro cabem; "Doces prontos" quebra em duas
+     linhas, que é preço bem menor que sumir com uma aba. */
+  .abas {
+    margin: 14px 0 12px;
+    gap: 2px;
+  }
+
+  .abas__item {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 4px;
+    font-size: 0.85rem;
+    text-align: center;
   }
 
   /* Quadrado como na referência, que é um layout de celular. No desktop
