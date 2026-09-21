@@ -89,6 +89,22 @@ export function Dashboard() {
 
   const listaAlertas = montarAlertas(alertas);
 
+  /**
+   * Os alertas viram UMA FAIXA, não uma lista.
+   *
+   * A lista não tinha teto: com doze ingredientes em falta ela ocupava
+   * 300px e empurrava os cartões de ação para fora da tela — o contrário
+   * do que esta tela existe para fazer. Mas sumir com o aviso também não
+   * serve, porque é a única coisa que ela precisa NOTAR sem ter ido
+   * procurar.
+   *
+   * A faixa mostra o caso mais urgente (vencido primeiro, pela ordem que
+   * `montarAlertas` já devolve) e o total. O resto fica a um toque, no
+   * Estoque, onde a lista completa cabe.
+   */
+  const alertaTopo = listaAlertas[0];
+  const alertasRestantes = listaAlertas.length - 1;
+
   return (
     <section>
       {erro && <p className="alerta alerta--erro">{erro}</p>}
@@ -125,18 +141,19 @@ export function Dashboard() {
         </button>
       )}
 
-      {listaAlertas.length > 0 && (
-        <article className="cartao cartao--alerta">
-          <h2 className="cartao__subtitulo">Precisa de atenção</h2>
-          <ul className="lista-simples">
-            {listaAlertas.map((a) => (
-              <li key={a.chave}>
-                <span>{a.texto}</span>
-                <strong className={a.critico ? 'fechamento__falta' : undefined}>{a.valor}</strong>
-              </li>
-            ))}
-          </ul>
-        </article>
+      {alertaTopo && (
+        <button
+          type="button"
+          className={alertaTopo.critico ? 'faixa-alerta faixa-alerta--critica' : 'faixa-alerta'}
+          onClick={() => navegar('/estoque')}
+        >
+          <span className="faixa-alerta__texto">
+            {alertaTopo.texto}
+            {alertasRestantes > 0 &&
+              ` · e mais ${alertasRestantes} ${alertasRestantes === 1 ? 'item' : 'itens'}`}
+          </span>
+          <span className="faixa-alerta__link">ver no estoque</span>
+        </button>
       )}
 
       <VendaRapida
