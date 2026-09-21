@@ -414,6 +414,17 @@ Ou seja: é ruído conhecido, não uma falha do nosso código. Vale reavaliar qu
 
 ---
 
+## Documentação
+
+| Documento                                              | O que traz                                                                                                                |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **[docs/REQUISITOS.md](docs/REQUISITOS.md)**           | Requisitos funcionais e não funcionais, regras de negócio e a matriz de rastreabilidade (requisito → rota → tela → teste) |
+| **[docs/MODELO-DE-DADOS.md](docs/MODELO-DE-DADOS.md)** | MER, DER, modelo lógico e as decisões de modelagem                                                                        |
+| **[docs/DEPLOY.md](docs/DEPLOY.md)**                   | Como o sistema vai para o ar e como cuidar dele depois                                                                    |
+| **[docs/PROXIMOS-PASSOS.md](docs/PROXIMOS-PASSOS.md)** | Detalhamento técnico e sugestão de divisão de tarefas entre o grupo                                                       |
+
+---
+
 ## Próximos passos
 
 Ver **[docs/PROXIMOS-PASSOS.md](docs/PROXIMOS-PASSOS.md)** para o detalhamento técnico e a sugestão de divisão de tarefas entre o grupo.
