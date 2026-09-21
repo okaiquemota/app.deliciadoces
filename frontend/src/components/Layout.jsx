@@ -13,7 +13,6 @@ export function Layout() {
     { para: '/dashboard', rotulo: 'Início' },
     { para: '/caixa', rotulo: 'Caixa' },
     { para: '/fechamento', rotulo: 'Fechamento' },
-    { para: '/resumo', rotulo: 'Resumo' },
     { para: '/producao', rotulo: 'Produção' },
     { para: '/estoque', rotulo: 'Estoque' },
   ];

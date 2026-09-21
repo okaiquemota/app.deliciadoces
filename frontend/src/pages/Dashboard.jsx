@@ -6,6 +6,14 @@ import { mensagemDeErro } from '../services/api.js';
 import { moeda, quantidade, data as formatarData } from '../utils/formato.js';
 import { VendaRapida } from '../components/VendaRapida.jsx';
 import { DinheiroRapido } from '../components/DinheiroRapido.jsx';
+import {
+  IconeVenda,
+  IconeEntrada,
+  IconeSaida,
+  IconeRetirada,
+  IconeFechamento,
+  IconeResumo,
+} from '../components/Icones.jsx';
 
 /**
  * Tela inicial: AÇÃO, não número.
@@ -23,31 +31,32 @@ import { DinheiroRapido } from '../components/DinheiroRapido.jsx';
  * depender de ela lembrar de abrir outra tela.
  */
 
-const ACOES = [
-  {
-    id: 'venda',
-    rotulo: 'Venda',
-    dica: 'Escolha os doces vendidos',
-    classe: 'acao--venda',
-  },
-  {
-    id: 'entrada',
-    rotulo: 'Entrou dinheiro',
-    dica: 'Só o valor, sem escolher doce',
-    classe: 'acao--entrada',
-  },
-  {
-    id: 'saida',
-    rotulo: 'Saiu dinheiro',
-    dica: 'Ingrediente, conta, aluguel',
-    classe: 'acao--saida',
-  },
-  {
-    id: 'retirada',
-    rotulo: 'Retirada',
-    dica: 'Dinheiro seu, não do negócio',
-    classe: 'acao--retirada',
-  },
+/**
+ * As ações em três tamanhos, e o tamanho é a hierarquia.
+ *
+ * Venda ocupa a largura inteira porque é o que ela faz dez vezes por dia;
+ * entrada e saída dividem a linha seguinte; retirada, fechamento e resumo
+ * ficam na fileira menor, que é tarefa de fim de dia e não de balcão.
+ *
+ * Sem isso os seis botões teriam o mesmo peso e ela leria os seis toda
+ * vez para achar o mesmo de sempre.
+ */
+const PRINCIPAL = {
+  id: 'venda',
+  rotulo: 'Venda',
+  dica: 'Escolha os doces vendidos',
+  Icone: IconeVenda,
+};
+
+const MEDIAS = [
+  { id: 'entrada', rotulo: 'Entrou dinheiro', dica: 'Só o valor', Icone: IconeEntrada },
+  { id: 'saida', rotulo: 'Saiu dinheiro', dica: 'Ingrediente, conta', Icone: IconeSaida },
+];
+
+const PEQUENAS = [
+  { id: 'retirada', rotulo: 'Retirada', Icone: IconeRetirada },
+  { id: 'fechamento', rotulo: 'Fechar dia', Icone: IconeFechamento, rota: '/fechamento' },
+  { id: 'resumo', rotulo: 'Resumo', Icone: IconeResumo, rota: '/resumo' },
 ];
 
 export function Dashboard() {
@@ -97,17 +106,24 @@ export function Dashboard() {
       {erro && <p className="alerta alerta--erro">{erro}</p>}
 
       <div className="acoes">
-        {ACOES.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            className={`acao ${a.classe}`}
-            onClick={() => setAberto(a.id)}
-          >
-            <span className="acao__rotulo">{a.rotulo}</span>
-            <span className="acao__dica">{a.dica}</span>
-          </button>
-        ))}
+        <Cartao acao={PRINCIPAL} tamanho="grande" onClick={() => setAberto(PRINCIPAL.id)} />
+
+        <div className="acoes__linha acoes__linha--dupla">
+          {MEDIAS.map((a) => (
+            <Cartao key={a.id} acao={a} onClick={() => setAberto(a.id)} />
+          ))}
+        </div>
+
+        <div className="acoes__linha acoes__linha--tripla">
+          {PEQUENAS.map((a) => (
+            <Cartao
+              key={a.id}
+              acao={a}
+              tamanho="pequeno"
+              onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Uma linha só: quanto entrou hoje. Não é painel, é confirmação de
@@ -146,6 +162,26 @@ export function Dashboard() {
         aoLancar={aoLancar}
       />
     </section>
+  );
+}
+
+/**
+ * Cartão de ação: ícone no alto, rótulo embaixo.
+ *
+ * O vão entre os dois é de propósito — é ele que faz o cartão virar alvo
+ * grande em vez de linha de lista. O dedo acerta o cartão inteiro, não só
+ * o texto.
+ */
+function Cartao({ acao, tamanho = 'medio', onClick }) {
+  const { Icone, rotulo, dica } = acao;
+  return (
+    <button type="button" className={`cartao-acao cartao-acao--${tamanho}`} onClick={onClick}>
+      <Icone tamanho={tamanho === 'pequeno' ? 24 : 30} />
+      <span className="cartao-acao__texto">
+        <span className="cartao-acao__rotulo">{rotulo}</span>
+        {dica && <span className="cartao-acao__dica">{dica}</span>}
+      </span>
+    </button>
   );
 }
 

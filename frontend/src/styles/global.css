@@ -877,78 +877,129 @@ body {
 }
 /* ---------- Tela inicial: ações rápidas ---------- */
 
-/* Quatro botões grandes no lugar dos quadrados de número. A cliente disse
-   que não tem tempo de mexer no sistema: o que ela abre no balcão precisa
-   ser alvo grande e óbvio, não painel.
+/* Cartões claros com ícone em cima e rótulo embaixo, no lugar de blocos
+   de cor cheia. O fundo branco deixa o vinho da marca ser o único ponto
+   forte da tela — com quatro blocos coloridos, nenhum se destacava e a
+   tela virava um mosaico.
 
-   As cores foram conferidas contra a WCAG com texto branco: vinho 9,14 /
-   verde 5,05 / marrom suave 5,13 / marrom 8,71. O dourado da marca ficou
-   de fora porque dá só 3,16 — passaria em título grande, mas a linha de
-   dica é texto pequeno e reprovaria. */
+   O tamanho é a hierarquia: Venda ocupa a linha inteira, entrada e saída
+   dividem a seguinte, e as tarefas de fim de dia ficam na fileira menor. */
 .acoes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
-.acao {
+.acoes__linha {
+  display: grid;
+  gap: 10px;
+}
+
+.acoes__linha--dupla {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.acoes__linha--tripla {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.cartao-acao {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-height: 96px;
-  padding: 18px 20px;
-  border: none;
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
-  color: #fff;
+  /* O vão entre ícone e rótulo é o que faz virar alvo grande em vez de
+     linha de lista: o dedo acerta o cartão inteiro. */
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  min-height: 132px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  background-color: var(--cor-superficie);
+  color: var(--cor-texto);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
   transition:
-    transform 80ms ease-out,
-    filter 80ms ease-out;
+    border-color 100ms ease-out,
+    transform 80ms ease-out;
 }
 
-.acao:hover {
+.cartao-acao:hover {
+  border-color: var(--cor-primaria);
+}
+
+.cartao-acao:active {
+  transform: scale(0.99);
+}
+
+.cartao-acao .icone {
+  color: var(--cor-primaria);
+  flex: 0 0 auto;
+}
+
+.cartao-acao__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cartao-acao__rotulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cartao-acao__dica {
+  font-size: 0.78rem;
+  color: var(--cor-texto-suave);
+}
+
+/* Venda ocupa a largura toda e ganha o preenchimento da marca: é a ação
+   que ela repete o dia inteiro e precisa ser achada sem ler. */
+.cartao-acao--grande {
+  min-height: 150px;
+  background-color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: #fff;
+}
+
+.cartao-acao--grande .icone,
+.cartao-acao--grande .cartao-acao__dica {
+  color: #fff;
+}
+
+.cartao-acao--grande .cartao-acao__dica {
+  opacity: 0.85;
+}
+
+.cartao-acao--grande .cartao-acao__rotulo {
+  font-size: 1.4rem;
+}
+
+.cartao-acao--grande:hover {
   filter: brightness(1.08);
 }
 
-.acao:active {
-  transform: scale(0.985);
+/* Fileira de fim de dia: mesma linguagem, menos peso. */
+/* 12px e não 14: com 14 sobravam 84px úteis e "Fechar dia" precisava de
+   85 — quebrava em duas linhas por um pixel, e a fileira toda ficava
+   desalinhada porque só esse rótulo subia. */
+.cartao-acao--pequeno {
+  min-height: 96px;
+  padding: 12px;
+  gap: 10px;
 }
 
-.acao__rotulo {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.acao__dica {
-  font-size: 0.8rem;
-  opacity: 0.9;
-}
-
-.acao--venda {
-  background-color: var(--cor-primaria);
-}
-
-.acao--entrada {
-  background-color: var(--cor-positivo);
-}
-
-.acao--saida {
-  background-color: var(--cor-texto-suave);
-}
-
-.acao--retirada {
-  background-color: var(--cor-texto);
+.cartao-acao--pequeno .cartao-acao__rotulo {
+  font-size: 0.9rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .acao {
+  .cartao-acao {
     transition: none;
   }
-  .acao:active {
+  .cartao-acao:active {
     transform: none;
   }
 }
