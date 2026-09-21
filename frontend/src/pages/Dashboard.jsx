@@ -32,25 +32,22 @@ import {
  */
 
 /**
- * As ações em três tamanhos, e o tamanho é a hierarquia.
+ * As ações em três tamanhos, e o TAMANHO é toda a hierarquia.
  *
  * Venda ocupa a largura inteira porque é o que ela faz dez vezes por dia;
- * entrada e saída dividem a linha seguinte; retirada, fechamento e resumo
- * ficam na fileira menor, que é tarefa de fim de dia e não de balcão.
+ * entrada e saída dividem a linha seguinte; retirada, fechar dia e resumo
+ * ficam na fileira menor, que é tarefa de fim de expediente.
  *
- * Sem isso os seis botões teriam o mesmo peso e ela leria os seis toda
- * vez para achar o mesmo de sempre.
+ * Nenhum cartão é preenchido de cor. A primeira versão destacava Venda
+ * com fundo vinho, mas a referência resolve isso só com a largura — e com
+ * um cartão colorido no meio de cinco brancos, a cor vira o assunto da
+ * tela em vez de ser a marca aparecendo discretamente.
  */
-const PRINCIPAL = {
-  id: 'venda',
-  rotulo: 'Venda',
-  dica: 'Escolha os doces vendidos',
-  Icone: IconeVenda,
-};
+const PRINCIPAL = { id: 'venda', rotulo: 'Venda', Icone: IconeVenda };
 
 const MEDIAS = [
-  { id: 'entrada', rotulo: 'Entrou dinheiro', dica: 'Só o valor', Icone: IconeEntrada },
-  { id: 'saida', rotulo: 'Saiu dinheiro', dica: 'Ingrediente, conta', Icone: IconeSaida },
+  { id: 'entrada', rotulo: 'Entrou dinheiro', Icone: IconeEntrada },
+  { id: 'saida', rotulo: 'Saiu dinheiro', Icone: IconeSaida },
 ];
 
 const PEQUENAS = [
@@ -173,14 +170,11 @@ export function Dashboard() {
  * o texto.
  */
 function Cartao({ acao, tamanho = 'medio', onClick }) {
-  const { Icone, rotulo, dica } = acao;
+  const { Icone, rotulo } = acao;
   return (
     <button type="button" className={`cartao-acao cartao-acao--${tamanho}`} onClick={onClick}>
-      <Icone tamanho={tamanho === 'pequeno' ? 24 : 30} />
-      <span className="cartao-acao__texto">
-        <span className="cartao-acao__rotulo">{rotulo}</span>
-        {dica && <span className="cartao-acao__dica">{dica}</span>}
-      </span>
+      <Icone tamanho={tamanho === 'pequeno' ? 24 : 28} />
+      <span className="cartao-acao__rotulo">{rotulo}</span>
     </button>
   );
 }

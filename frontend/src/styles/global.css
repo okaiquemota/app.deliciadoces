@@ -877,23 +877,25 @@ body {
 }
 /* ---------- Tela inicial: ações rápidas ---------- */
 
-/* Cartões claros com ícone em cima e rótulo embaixo, no lugar de blocos
-   de cor cheia. O fundo branco deixa o vinho da marca ser o único ponto
-   forte da tela — com quatro blocos coloridos, nenhum se destacava e a
-   tela virava um mosaico.
+/* Cartões brancos, ícone no alto, rótulo embaixo — nenhum preenchido de
+   cor. O TAMANHO é toda a hierarquia: Venda ocupa a linha inteira porque
+   é o que ela repete o dia todo, entrada e saída dividem a seguinte, e as
+   tarefas de fim de expediente ficam na fileira menor.
 
-   O tamanho é a hierarquia: Venda ocupa a linha inteira, entrada e saída
-   dividem a seguinte, e as tarefas de fim de dia ficam na fileira menor. */
+   As alturas saíram medidas da referência e convertidas para 390px de
+   tela: 176 no grande, quadrado no médio, 135 no pequeno. O vão grande
+   entre ícone e rótulo é o que faz o cartão ser alvo de dedo em vez de
+   linha de lista — encolher isso devolve a tela para a leitura. */
 .acoes {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   margin-bottom: 20px;
 }
 
 .acoes__linha {
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
 .acoes__linha--dupla {
@@ -907,26 +909,27 @@ body {
 .cartao-acao {
   display: flex;
   flex-direction: column;
-  /* O vão entre ícone e rótulo é o que faz virar alvo grande em vez de
-     linha de lista: o dedo acerta o cartão inteiro. */
   justify-content: space-between;
   gap: 16px;
   padding: 18px;
-  min-height: 132px;
-  border: 1px solid var(--cor-borda);
+  border: none;
   border-radius: 16px;
   background-color: var(--cor-superficie);
+  /* Sombra no lugar de borda: o fundo da marca é creme, não cinza como o
+     da referência, e sem um destes dois o cartão branco se dissolveria
+     no fundo. A sombra separa sem desenhar um contorno duro. */
+  box-shadow: 0 1px 3px rgba(63, 22, 11, 0.08);
   color: var(--cor-texto);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
   transition:
-    border-color 100ms ease-out,
+    box-shadow 120ms ease-out,
     transform 80ms ease-out;
 }
 
 .cartao-acao:hover {
-  border-color: var(--cor-primaria);
+  box-shadow: 0 3px 10px rgba(63, 22, 11, 0.16);
 }
 
 .cartao-acao:active {
@@ -938,57 +941,36 @@ body {
   flex: 0 0 auto;
 }
 
-.cartao-acao__texto {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
 .cartao-acao__rotulo {
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
 }
 
-.cartao-acao__dica {
-  font-size: 0.78rem;
-  color: var(--cor-texto-suave);
-}
-
-/* Venda ocupa a largura toda e ganha o preenchimento da marca: é a ação
-   que ela repete o dia inteiro e precisa ser achada sem ler. */
 .cartao-acao--grande {
-  min-height: 150px;
-  background-color: var(--cor-primaria);
-  border-color: var(--cor-primaria);
-  color: #fff;
-}
-
-.cartao-acao--grande .icone,
-.cartao-acao--grande .cartao-acao__dica {
-  color: #fff;
-}
-
-.cartao-acao--grande .cartao-acao__dica {
-  opacity: 0.85;
+  min-height: 176px;
 }
 
 .cartao-acao--grande .cartao-acao__rotulo {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
 }
 
-.cartao-acao--grande:hover {
-  filter: brightness(1.08);
+/* Altura fixa aqui; o quadrado da referência vale só no celular e está
+   no bloco de 640px.
+
+   `aspect-ratio` com `max-height` não serve: a proporção passa a definir
+   também a LARGURA, e no desktop os cartões encolhiam para quadradinhos
+   de 190px dentro de uma célula de 533px, encostados à esquerda. */
+.cartao-acao--medio {
+  min-height: 176px;
 }
 
-/* Fileira de fim de dia: mesma linguagem, menos peso. */
-/* 12px e não 14: com 14 sobravam 84px úteis e "Fechar dia" precisava de
-   85 — quebrava em duas linhas por um pixel, e a fileira toda ficava
-   desalinhada porque só esse rótulo subia. */
+/* 12px e não 14: com 14 sobram 84px úteis e "Fechar dia" pede 85 —
+   quebrava em duas linhas por um pixel, e como só esse rótulo subia, a
+   fileira inteira desalinhava. */
 .cartao-acao--pequeno {
-  min-height: 96px;
+  min-height: 135px;
   padding: 12px;
-  gap: 10px;
 }
 
 .cartao-acao--pequeno .cartao-acao__rotulo {
@@ -1275,6 +1257,13 @@ body {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
+  }
+
+  /* Quadrado como na referência, que é um layout de celular. No desktop
+     isso viraria uma torre, então a proporção fica só aqui. */
+  .cartao-acao--medio {
+    aspect-ratio: 1 / 1;
+    min-height: 0;
   }
 
   /* Um indicador por linha, para o número não espremer */
