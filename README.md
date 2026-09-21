@@ -1,4 +1,4 @@
-# 🍰 app.deliciadoces
+# app.deliciadoces
 
 Sistema de gestão para a **Delícia Doces**, confeitaria com mais de 20 anos de mercado — controle de caixa, estoque em dois níveis (ingredientes e doces prontos), produção e resultado semanal.
 
