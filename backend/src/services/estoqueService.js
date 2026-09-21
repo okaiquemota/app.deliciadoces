@@ -1,6 +1,8 @@
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../utils/AppError.js';
 
+const DIA = 24 * 60 * 60 * 1000;
+
 /**
  * ÚNICO lugar autorizado a alterar `quantidadeAtual` de insumo ou produto.
  *
@@ -210,13 +212,25 @@ export const estoqueService = {
         FROM produtos
         WHERE ativo = true AND "estoqueMinimo" > 0 AND "quantidadeAtual" <= "estoqueMinimo"
         ORDER BY nome`,
-      // Validade fica na ENTRADA, não no insumo: cada compra tem a sua.
+      /**
+       * Validade fica na ENTRADA, não no insumo: cada compra tem a sua.
+       *
+       * O limite INFERIOR não existia, e isso estragava o alerta: lote
+       * vencido há seis meses continuava casando com `lte: hoje+15d` para
+       * sempre. Como a ordem é por validade crescente, os mais velhos
+       * vinham primeiro e, com o teto de 20 itens, empurravam para fora
+       * justamente o que vencia amanhã — o alerta parava de avisar o que
+       * ainda dava para salvar.
+       *
+       * Agora entra uma janela: vencido há até 30 dias (ainda pode estar
+       * na prateleira esperando descarte) até vencendo em 15.
+       */
       prisma.movimentacaoEstoque.findMany({
         where: {
           tipo: 'ENTRADA_COMPRA',
           validade: {
-            not: null,
-            lte: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+            gte: new Date(Date.now() - 30 * DIA),
+            lte: new Date(Date.now() + 15 * DIA),
           },
         },
         include: { insumo: { select: { nome: true, unidade: true } } },
@@ -226,6 +240,69 @@ export const estoqueService = {
     ]);
 
     return { insumosBaixos: insumos, produtosBaixos: produtos, validadeProxima: validades };
+  },
+
+  /**
+   * Lotes com validade, para a tela de conferência.
+   *
+   * A unidade é o LOTE, não o ingrediente: a validade está na entrada de
+   * compra, então o mesmo creme de leite pode ter três lotes com três
+   * datas. Agrupar por ingrediente esconderia justamente a informação que
+   * importa — qual caixa usar primeiro.
+   *
+   * IMPORTANTE, e a tela avisa: o sistema não sabe quanto RESTA de cada
+   * lote. As saídas não apontam para qual entrada baixaram, então o que
+   * aparece é a quantidade que ENTROU. Amarrar saída a lote é mudança
+   * maior, que mexe em como a venda dá baixa; enquanto não existe, é mais
+   * honesto mostrar o número certo com o rótulo certo do que inventar um
+   * saldo por lote que o dado não sustenta.
+   */
+  async validades({ inicio, fim, situacao } = {}) {
+    const agora = new Date();
+    const where = { tipo: 'ENTRADA_COMPRA', validade: { not: null } };
+
+    if (situacao === 'vencidos') {
+      where.validade = { lt: agora };
+    } else if (situacao === '7' || situacao === '30') {
+      // Vencendo: da data de hoje para frente, dentro da janela.
+      where.validade = { gte: agora, lte: new Date(Date.now() + Number(situacao) * DIA) };
+    }
+
+    // Intervalo digitado manda sobre o atalho, se vier junto.
+    if (inicio || fim) {
+      where.validade = {
+        ...(inicio ? { gte: inicio } : {}),
+        ...(fim ? { lte: fim } : {}),
+      };
+    }
+
+    const lotes = await prisma.movimentacaoEstoque.findMany({
+      where,
+      include: { insumo: { select: { id: true, nome: true, unidade: true } } },
+      orderBy: { validade: 'asc' },
+      take: 200,
+    });
+
+    return lotes.map((l) => {
+      // Dias em data cheia, não em milissegundos: um lote que vence hoje
+      // às 23h não pode aparecer como "vence em 0 dias" de manhã e
+      // "vencido" à tarde.
+      const venc = new Date(l.validade);
+      venc.setHours(0, 0, 0, 0);
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const dias = Math.round((venc - hoje) / DIA);
+
+      return {
+        id: l.id,
+        insumo: l.insumo,
+        quantidadeEntrada: l.quantidade,
+        data: l.data,
+        validade: l.validade,
+        dias,
+        vencido: dias < 0,
+      };
+    });
   },
 };
 

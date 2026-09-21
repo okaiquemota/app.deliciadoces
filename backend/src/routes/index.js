@@ -74,6 +74,7 @@ router.put(
 router.get('/estoque/movimentacoes', estoqueController.listarMovimentacoes);
 router.post('/estoque/movimentacoes', validar(movimentacaoSchema), estoqueController.movimentar);
 router.get('/estoque/alertas', estoqueController.alertas);
+router.get('/estoque/validades', estoqueController.validades);
 router.post('/estoque/recalcular', estoqueController.recalcular);
 
 // ----------------------------------------------------------------- vendas

@@ -6,6 +6,7 @@ import { Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { estoque, insumos, produtos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import {
+  data as formatarData,
   dataHora,
   moeda,
   quantidade,
@@ -29,12 +30,14 @@ export function Estoque() {
         abas={[
           { id: 'insumos', rotulo: 'Ingredientes' },
           { id: 'produtos', rotulo: 'Doces prontos' },
+          { id: 'validade', rotulo: 'Validade' },
           { id: 'historico', rotulo: 'Histórico' },
         ]}
       />
 
       {aba === 'insumos' && <ListaInsumos />}
       {aba === 'produtos' && <ListaProdutos />}
+      {aba === 'validade' && <Validades />}
       {aba === 'historico' && <Historico />}
     </section>
   );
@@ -501,4 +504,116 @@ function Historico() {
       />
     </>
   );
+}
+
+/**
+ * Lotes com validade.
+ *
+ * A unidade é o LOTE e não o ingrediente: a validade está na entrada de
+ * compra, então o mesmo creme de leite pode ter três caixas com três
+ * datas. Agrupar por ingrediente esconderia justamente o que ela precisa
+ * saber — qual usar primeiro.
+ *
+ * Vencido e vencendo ficam visualmente separados porque a ação é oposta:
+ * um se joga fora, o outro se usa antes. O filtro abre em "30 dias", que
+ * é a pergunta do dia a dia; "vencidos" é conferência de descarte.
+ */
+const SITUACOES = [
+  { id: '30', rotulo: 'Vence em 30 dias' },
+  { id: '7', rotulo: 'Vence em 7 dias' },
+  { id: 'vencidos', rotulo: 'Vencidos' },
+  { id: 'todos', rotulo: 'Todos' },
+];
+
+function Validades() {
+  const [situacao, setSituacao] = useState('30');
+  const [lista, setLista] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    try {
+      setLista(await estoque.validades(situacao === 'todos' ? {} : { situacao }));
+      setErro('');
+    } catch (e) {
+      setErro(mensagemDeErro(e));
+    } finally {
+      setCarregando(false);
+    }
+  }, [situacao]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  const vencidos = lista.filter((l) => l.vencido).length;
+
+  return (
+    <>
+      <nav className="seletor-periodo">
+        {SITUACOES.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            className={
+              situacao === s.id
+                ? 'seletor-periodo__item seletor-periodo__item--ativo'
+                : 'seletor-periodo__item'
+            }
+            onClick={() => setSituacao(s.id)}
+          >
+            {s.rotulo}
+          </button>
+        ))}
+      </nav>
+
+      {erro && <p className="alerta alerta--erro">{erro}</p>}
+
+      <div className="barra-acoes">
+        <span className="barra-acoes__resumo">
+          {lista.length} lote(s)
+          {vencidos > 0 && <span className="fechamento__falta"> · {vencidos} vencido(s)</span>}
+        </span>
+      </div>
+
+      {/* O sistema não sabe quanto RESTA de cada lote: as saídas não
+          apontam para qual entrada baixaram. Dizer isso é melhor que
+          deixar ela achar que a coluna é saldo atual. */}
+      <p className="cartao__aviso">
+        A quantidade é a que entrou na compra. O sistema ainda não acompanha quanto sobrou de cada
+        lote separadamente.
+      </p>
+
+      <Tabela
+        carregando={carregando}
+        dados={lista}
+        vazio="Nenhum lote com validade neste filtro."
+        colunas={[
+          { chave: 'insumo', titulo: 'Ingrediente', render: (l) => l.insumo?.nome ?? '—' },
+          {
+            chave: 'quantidadeEntrada',
+            titulo: 'Entrou',
+            render: (l) => quantidade(l.quantidadeEntrada, l.insumo?.unidade),
+          },
+          { chave: 'data', titulo: 'Comprado em', render: (l) => formatarData(l.data) },
+          { chave: 'validade', titulo: 'Vence em', render: (l) => formatarData(l.validade) },
+          { chave: 'dias', titulo: 'Situação', render: (l) => <Prazo lote={l} /> },
+        ]}
+      />
+    </>
+  );
+}
+
+/** O prazo em palavras: "vencido há 3 dias" diz o que fazer; "-3" não. */
+function Prazo({ lote }) {
+  if (lote.vencido) {
+    const d = Math.abs(lote.dias);
+    return <span className="fechamento__falta">vencido há {d === 1 ? '1 dia' : `${d} dias`}</span>;
+  }
+  if (lote.dias === 0) {
+    return <span className="fechamento__sobra">vence hoje</span>;
+  }
+  const classe = lote.dias <= 7 ? 'fechamento__sobra' : undefined;
+  return <span className={classe}>em {lote.dias === 1 ? '1 dia' : `${lote.dias} dias`}</span>;
 }

@@ -87,6 +87,14 @@ export const estoqueController = {
       })
     );
   },
+  async validades(req, res) {
+    res.json(
+      await estoqueService.validades({
+        ...filtrosPeriodo(req.query),
+        situacao: req.query.situacao,
+      })
+    );
+  },
   async alertas(_req, res) {
     res.json(await estoqueService.alertas());
   },
