@@ -1601,3 +1601,70 @@ body {
     min-height: 44px;
   }
 }
+
+/* ---------------------------------------------------------------------
+   Telas BAIXAS — o celular real, não o número do catálogo.
+
+   Um iPhone 13 é 390x844 no papel, mas com a barra do navegador à mostra
+   sobram ~664px, e num SE sobram ~553. Os cartões com altura fixa de
+   176/174/135 foram medidos contra os 844 e não cabem no que existe de
+   verdade: na tela inicial faltavam de 8 a 173px, dependendo do aparelho.
+
+   Aqui eles passam a encolher junto com a tela. `clamp` em vez de valores
+   por faixa porque a altura varia de forma contínua — a barra do
+   navegador some e volta conforme ela rola, e um degrau faria o layout
+   pular no meio do uso.
+   --------------------------------------------------------------------- */
+
+@media (max-height: 760px) {
+  .layout__conteudo {
+    padding: 14px;
+  }
+
+  .acoes {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .acoes__linha {
+    gap: 10px;
+  }
+
+  .cartao-acao {
+    min-height: 0;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .cartao-acao--grande {
+    min-height: clamp(84px, 17vh, 176px);
+  }
+
+  .cartao-acao--grande .cartao-acao__rotulo {
+    font-size: 1.15rem;
+  }
+
+  /* A proporção quadrada é o que mais custa altura: 174px de largura
+     viravam 174 de altura. Em tela baixa ela sai e entra altura própria. */
+  .cartao-acao--medio {
+    aspect-ratio: auto;
+    min-height: clamp(78px, 15vh, 174px);
+  }
+
+  .cartao-acao--pequeno {
+    min-height: clamp(68px, 13vh, 135px);
+  }
+
+  .cartao-acao__rotulo {
+    font-size: 0.95rem;
+  }
+
+  .resumo-dia {
+    padding: 10px 14px;
+    margin-bottom: 10px;
+  }
+
+  .faixa-alerta {
+    padding: 9px 12px;
+  }
+}
