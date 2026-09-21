@@ -179,10 +179,58 @@ body {
   font-size: 0.9rem;
 }
 
+/* ---------- Casca de altura fixa ----------
+
+   A PÁGINA não rola: quem rola é a área de conteúdo, por dentro. Assim o
+   hero e o menu ficam sempre no lugar, e ela nunca precisa voltar ao topo
+   para trocar de seção.
+
+   Listas continuam rolando, e não tem como ser diferente — a de vendas
+   não tem teto, com 80 vendas nenhuma tela do mundo a comporta. O que
+   muda é ONDE a rolagem acontece: dentro do quadro, não na janela.        */
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  /* `vh` primeiro como reserva; `dvh` é o que vale onde existe, porque
+     desconta a barra do navegador no celular. Com `vh` puro, a última
+     linha da tela some atrás da barra do Safari e do Chrome Android. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.hero {
+  flex: 0 0 auto;
+}
+
 .layout__conteudo {
+  flex: 1 1 auto;
+  /* Sem `min-height: 0` o filho de um flex container se recusa a encolher
+     abaixo do próprio conteúdo, o `overflow` nunca entra em ação e a
+     página volta a rolar inteira. */
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* 24 e não 32: num notebook de 800px de altura os 16px extras eram o
+     que fazia a tela inicial passar do limite por 35px. */
+  padding: 24px;
+}
+
+/* A largura máxima fica no filho, não no que rola: se o limitador fosse o
+   próprio scroller, a barra de rolagem apareceria no meio da tela, a
+   1100px, em vez de na borda da janela. */
+.layout__conteudo > * {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 32px 24px;
+}
+
+/* Margem embaixo do último elemento é espaço morto: dentro de um quadro
+   que rola ela vira uma faixa vazia no fim, e o `padding` do próprio
+   quadro já dá o respiro. Em telas apertadas, esses 20px são a diferença
+   entre caber e rolar. */
+.layout__conteudo > * > *:last-child {
+  margin-bottom: 0;
 }
 
 /* ---------- Login ---------- */
@@ -1329,9 +1377,20 @@ body {
     min-height: 0;
   }
 
-  /* Um indicador por linha, para o número não espremer */
+  /* Dois por linha, não um. Quatro indicadores empilhados somavam ~520px
+     de rolagem no Resumo, e cada um carrega só um rótulo e um número —
+     não precisam da largura inteira para caber sem espremer. */
   .indicadores {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .indicador {
+    padding: 14px;
+  }
+
+  .indicador__valor {
+    font-size: 1.35rem;
   }
 
   .painel-duplo {
