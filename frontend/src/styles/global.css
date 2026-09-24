@@ -37,10 +37,19 @@
 }
 
 :root {
-  /* ----- Cinza, na paleta da Apple --------------------------------- */
+  /* ----- Cinza na paleta da Apple, com os tons CLAROS puxados p/ rosa
+
+     Os dois degraus mais claros são superfície de fundo — a página, o
+     trilho do controle segmentado, o realce do menu. Postos na matiz do
+     laço da marca (≈345°), eles trazem a confeitaria de volta sem que
+     nada fique "cor-de-rosa": texto, borda, ícone e botão seguem cinzas.
+
+     A luminosidade é praticamente a mesma do cinza que saiu, então o
+     contraste quase não mexeu: o texto dá 15,39 no fundo (era 15,46) e o
+     secundário 4,64 (era 4,66), ambos bem acima do mínimo de 4,5. */
   --c-0: #ffffff;
-  --c-50: #f5f5f7; /* o cinza de fundo da apple.com */
-  --c-100: #ececf0;
+  --c-50: #fdf2f6; /* fundo da página */
+  --c-100: #f8e8ef; /* realce: item de menu aceso, hover, aviso */
   --c-200: #e8e8ed; /* borda de cartão */
   --c-300: #d2d2d7; /* borda forte, régua */
   --c-400: #86868b; /* terciário: 3,62 no branco — ÍCONE, nunca texto */
@@ -141,7 +150,6 @@ body {
 .barra-confirmar__total,
 .valor__campo {
   font-variant-numeric: tabular-nums;
-  letter-spacing: var(--tr-numero);
 }
 
 :focus-visible {
@@ -507,6 +515,8 @@ body {
 .botao--texto:hover:not(:disabled) {
   background-color: var(--c-100);
   border-color: transparent;
+  /* Sobre o realce rosa o cinza secundário do estado normal daria 4,29. */
+  color: var(--texto);
 }
 
 .botao--perigo {
@@ -655,12 +665,16 @@ body {
   font-size: 0.875rem;
 }
 
+/* Texto em --c-700 e não no cinza secundário: sobre o realce rosa o
+   secundário cai para 4,29, abaixo do mínimo de 4,5 da WCAG. Este dá
+   8,48 e a caixa continua lendo como nota de rodapé pelo corpo menor,
+   que é o que a distingue — não pela cor apagada. */
 .cartao__aviso {
   margin: 14px 0 0;
   padding: 9px 11px;
   border-radius: var(--r-1);
   background-color: var(--c-100);
-  color: var(--texto-suave);
+  color: var(--c-700);
   font-size: 0.8125rem;
 }
 
@@ -880,7 +894,7 @@ body {
   padding: 2px;
   border: none;
   border-radius: 9px;
-  background-color: rgb(118 118 128 / 0.12);
+  background-color: rgb(198 128 152 / 0.16);
 }
 
 .abas__item {
@@ -921,7 +935,7 @@ body {
   padding: 2px;
   border: none;
   border-radius: 9px;
-  background-color: rgb(118 118 128 / 0.12);
+  background-color: rgb(198 128 152 / 0.16);
 }
 
 .seletor-periodo__item {
@@ -1449,11 +1463,79 @@ body {
   color: var(--texto-suave);
 }
 
+/* O total é um botão com cara de número: sem borda, sem fundo, alinhado
+   à esquerda como estava. O alvo de toque é o próprio valor, que é
+   grande — melhor que um lápis de vinte pixels ao lado dele. */
 .barra-confirmar__total {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--texto);
+  font-family: inherit;
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: var(--tr-numero);
   line-height: 1.1;
+  text-align: left;
+  cursor: pointer;
+}
+
+.barra-confirmar__total:disabled {
+  cursor: default;
+}
+
+.barra-confirmar__editar {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--texto-suave);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.barra-confirmar__total:disabled .barra-confirmar__editar {
+  display: none;
+}
+
+.barra-confirmar__total:hover:not(:disabled) .barra-confirmar__editar {
+  color: var(--texto);
+}
+
+/* Em edição, o número vira campo no MESMO corpo e na mesma posição: ela
+   toca no total e continua olhando para o mesmo lugar da tela. Só ganha
+   um sublinhado, que é o que diz "isto agora aceita digitação". */
+.total-editavel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  border-bottom: 2px solid var(--acao);
+}
+
+.total-editavel__moeda {
+  color: var(--texto-suave);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.total-editavel__campo {
+  min-width: 2ch;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tr-numero);
+  line-height: 1.1;
+}
+
+.total-editavel__campo:focus {
+  outline: none;
 }
 
 .barra-confirmar .botao--primario {
@@ -1462,7 +1544,7 @@ body {
 }
 
 /* =====================================================================
-   DINHEIRO RÁPIDO — valor, atalhos, teclado, formas
+   DINHEIRO RÁPIDO — valor, atalhos, formas
    ===================================================================== */
 
 .valor {
@@ -1493,6 +1575,10 @@ body {
   font-weight: 500;
 }
 
+/* Alinhado à ESQUERDA, e quem centra é a linha inteira. Centrado dentro
+   do próprio campo, o texto ficava no meio de uma caixa mais larga que
+   ele — o atributo `size` reserva largura pela média dos caracteres — e
+   isso abria um vão entre o "R$" e o primeiro dígito. */
 .valor__campo {
   padding: 0;
   border: none;
@@ -1501,8 +1587,8 @@ body {
   font-family: inherit;
   font-size: 2.5rem;
   font-weight: 600;
-  letter-spacing: -0.03em;
-  text-align: center;
+  letter-spacing: var(--tr-numero);
+  text-align: left;
 }
 
 .valor__campo:focus {
@@ -1564,37 +1650,6 @@ body {
   border-color: var(--acao);
   background-color: var(--acao);
   color: var(--c-0);
-}
-
-.teclado {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.teclado__tecla {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  border: 1px solid var(--borda);
-  border-radius: var(--r-1);
-  background-color: var(--superficie);
-  color: var(--texto);
-  font-family: inherit;
-  font-size: 1.3rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.teclado__tecla:active {
-  background-color: var(--c-100);
-  border-color: var(--borda-forte);
-}
-
-.teclado__tecla--apagar {
-  background-color: var(--c-50);
 }
 
 /* =====================================================================
@@ -1977,37 +2032,13 @@ body {
     position: relative;
   }
 
-  /* Três fichas lado a lado em 375px dariam 110px cada, e "R$ 1.234,56"
-     pede 78 sem contar o respiro — o valor ficaria cortado. Aqui elas
-     viram uma coluna. */
+  /* O mini-histórico não existe no celular.
+     Empilhado, ele comia três linhas da tela que os botões queriam — e
+     no balcão ela está aqui para LANÇAR, não para conferir. O histórico
+     inteiro fica a um toque, no Caixa. No computador sobra espaço e ele
+     continua valendo como recibo. */
   .historico {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  /* Linha de lista: rótulo e detalhe empilhados à esquerda, valor à
-     direita ocupando as duas linhas. Em fila única os três competiam pela
-     largura e o detalhe era cortado no meio do nome do doce. */
-  .registro {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    column-gap: 12px;
-    padding: 9px 12px;
-  }
-
-  .registro__rotulo {
-    grid-area: 1 / 1;
-  }
-
-  .registro__detalhe {
-    grid-area: 2 / 1;
-    min-width: 0;
-  }
-
-  .registro__valor {
-    grid-area: 1 / 2 / span 2;
-    font-size: 1.125rem;
+    display: none;
   }
 
   .nav {
