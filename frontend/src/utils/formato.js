@@ -76,3 +76,35 @@ export function paraInput(valor = new Date()) {
   const dia = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
+
+/**
+ * Cor de identificação do doce, derivada do NOME.
+ *
+ * O schema está fechado, então não há campo `cor` no produto — e não
+ * precisa haver. O nome já é único no cadastro, então some os códigos das
+ * letras e escolha uma matiz: o mesmo doce recebe sempre a mesma cor, sem
+ * migração e sem ela ter que escolher nada.
+ *
+ * As cores saem de uma lista fixa em vez de `hsl()` calculado na hora
+ * porque matiz livre produz tons que brigam com o rosa da marca. Estas
+ * foram escolhidas à mão, todas com luminosidade parecida, para nenhuma
+ * puxar a atenção sozinha na grade.
+ */
+const CORES_DOCE = [
+  '#7B4A2E', // chocolate
+  '#E8C48F', // massa
+  '#F6E27A', // limão
+  '#FA9EB0', // morango
+  '#D9A441', // dourado
+  '#B5C99A', // pistache
+  '#C9A0DC', // uva
+  '#E8A87C', // doce de leite
+  '#9ED8DB', // menta
+  '#EFD9C1', // coco
+];
+
+export function corDoDoce(nome = '') {
+  let soma = 0;
+  for (let i = 0; i < nome.length; i += 1) soma += nome.charCodeAt(i);
+  return CORES_DOCE[soma % CORES_DOCE.length];
+}

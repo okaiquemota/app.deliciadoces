@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { despesas, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { Modal } from './Modal.jsx';
+import { IconeApagar } from './Icones.jsx';
+import { moeda } from '../utils/formato.js';
 
 const FORMAS = [
   ['DINHEIRO', 'Dinheiro'],
@@ -78,6 +80,26 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
     if (config?.precisaCategoria) carregarCategorias(config.precisaCategoria);
   }, [modo, config?.precisaCategoria, carregarCategorias]);
 
+  /**
+   * O teclado escreve no valor.
+   *
+   * Recusa a segunda vírgula e trava em dois decimais: sem isso ela
+   * digita "12,,5" ou "12,500" e o `Number()` devolve NaN ou um valor
+   * errado — e o erro só apareceria depois de salvar.
+   */
+  function digitar(tecla) {
+    setValor((atual) => {
+      if (tecla === ',') return atual.includes(',') ? atual : `${atual || '0'},`;
+      const [, decimais] = atual.split(',');
+      if (decimais !== undefined && decimais.length >= 2) return atual;
+      return atual === '0' ? tecla : atual + tecla;
+    });
+  }
+
+  function apagar() {
+    setValor((atual) => atual.slice(0, -1));
+  }
+
   async function enviar(evento) {
     evento.preventDefault();
     const numero = Number(String(valor).replace(',', '.'));
@@ -119,20 +141,46 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
       <form onSubmit={enviar}>
         {erro && <p className="alerta alerta--erro">{erro}</p>}
 
-        <label className="campo">
-          <span className="campo__rotulo">{config.rotuloValor}</span>
-          <input
-            className="campo__entrada campo__entrada--grande"
-            type="number"
-            step="0.01"
-            min="0"
-            inputMode="decimal"
-            placeholder="0,00"
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-            autoFocus
-          />
-        </label>
+        <div className="valor">
+          <label className="valor__rotulo" htmlFor="campo-valor">
+            {config.rotuloValor}
+          </label>
+          {/*
+            `inputMode="none"` e `readOnly`: o campo continua sendo um
+            input de verdade, então leitor de tela o anuncia e o rótulo
+            aponta para ele — mas o teclado do sistema não abre. Quem
+            digita é o teclado próprio abaixo, com tecla grande.
+          */}
+          <span className="valor__linha">
+            <span className="valor__moeda" aria-hidden="true">
+              R$
+            </span>
+            <input
+              id="campo-valor"
+              className="valor__campo"
+              type="text"
+              inputMode="none"
+              readOnly
+              size={Math.max(4, valor === '' ? 4 : valor.length)}
+              value={valor === '' ? '0,00' : valor}
+              aria-label={config.rotuloValor}
+            />
+          </span>
+        </div>
+
+        {/* Os valores que ela mais lança: pula o teclado inteiro. */}
+        <div className="atalhos-valor">
+          {[5, 10, 20, 50].map((v) => (
+            <button
+              key={v}
+              type="button"
+              className="atalho-valor"
+              onClick={() => setValor(String(v).replace('.', ','))}
+            >
+              {moeda(v)}
+            </button>
+          ))}
+        </div>
 
         {config.precisaDescricao && (
           <label className="campo">
@@ -186,6 +234,22 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
             vendido. Para o estoque acompanhar, use o botão Venda.
           </p>
         )}
+
+        <div className="teclado">
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0'].map((t) => (
+            <button key={t} type="button" className="teclado__tecla" onClick={() => digitar(t)}>
+              {t}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="teclado__tecla teclado__tecla--apagar"
+            onClick={apagar}
+            aria-label="Apagar último dígito"
+          >
+            <IconeApagar tamanho={22} />
+          </button>
+        </div>
 
         <button className="botao botao--primario" type="submit" disabled={salvando}>
           {salvando ? 'Salvando...' : config.botao}

@@ -1,3 +1,47 @@
+/* ---------------------------------------------------------------------
+   Fontes servidas pelo PRÓPRIO app, não pelo Google.
+
+   Três motivos, nesta ordem: a tela não depende de um terceiro estar no ar
+   para ter a tipografia certa; some uma ida à rede antes da primeira
+   pintura, que no 3G do balcão é o que mais atrasa; e o navegador da
+   cliente deixa de anunciar a visita dela ao Google a cada carregamento.
+
+   Só o subconjunto `latin`, que cobre os acentos do português (á é í ó ú
+   ã õ ç) — 72 KB no total, contra os 4 pesos completos.
+   --------------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fontes/dmsans-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fontes/dmsans-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fontes/dmsans-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fontes/fraunces-700.woff2') format('woff2');
+}
+
 /* =====================================================================
    Estilos globais — CSS puro, sem framework.
    Decisão: manter o setup leve no início. Se o grupo optar por uma
@@ -27,6 +71,7 @@
   --cor-primaria-escura: #ad1f49;
 
   --cor-rosa: #fa9eb0; /* laço, fouet e rosas */
+  --cor-rosa-claro: #fde7ee; /* fundo suave derivado do rosa da marca */
   --cor-dourado: #b48951; /* moldura */
   --cor-marca: #743c21; /* marrom puro da marca, sem ajuste */
 
@@ -45,11 +90,16 @@ body {
   margin: 0;
   background-color: var(--cor-fundo);
   color: var(--cor-texto);
+  /* DM Sans no corpo e Fraunces só no logotipo. Inter e Roboto ficaram de
+     fora de propósito: são a fonte padrão de todo template, e a marca é de
+     uma confeitaria — a serifa arredondada do Fraunces diz isso sem
+     precisar de enfeite. A pilha de sistema continua atrás, para a tela
+     não ficar sem texto enquanto a fonte carrega. */
   font-family:
+    'DM Sans',
     system-ui,
     -apple-system,
     'Segoe UI',
-    Roboto,
     sans-serif;
   font-size: 16px;
   line-height: 1.5;
@@ -951,6 +1001,7 @@ body {
 }
 
 .marca__nome {
+  font-family: 'Fraunces', Georgia, serif;
   font-weight: 700;
   font-size: 1.05rem;
   letter-spacing: -0.01em;
@@ -1118,19 +1169,49 @@ body {
   transform: scale(0.99);
 }
 
+/* O ícone ganha um selo rosa claro atrás. Solto sobre o branco ele some;
+   no selo, vira âncora visual e o cartão fica reconhecível de relance,
+   antes de ela ler o rótulo. */
+.cartao-acao__selo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: var(--cor-rosa-claro);
+  flex: 0 0 auto;
+}
+
 .cartao-acao .icone {
   color: var(--cor-primaria);
   flex: 0 0 auto;
 }
 
+.cartao-acao__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .cartao-acao__rotulo {
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
 }
 
+/* O movimento do dia, dentro do próprio cartão: ela vê o número no mesmo
+   lugar onde decide o que lançar, sem abrir o resumo. */
+.cartao-acao__rodape {
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+/* Faixa rosa na borda esquerda: distingue a ação principal sem preencher
+   o cartão de cor, que faria a cor virar o assunto da tela. */
 .cartao-acao--grande {
   min-height: 176px;
+  border-left: 4px solid var(--cor-primaria);
 }
 
 .cartao-acao--grande .cartao-acao__rotulo {
@@ -1157,6 +1238,12 @@ body {
 
 .cartao-acao--pequeno .cartao-acao__rotulo {
   font-size: 0.9rem;
+}
+
+.cartao-acao--pequeno .cartao-acao__selo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1202,10 +1289,13 @@ body {
 
 /* Os doces são botões, não um select. No celular um select abre uma
    roleta que cobre a tela e exige três gestos; aqui é um toque. */
+/* Dois por linha, e cada um deitado: a bolinha de cor à esquerda e o
+   texto à direita. Empilhado, a cor ficava longe do nome e não ajudava a
+   reconhecer. */
 .grade-produtos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 20px;
   max-height: 46vh;
   overflow-y: auto;
@@ -1214,81 +1304,99 @@ body {
 .doce {
   position: relative;
   border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
+  border-radius: 14px;
   background-color: var(--cor-superficie);
 }
 
 .doce--escolhido {
-  border-color: var(--cor-primaria);
-  box-shadow: inset 0 0 0 1px var(--cor-primaria);
+  border: 2px solid var(--cor-primaria);
 }
 
 .doce__toque {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  min-height: 76px;
-  padding: 12px;
+  padding: 11px;
   border: none;
   background: none;
-  border-radius: var(--raio);
+  border-radius: 14px;
   color: var(--cor-texto);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.doce__nome {
-  font-weight: 600;
-  line-height: 1.25;
+/* A cor sai do NOME do doce, não de um campo no banco: o schema está
+   fechado e o nome já é único, então some as letras e escolha a matiz. */
+.doce__cor {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px rgba(63, 22, 11, 0.08);
 }
 
-/* O contador fica sobreposto no canto. Sem reservar espaço, um doce de
-   nome comprido passa por baixo dele e fica ilegível justamente no item
-   que ela acabou de escolher. */
-.doce--escolhido .doce__nome {
-  padding-right: 52px;
+.doce__info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.doce__nome {
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.2;
 }
 
 .doce__preco {
   color: var(--cor-primaria);
   font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .doce__estoque {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--cor-texto-suave);
 }
 
-/* O contador só existe depois do primeiro toque: enquanto o doce não foi
-   escolhido, um "0" e um botão de menos seriam ruído. */
+/* O contador aparece só depois do primeiro toque, e traz os DOIS passos.
+   Antes só dava para tirar um por vez pelo "−" e somar tocando o cartão
+   inteiro — dois gestos diferentes para a mesma coisa. */
+/* Canto INFERIOR direito, não superior. Em cima ele disputava espaço com
+   o nome: reservar margem para ele espremia "Bolo de pote" em três
+   linhas, o que é pior que o problema original. Embaixo, a linha do
+   estoque é curta e sobra espaço vazio. */
 .doce__contador {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  bottom: 8px;
+  right: 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 8px 2px 2px;
+  gap: 4px;
+  height: 26px;
+  padding: 0 4px;
   background-color: var(--cor-primaria);
   border-radius: 999px;
   color: #fff;
+  font-size: 0.8rem;
 }
 
-.doce__menos {
-  width: 26px;
-  height: 26px;
+.doce__passo {
+  width: 20px;
+  height: 20px;
   border: none;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.28);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
-
-/* ---------- Formas de pagamento ---------- */
 
 .formas {
   display: flex;
@@ -1325,11 +1433,22 @@ body {
   border-top: 1px solid var(--cor-borda);
 }
 
-.barra-confirmar__total {
+.barra-confirmar__valor {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.barra-confirmar__itens {
+  font-size: 0.72rem;
+  color: var(--cor-texto-suave);
+}
+
+.barra-confirmar__total {
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--cor-texto);
+  line-height: 1.1;
 }
 
 .barra-confirmar .botao--primario {
@@ -1337,46 +1456,206 @@ body {
   flex: 0 0 auto;
 }
 
-/* Campo de valor: é o único dado de um lançamento rápido, então merece
-   ser o maior elemento do formulário. */
-.campo__entrada--grande {
-  font-size: 1.6rem;
+/* ---------- Lançamento de valor com teclado próprio ----------
+
+   O valor é o único dado de uma entrada rápida, então é o maior elemento
+   da tela. E quem digita é um teclado DESENHADO PARA DEDO, não o do
+   sistema: aquele cobre metade da tela, tem tecla de 6mm e some quando ela
+   toca fora sem querer. Aqui a tecla tem 44px e nada se move.            */
+
+.valor {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.valor__rotulo {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 14px 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+
+/* O "R$" fica de fora do input e o campo encolhe para o tamanho do que
+   ela digitou, para os dois ficarem juntos e centralizados. Com o campo
+   em 100%, o cifrão ficava solto na borda esquerda. */
+.valor__linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+
+.valor__moeda {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--cor-texto-suave);
+}
+
+.valor__campo {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+  text-align: center;
+  letter-spacing: -0.02em;
+  padding: 0;
+}
+
+.valor__campo:focus {
+  outline: none;
+}
+
+.atalhos-valor {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.atalho-valor {
+  min-height: 38px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 999px;
+  background-color: var(--cor-superficie);
+  color: var(--cor-texto-suave);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.atalho-valor:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+.teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.teclado__tecla {
+  min-height: 52px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 13px;
+  background-color: var(--cor-superficie);
+  color: var(--cor-texto);
+  font-family: inherit;
+  font-size: 1.45rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teclado__tecla:active {
+  background-color: var(--cor-rosa-claro);
+  border-color: var(--cor-primaria);
+}
+
+.teclado__tecla--apagar {
+  background-color: var(--cor-fundo);
+}
+
+.teclado__tecla--apagar .icone {
+  color: var(--cor-texto);
 }
 /* Faixa de alerta: uma linha, não uma lista. O que ela precisa notar sem
    procurar cabe numa frase; a lista inteira mora no Estoque. */
+/* Barra grossa na borda esquerda em vez de contorno inteiro: marca a
+   urgência sem transformar a faixa num bloco de cor, e deixa o texto
+   sobre fundo claro, onde ele se lê. */
 .faixa-alerta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 11px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 14px;
   border: 1px solid var(--cor-dourado);
+  border-left: 4px solid var(--cor-dourado);
   border-radius: var(--raio);
   background-color: #fdf3e2;
-  color: #8a5a10;
+  color: var(--cor-texto);
   font-family: inherit;
-  font-size: 0.9rem;
   text-align: left;
   cursor: pointer;
 }
 
 .faixa-alerta--critica {
-  border-color: var(--cor-erro);
-  background-color: #fdecea;
+  border-color: #f2c4d2;
+  border-left-color: var(--cor-erro);
+  background-color: var(--cor-rosa-claro);
+}
+
+.faixa-alerta .icone {
+  flex: 0 0 auto;
+  color: var(--cor-dourado);
+}
+
+.faixa-alerta--critica .icone {
   color: var(--cor-erro);
 }
 
-.faixa-alerta__texto {
-  font-weight: 600;
+.faixa-alerta__corpo {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.faixa-alerta__link {
+.faixa-alerta__texto {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #8a5a10;
+}
+
+.faixa-alerta--critica .faixa-alerta__texto {
+  color: var(--cor-erro);
+}
+
+/* O resto vira segunda linha, em tom calmo: o alerta chama atenção pela
+   cor da barra, não por gritar duas frases em vermelho. */
+.faixa-alerta__resto {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.faixa-alerta__seta {
   flex: 0 0 auto;
-  text-decoration: underline;
-  white-space: nowrap;
+  color: var(--cor-texto-suave);
+}
+/* Saudação: quem abre isto às dez da noite não é a mesma pessoa que abriu
+   às oito da manhã. Custa uma linha e faz a tela parecer feita para ela. */
+.saudacao {
+  margin-bottom: 14px;
+}
+
+.saudacao__titulo {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+}
+
+/* Só a PRIMEIRA letra sobe. `text-transform: capitalize` maiúscula cada
+   palavra e devolveria "Quinta-Feira, 24 De Setembro" — em português
+   "de" e "feira" são minúsculas. */
+.saudacao__data {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+}
+
+.saudacao__data::first-letter {
+  text-transform: uppercase;
 }
 
 /* =====================================================================
