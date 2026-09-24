@@ -26,11 +26,15 @@ import {
  * Então os quadrados viraram botões grandes, e os números mudaram para
  * /resumo, que ela abre quando senta para olhar o resultado.
  *
- * Embaixo dos botões, o último lançamento de cada tipo. Serve de recibo:
- * ela registra uma venda no balcão, o cartão muda, e ela vê que entrou —
- * sem abrir o Caixa para conferir. É também onde um erro aparece rápido:
- * um valor digitado errado fica ali, à vista, em vez de esperar o
- * fechamento do dia.
+ * No computador, embaixo dos botões vai o último lançamento de cada tipo.
+ * Serve de recibo: ela registra uma venda, o cartão muda, e ela vê que
+ * entrou — sem abrir o Caixa para conferir. É também onde um valor
+ * digitado errado aparece na hora, em vez de esperar o fechamento.
+ *
+ * No CELULAR ele não existe. Empilhado, comia três linhas da tela que os
+ * botões queriam, e no balcão ela está aqui para lançar, não para
+ * conferir. Some do markup e a consulta nem é feita — esconder por CSS
+ * deixaria o telefone pedindo dados que ninguém vai ver.
  *
  * O aviso de estoque saiu daqui. Ele não sumiu: virou um contador no item
  * Estoque do menu, que fica à vista em TODAS as telas e não só nesta.
@@ -85,12 +89,22 @@ const PEQUENAS = [
   { id: 'resumo', rotulo: 'Resumo', Icone: IconeResumo, rota: '/resumo' },
 ];
 
+/**
+ * Verdadeiro acima do ponto em que a barra de navegação sai do rodapé e
+ * vira coluna. O número vive aqui e no CSS, e os dois precisam bater —
+ * está no mesmo comentário dos dois lados.
+ */
+function usaHistorico() {
+  return window.matchMedia('(min-width: 901px)').matches;
+}
+
 export function Dashboard() {
   const { usuario } = useAuth();
   const navegar = useNavigate();
   const [aberto, setAberto] = useState(null);
   const [ultimos, setUltimos] = useState(null);
   const [hoje, setHoje] = useState(null);
+  const [largo, setLargo] = useState(usaHistorico);
   const [erro, setErro] = useState('');
 
   const carregar = useCallback(async () => {
@@ -99,7 +113,7 @@ export function Dashboard() {
       inicio.setHours(0, 0, 0, 0);
       const [r, u] = await Promise.all([
         dashboard.resumo({ inicio: paraDia(inicio), fim: paraDia(new Date()) }),
-        dashboard.ultimos(),
+        usaHistorico() ? dashboard.ultimos() : null,
       ]);
       setHoje(r);
       setUltimos(u);
@@ -112,6 +126,15 @@ export function Dashboard() {
   useEffect(() => {
     carregar();
   }, [carregar]);
+
+  // Acompanha a janela em vez de ler a largura uma vez: no computador ela
+  // pode estreitar a janela, e aí o histórico precisa sair de cena.
+  useEffect(() => {
+    const consulta = window.matchMedia('(min-width: 901px)');
+    const aoMudar = () => setLargo(consulta.matches);
+    consulta.addEventListener('change', aoMudar);
+    return () => consulta.removeEventListener('change', aoMudar);
+  }, []);
 
   function aoLancar() {
     setAberto(null);
@@ -182,11 +205,13 @@ export function Dashboard() {
         dizendo o que falta — um espaço em branco faria a tela parecer
         quebrada no primeiro dia de uso.
       */}
-      <div className="historico">
-        {HISTORICO.map(({ chave, rotulo }) => (
-          <Registro key={chave} rotulo={rotulo} dado={ultimos?.[chave]} />
-        ))}
-      </div>
+      {largo && (
+        <div className="historico">
+          {HISTORICO.map(({ chave, rotulo }) => (
+            <Registro key={chave} rotulo={rotulo} dado={ultimos?.[chave]} />
+          ))}
+        </div>
+      )}
 
       <VendaRapida
         aberto={aberto === 'venda'}

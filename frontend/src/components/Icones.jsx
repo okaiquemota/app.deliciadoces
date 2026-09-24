@@ -98,14 +98,6 @@ export const IconeSeta = (p) => (
   </Base>
 );
 
-/** Tecla de apagar do teclado numérico. */
-export const IconeApagar = (p) => (
-  <Base {...p}>
-    <path d="M9 5h10a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 19H9l-6-7Z" />
-    <path d="m12 9.5 5 5M17 9.5l-5 5" />
-  </Base>
-);
-
 /* ---------------------------------------------------------------------
    Ícones de navegação.
 

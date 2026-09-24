@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { despesas, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { Modal } from './Modal.jsx';
-import { IconeApagar } from './Icones.jsx';
 import { moeda } from '../utils/formato.js';
 
 const FORMAS = [
@@ -14,19 +13,19 @@ const FORMAS = [
 
 const MODOS = {
   entrada: {
-    titulo: 'Entrou dinheiro',
+    titulo: 'Entrada avulsa',
     rotuloValor: 'Quanto entrou',
     botao: 'Registrar entrada',
   },
   saida: {
-    titulo: 'Saiu dinheiro',
+    titulo: 'Saída',
     rotuloValor: 'Quanto saiu',
     botao: 'Registrar saída',
     precisaCategoria: 'CUSTO_OPERACIONAL',
     precisaDescricao: true,
   },
   retirada: {
-    titulo: 'Retirada',
+    titulo: 'Retirada pessoal',
     rotuloValor: 'Quanto você tirou',
     botao: 'Registrar retirada',
     precisaCategoria: 'RETIRADA_PESSOAL',
@@ -48,6 +47,19 @@ const MODOS = {
  * caminho curto, mas ela precisa saber que ele tem esse custo — um
  * sistema que resolve o atalho escondendo a consequência é pior que um
  * sistema lento.
+ *
+ * QUEM DIGITA É O TECLADO DO APARELHO.
+ *
+ * Havia aqui um teclado numérico desenhado à mão, com o campo em
+ * `readOnly` para o do sistema não abrir. A ideia era controlar o
+ * tamanho das teclas; na prática ele ocupava metade da tela, tinha
+ * teclas menores que as do teclado nativo, não tinha o retorno tátil que
+ * o aparelho dá, e no computador era só um monte de botão para clicar
+ * com o mouse em vez de digitar.
+ *
+ * Com `inputMode="decimal"` o celular abre o teclado numérico sozinho e
+ * o computador aceita o teclado físico. O que sobrou aqui é o que o
+ * aparelho não faz: os valores de atalho e as regras do formato.
  */
 export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
   const config = modo ? MODOS[modo] : null;
@@ -59,6 +71,7 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
   const [categoriaId, setCategoriaId] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
+  const campo = useRef(null);
 
   const carregarCategorias = useCallback(async (tipo) => {
     try {
@@ -78,26 +91,34 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
     setDescricao('');
     setErro('');
     if (config?.precisaCategoria) carregarCategorias(config.precisaCategoria);
+
+    /**
+     * Foco no campo assim que o modal abre: no celular é o que faz o
+     * teclado subir sozinho, e ela começa a digitar o valor sem um toque
+     * a mais. O atraso existe porque o modal ainda está entrando na tela
+     * — focar antes disso o navegador ignora.
+     */
+    const t = setTimeout(() => campo.current?.focus(), 80);
+    return () => clearTimeout(t);
   }, [modo, config?.precisaCategoria, carregarCategorias]);
 
   /**
-   * O teclado escreve no valor.
+   * Filtra o que o teclado do aparelho manda.
    *
-   * Recusa a segunda vírgula e trava em dois decimais: sem isso ela
-   * digita "12,,5" ou "12,500" e o `Number()` devolve NaN ou um valor
-   * errado — e o erro só apareceria depois de salvar.
+   * O teclado numérico do iOS e do Android não impede nada: ela consegue
+   * digitar "12,,5", colar "R$ 1.234,56" ou emendar "12,500". Sem este
+   * filtro o `Number()` devolveria NaN ou um valor errado, e o erro só
+   * apareceria depois de salvar.
+   *
+   * O ponto vira vírgula porque os dois teclados oferecem um ou outro
+   * conforme o idioma do aparelho, e quem digita não deveria precisar
+   * saber qual dos dois este campo aceita.
    */
-  function digitar(tecla) {
-    setValor((atual) => {
-      if (tecla === ',') return atual.includes(',') ? atual : `${atual || '0'},`;
-      const [, decimais] = atual.split(',');
-      if (decimais !== undefined && decimais.length >= 2) return atual;
-      return atual === '0' ? tecla : atual + tecla;
-    });
-  }
-
-  function apagar() {
-    setValor((atual) => atual.slice(0, -1));
+  function aoDigitar(texto) {
+    const limpo = texto.replace(/\./g, ',').replace(/[^\d,]/g, '');
+    const [inteiro, ...resto] = limpo.split(',');
+    if (!resto.length) return setValor(inteiro);
+    return setValor(`${inteiro},${resto.join('').slice(0, 2)}`);
   }
 
   async function enviar(evento) {
@@ -146,10 +167,12 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
             {config.rotuloValor}
           </label>
           {/*
-            `inputMode="none"` e `readOnly`: o campo continua sendo um
-            input de verdade, então leitor de tela o anuncia e o rótulo
-            aponta para ele — mas o teclado do sistema não abre. Quem
-            digita é o teclado próprio abaixo, com tecla grande.
+            `type="text"` com `inputMode="decimal"`, e não `type="number"`:
+            o número nativo aceita notação científica, mostra setinhas de
+            incremento que não servem para dinheiro, e no Firefox deixa
+            digitar letra sem avisar. O modo de entrada é o que faz o
+            celular abrir o teclado numérico — o tipo do campo continua
+            texto, e quem valida é o filtro acima.
           */}
           <span className="valor__linha">
             <span className="valor__moeda" aria-hidden="true">
@@ -157,18 +180,21 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
             </span>
             <input
               id="campo-valor"
+              ref={campo}
               className="valor__campo"
               type="text"
-              inputMode="none"
-              readOnly
-              size={Math.max(4, valor === '' ? 4 : valor.length)}
-              value={valor === '' ? '0,00' : valor}
+              inputMode="decimal"
+              autoComplete="off"
+              placeholder="0,00"
+              size={Math.max(4, valor.length || 4)}
+              value={valor}
+              onChange={(e) => aoDigitar(e.target.value)}
               aria-label={config.rotuloValor}
             />
           </span>
         </div>
 
-        {/* Os valores que ela mais lança: pula o teclado inteiro. */}
+        {/* Os valores que ela mais lança: um toque em vez de digitar. */}
         <div className="atalhos-valor">
           {[5, 10, 20, 50].map((v) => (
             <button
@@ -234,22 +260,6 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
             vendido. Para o estoque acompanhar, use o botão Venda.
           </p>
         )}
-
-        <div className="teclado">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0'].map((t) => (
-            <button key={t} type="button" className="teclado__tecla" onClick={() => digitar(t)}>
-              {t}
-            </button>
-          ))}
-          <button
-            type="button"
-            className="teclado__tecla teclado__tecla--apagar"
-            onClick={apagar}
-            aria-label="Apagar último dígito"
-          >
-            <IconeApagar tamanho={22} />
-          </button>
-        </div>
 
         <button className="botao botao--primario" type="submit" disabled={salvando}>
           {salvando ? 'Salvando...' : config.botao}

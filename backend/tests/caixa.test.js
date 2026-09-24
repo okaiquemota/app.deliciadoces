@@ -63,6 +63,31 @@ describe('venda', () => {
     expect(Number(guardada.total)).toBe(20);
   });
 
+  /**
+   * O desconto agora entra pela tela: ela toca no total e digita o que
+   * cobrou, e a diferença vira desconto. Este teste trava o que a tela
+   * depende — que o desconto saia do subtotal do CADASTRO, e não do que
+   * o navegador mandou como total.
+   */
+  it('desconta do subtotal calculado no servidor, não do que o cliente mandou', async () => {
+    const p = await produtoComEstoque(100, 10);
+    const venda = await vendaService.criar(
+      {
+        itens: [{ produtoId: p.id, quantidade: 3 }],
+        desconto: 5,
+        // Se isto fosse respeitado, a venda iria a R$ 1: o servidor
+        // recalcula tudo e ignora o total vindo de fora.
+        total: 1,
+        subtotal: 6,
+        formaPagamento: 'PIX',
+      },
+      null
+    );
+    expect(Number(venda.subtotal)).toBe(30);
+    expect(Number(venda.desconto)).toBe(5);
+    expect(Number(venda.total)).toBe(25);
+  });
+
   it('recusa desconto maior que o subtotal', async () => {
     const p = await produtoComEstoque(100, 10);
     await expect(
