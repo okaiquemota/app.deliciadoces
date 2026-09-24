@@ -20,8 +20,11 @@
   --cor-texto: #743c21; /* marrom da tipografia, escurecido p/ AAA */
   --cor-texto-suave: #986045;
 
-  --cor-primaria: #940616; /* vinho do "Confeitaria" */
-  --cor-primaria-escura: #7b0000;
+  /* Rosa, na matiz do laço e das rosas da arte, escurecido o bastante para
+     carregar texto branco: o rosa puro da logo (#fa9eb0) dá 1,98 de
+     contraste, ilegível. Este dá 4,84, acima do mínimo da WCAG. */
+  --cor-primaria: #d6295d;
+  --cor-primaria-escura: #ad1f49;
 
   --cor-rosa: #fa9eb0; /* laço, fouet e rosas */
   --cor-dourado: #b48951; /* moldura */
