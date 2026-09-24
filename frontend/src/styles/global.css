@@ -1,814 +1,524 @@
-/* ---------------------------------------------------------------------
-   Fontes servidas pelo PRÓPRIO app, não pelo Google.
-
-   Três motivos, nesta ordem: a tela não depende de um terceiro estar no ar
-   para ter a tipografia certa; some uma ida à rede antes da primeira
-   pintura, que no 3G do balcão é o que mais atrasa; e o navegador da
-   cliente deixa de anunciar a visita dela ao Google a cada carregamento.
-
-   Só o subconjunto `latin`, que cobre os acentos do português (á é í ó ú
-   ã õ ç) — 72 KB no total, contra os 4 pesos completos.
-   --------------------------------------------------------------------- */
-
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fontes/dmsans-400.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fontes/dmsans-500.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fontes/dmsans-700.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fontes/fraunces-700.woff2') format('woff2');
-}
-
 /* =====================================================================
-   Estilos globais — CSS puro, sem framework.
-   Decisão: manter o setup leve no início. Se o grupo optar por uma
-   biblioteca de UI (Tailwind, MUI), a troca é feita depois sem
-   reescrever a lógica das telas.
+   Delícia Doces — folha de estilo única, CSS puro.
+
+   Reescrita do zero. A versão anterior era creme e rosa, com cartões
+   grandes de canto redondo e sombra; esta é o oposto: neutro frio, borda
+   de 1px em vez de sombra, canto pequeno, e cor reservada para o que
+   significa alguma coisa (erro, positivo, aviso).
+
+   Duas regras que valem para o arquivo inteiro:
+
+   1. BORDA, NÃO SOMBRA. Sombra é o que faz uma tela parecer feita de
+      cartõezinhos empilhados. Aqui só o modal tem sombra, porque ele
+      realmente flutua sobre o resto.
+
+   2. COR SÓ COM SIGNIFICADO. Nada é colorido por enfeite. Se está
+      vermelho, é problema; verde, é dinheiro entrando; âmbar, é prazo.
+      O resto vive na escala de cinza.
    ===================================================================== */
 
-/* Paleta tirada da logo da Delícia Doces:
-     vinho    -> o "Confeitaria" manuscrito
-     chocolate-> o "Delícia Doces" e a borda da medalha
-     creme    -> o miolo da medalha
-     rosa     -> o laço, o fouet e as rosas
-     dourado  -> os fios finos da moldura                                  */
+/* ---------------------------------------------------------------------
+   Inter, servida pelo próprio app.
+
+   Arquivo VARIÁVEL: um só .woff2 de 48 KB cobre 100 a 900. A versão
+   anterior tinha três arquivos de peso fixo e nove regras pedindo o peso
+   600, que não existia em arquivo nenhum — o navegador caía no 700 e o
+   degrau intermediário nunca chegava à tela. Com eixo contínuo esse tipo
+   de erro deixa de ser possível.
+
+   Só o subconjunto `latin`, que cobre os acentos do português.
+   --------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fontes/inter-var.woff2') format('woff2');
+}
 
 :root {
-  /* Creme do miolo da medalha, agora com metade da saturação (58% -> 37%
-     em HSL). O creme carregado puxava tudo para o amarelo; este continua
-     quente o bastante para ser a marca e não um template branco, sem
-     tingir os cartões brancos que ficam sobre ele. O contraste do texto
-     não mudou (8,21). */
-  --cor-fundo: #faf8f4;
-  --cor-superficie: #ffffff;
-  --cor-borda: #ece0cf;
+  /* ----- Escala de cinza, fria (matiz ~215°) -------------------------
+     Onze degraus, e todo o resto da folha sai daqui. Frio e não neutro
+     puro porque cinza exatamente dessaturado fica com cara de papel
+     velho em tela OLED; um traço de azul mantém limpo. */
+  --c-0: #ffffff;
+  --c-50: #f7f8f9;
+  --c-100: #eff1f3;
+  --c-200: #e3e6e9;
+  --c-300: #cbd0d6;
+  --c-400: #9aa2ad;
+  --c-500: #69717d;
+  --c-600: #4a515c;
+  --c-700: #333942;
+  --c-800: #1f242b;
+  --c-900: #14181d;
 
-  --cor-texto: #743c21; /* marrom da tipografia, escurecido p/ AAA */
-  --cor-texto-suave: #986045;
+  /* ----- Papéis ----------------------------------------------------- */
+  --fundo: var(--c-50);
+  --superficie: var(--c-0);
+  --borda: var(--c-200);
+  --borda-forte: var(--c-300);
+  --texto: var(--c-900);
+  --texto-suave: var(--c-500); /* 4,93 no branco — o c-400 dá 2,58 e reprova */
+  --texto-fraco: var(--c-400); /* só decorativo, nunca carrega informação */
 
-  /* Framboesa, na matiz do laço e das rosas da arte, escurecido o bastante
-     para carregar texto branco: o rosa puro da logo (#fa9eb0) dá 1,98 de
-     contraste, ilegível.
+  /* Ação primária é PRETO, não uma cor de marca. Numa paleta neutra o
+     contraste é o que destaca; pintar de azul só para "ter um botão
+     colorido" devolveria o problema que esta reescrita veio resolver. */
+  --acao: var(--c-900);
+  --acao-hover: var(--c-700);
 
-     Saiu de #d6295d (68% de saturação, 4,84 de contraste) para este:
-     59% de saturação e 5,85 de contraste. Dessaturar costuma CUSTAR
-     contraste; aqui os dois melhoraram porque o tom também desceu de
-     luminosidade. A matiz ficou em 344°, ainda framboesa e longe do
-     vermelho de erro (ΔE 29,4 no CIELAB). */
-  --cor-primaria: #b83055;
-  --cor-primaria-escura: #96274a;
+  --erro: #b42318;
+  --erro-fundo: #fef3f2;
+  --erro-borda: #fecdc9;
+  --ok: #067647;
+  --ok-fundo: #ecfdf3;
+  --ok-borda: #a9efc5;
+  --aviso: #b54708;
+  --aviso-fundo: #fffaeb;
+  --aviso-borda: #fedf89;
 
-  --cor-rosa: #fa9eb0; /* laço, fouet e rosas */
-  --cor-rosa-claro: #fde7ee; /* fundo suave derivado do rosa da marca */
-  --cor-dourado: #b48951; /* moldura */
-  --cor-marca: #743c21; /* marrom puro da marca, sem ajuste */
+  /* ----- Canto: três degraus, e pequenos ---------------------------- */
+  --r-1: 6px; /* campo, botão, chip, item de menu */
+  --r-2: 8px; /* cartão, painel */
+  --r-3: 12px; /* modal */
 
-  --cor-erro: #c62828;
-  --cor-erro-fundo: #fdecec; /* fundo do alerta crítico: 4,92 com o erro */
-  --cor-positivo: #2e7d4f;
+  /* ----- Medidas do esqueleto --------------------------------------- */
+  --lateral: 232px; /* barra lateral no desktop */
+  --barra-baixo: 60px; /* barra de abas no celular */
+  --leitura: 1120px; /* largura máxima do conteúdo */
 
-  /* Escala de canto: TRÊS degraus, não sete valores soltos. Antes havia
-     10, 11, 12, 13, 14 e 16px espalhados pelo arquivo — um pixel de
-     diferença não se lê como intenção, se lê como desalinhado, e é
-     exatamente o que aparecia quando a faixa de alerta (10) encostava no
-     cartão de ação (16) na tela inicial. */
-  --raio-selo: 10px; /* selo de ícone, amostra de cor */
-  --raio: 12px; /* padrão: campo, botão, aba, faixa */
-  --raio-cartao: 16px; /* cartão, tecla grande */
-
-  --sombra: 0 1px 3px rgba(63, 22, 11, 0.1);
+  --sombra-modal: 0 16px 48px -12px rgb(20 24 29 / 0.28);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  background-color: var(--cor-fundo);
-  color: var(--cor-texto);
-  /* DM Sans no corpo e Fraunces só no logotipo. Inter e Roboto ficaram de
-     fora de propósito: são a fonte padrão de todo template, e a marca é de
-     uma confeitaria — a serifa arredondada do Fraunces diz isso sem
-     precisar de enfeite. A pilha de sistema continua atrás, para a tela
-     não ficar sem texto enquanto a fonte carrega.
+  overflow-x: hidden;
+}
 
-     TRÊS pesos, e só os três que existem em arquivo — 400, 500 e 700:
-
-       400  texto corrido, rótulo secundário, dado de apoio
-       500  ênfase e estado ligado (aba ativa, forma escolhida, botão cheio)
-       700  título, nome de ação e VALOR (dinheiro, saldo, diferença)
-
-     Havia um quarto peso, 600, em nove regras. Não existe arquivo de 600:
-     o navegador procura o peso igual ou maior mais próximo e cai no 700.
-     Medido aqui, "Confirmar venda 0123" a 64px dá 650px em 400, 658 em
-     500, e 681 tanto em 600 quanto em 700 — idênticos. Ou seja, o degrau
-     intermediário que essas regras pediam nunca chegou à tela: aba ativa e
-     botão primário saíam com o mesmo peso de um título, e a hierarquia
-     tinha três níveis escritos e dois aparecendo. */
+body {
+  background-color: var(--fundo);
+  color: var(--texto);
   font-family:
-    'DM Sans',
+    'Inter',
     system-ui,
     -apple-system,
     'Segoe UI',
     sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
+  /* `cv11` abre o "l" minúsculo com cauda e o "1" com base — na Inter
+     padrão, "1l" em tabela de quantidade fica quase idêntico. */
+  font-feature-settings: 'cv11';
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- Layout ---------- */
-
-/* ---------- Hero: identidade, seção e navegação numa faixa só ----------
-
-   Cada página repetia o próprio título e um parágrafo explicando o que
-   ela era. A cliente lê isso uma vez; depois é texto que empurra o
-   conteúdo útil para baixo toda vez que ela abre a tela no balcão.
-
-   O nome da seção passa a viver aqui, como `h1` — tirar de vez deixaria
-   a página sem cabeçalho nenhum para leitor de tela, que navega por essa
-   marcação.
-
-   Fundo vinho com texto branco dá 9,14 de contraste, bem acima do
-   mínimo da WCAG.                                                      */
-
-.hero {
-  background-color: var(--cor-primaria);
-  color: #fff;
+/* Todo número que vai ser comparado de cima a baixo usa figura de largura
+   fixa: sem isso R$ 1.111,00 fica visivelmente mais estreito que
+   R$ 8.888,00 e a coluna deixa de alinhar na vírgula. */
+.tabela td,
+.indicador__valor,
+.cartao-acao__valor,
+.conta__linha,
+.conta__total,
+.saldo-grande,
+.barra-confirmar__total,
+.valor__campo {
+  font-variant-numeric: tabular-nums;
 }
 
-.hero__interno {
-  max-width: 1100px;
+:focus-visible {
+  outline: 2px solid var(--acao);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* =====================================================================
+   ESQUELETO
+
+   Uma grade de duas faixas. No desktop a navegação é a COLUNA da
+   esquerda; no celular ela desce para uma barra colada embaixo, onde o
+   polegar alcança sem trocar a mão de posição — é a diferença entre
+   registrar uma venda de uma mão só no balcão ou não registrar.
+
+   O mesmo `<nav>` serve os dois: só muda de lugar na grade. Nenhum item
+   de menu é duplicado em markup, então nada pode ficar fora de fase.
+   ===================================================================== */
+
+.app {
+  display: grid;
+  grid-template-columns: var(--lateral) 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    'topo principal'
+    'lado principal';
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Topo e lado formam juntos a coluna da esquerda: mesma superfície branca
+   e a mesma borda de 1px separando do conteúdo. São duas áreas da grade e
+   não uma só porque no celular elas se separam — o topo sobe, a navegação
+   desce para o rodapé. */
+.app__topo,
+.app__lado {
+  background-color: var(--superficie);
+  border-right: 1px solid var(--borda);
+}
+
+.app__topo {
+  grid-area: topo;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 10px 8px;
+}
+
+.app__lado {
+  grid-area: lado;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.app__principal {
+  grid-area: principal;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* O conteúdo rola DENTRO do seu quadro; a página em si nunca rola. */
+.app__conteudo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 28px 32px 32px;
+}
+
+.app__conteudo > * {
+  max-width: var(--leitura);
   margin: 0 auto;
-  padding: 16px 24px 0;
 }
 
-.hero__topo {
+/* Tela cujo conteúdo é uma tabela: ela ocupa a altura que sobrar e rola
+   por dentro, em vez de esticar a página. */
+.app__conteudo > *:has(.tabela__rolagem) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app__conteudo > *:has(.tabela__rolagem) > *:not(.tabela__rolagem) {
+  flex: 0 0 auto;
+}
+
+.app__conteudo > *:has(.tabela__rolagem) > .tabela__rolagem {
+  min-height: 160px;
+}
+
+.app__conteudo > * > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Navegação ---------- */
+
+.nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 10px;
+}
+
+.nav__grupo {
+  margin: 14px 0 4px;
+  padding: 0 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.nav__item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* A medalha veio com fundo transparente e miolo creme, então continua
-   legível sobre o vinho. O nome ao lado é que precisa virar branco. */
-.hero__marca .marca__nome {
-  color: #fff;
-}
-
-.hero__marca .marca__logo {
-  height: 32px;
-}
-
-.hero__usuario {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-}
-
-.hero__conta,
-.hero__sair {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  border: none;
-  border-radius: var(--raio);
-  background: none;
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.85rem;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-1);
+  color: var(--c-600);
+  font-size: 0.9375rem;
+  font-weight: 450;
   text-decoration: none;
+  transition: background-color 90ms ease-out;
+}
+
+.nav__item:hover {
+  background-color: var(--c-100);
+  color: var(--texto);
+}
+
+/* O ativo é fundo cinza + texto preto + peso, os três juntos. Só o peso
+   não se lê de longe, e só a cor de fundo não sobrevive a um monitor mal
+   calibrado no laboratório da faculdade. */
+.nav__item--ativo,
+.nav__item--ativo:hover {
+  background-color: var(--c-100);
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.nav__item .icone {
+  flex: 0 0 auto;
+  color: var(--texto-suave);
+}
+
+.nav__item--ativo .icone {
+  color: var(--texto);
+}
+
+.nav__rotulo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Conta e sair ---------- */
+
+.app__conta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.conta-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 8px;
+  border-radius: var(--r-1);
+  color: var(--texto);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.conta-link:hover {
+  background-color: var(--c-100);
+}
+
+/* Inicial do nome num quadrado, no lugar de foto: não existe upload de
+   avatar no sistema e um ícone genérico de pessoa seria igual para todo
+   mundo. A inicial já distingue quem está logado. */
+.conta-link__inicial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-1);
+  background-color: var(--c-800);
+  color: var(--c-0);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.conta-link__nome {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app__sair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--texto-suave);
   cursor: pointer;
 }
 
-.hero__conta:hover,
-.hero__sair:hover {
-  background-color: rgba(255, 255, 255, 0.16);
+.app__sair:hover {
+  background-color: var(--c-100);
+  color: var(--texto);
 }
 
-.hero__sair {
-  border: 1px solid rgba(255, 255, 255, 0.45);
-}
+/* =====================================================================
+   TIPOGRAFIA E TEXTO DE PÁGINA
+   ===================================================================== */
 
-/* O título da seção some da tela, mas NÃO do documento.
-   
-   Visualmente ele era redundante: a aba ativa no menu logo abaixo já diz
-   em que seção ela está, e os 64px que ele ocupava (altura mais margens)
-   fazem diferença de verdade numa tela de 844px.
-   
-   Continua no HTML porque leitor de tela navega por cabeçalho: sem `h1`
-   a página vira um bloco sem começo, e quem usa leitor perde a única
-   pista de onde está. Esconder pela tela e manter para a leitura é
-   diferente de `display: none`, que tira dos dois. */
-.hero__titulo {
+.so-leitor {
   position: absolute;
   width: 1px;
   height: 1px;
   margin: -1px;
   padding: 0;
   overflow: hidden;
+  white-space: nowrap;
   clip-path: inset(50%);
-  white-space: nowrap;
 }
 
-/* O menu fica colado na base da faixa: o item ativo se apoia na borda
-   entre o hero e o conteúdo, deixando claro que aquela aba é a tela
-   aberta embaixo. */
-.hero__menu {
+.pagina__cabecalho {
   display: flex;
-  margin-top: 14px;
-  gap: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.hero__menu::-webkit-scrollbar {
-  display: none;
+.pagina__titulo {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.hero__link {
-  padding: 10px 14px;
-  border-radius: var(--raio) var(--raio) 0 0;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 0.95rem;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.hero__link:hover {
-  background-color: rgba(255, 255, 255, 0.14);
-  color: #fff;
-}
-
-.hero__link--ativo {
-  background-color: var(--cor-fundo);
-  color: var(--cor-primaria);
-  font-weight: 700;
-}
-
-.hero__link--ativo:hover {
-  background-color: var(--cor-fundo);
-  color: var(--cor-primaria);
-}
-
-/* Legenda do período no Resumo: é dado, não título de tela. */
+.pagina__texto,
 .pagina__periodo {
   margin: 0;
-  color: var(--cor-texto-suave);
-  font-size: 0.9rem;
-}
-
-/* ---------- Casca de altura fixa ----------
-
-   A PÁGINA não rola: quem rola é a área de conteúdo, por dentro. Assim o
-   hero e o menu ficam sempre no lugar, e ela nunca precisa voltar ao topo
-   para trocar de seção.
-
-   Listas continuam rolando, e não tem como ser diferente — a de vendas
-   não tem teto, com 80 vendas nenhuma tela do mundo a comporta. O que
-   muda é ONDE a rolagem acontece: dentro do quadro, não na janela.        */
-
-.layout {
-  display: flex;
-  flex-direction: column;
-  /* `vh` primeiro como reserva; `dvh` é o que vale onde existe, porque
-     desconta a barra do navegador no celular. Com `vh` puro, a última
-     linha da tela some atrás da barra do Safari e do Chrome Android. */
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-}
-
-.hero {
-  flex: 0 0 auto;
-}
-
-.layout__conteudo {
-  flex: 1 1 auto;
-  /* Sem `min-height: 0` o filho de um flex container se recusa a encolher
-     abaixo do próprio conteúdo, o `overflow` nunca entra em ação e a
-     página volta a rolar inteira. */
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  /* 24 e não 32: num notebook de 800px de altura os 16px extras eram o
-     que fazia a tela inicial passar do limite por 35px. */
-  padding: 24px;
-}
-
-/* A largura máxima fica no filho, não no que rola: se o limitador fosse o
-   próprio scroller, a barra de rolagem apareceria no meio da tela, a
-   1100px, em vez de na borda da janela. */
-.layout__conteudo > * {
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-/* Só a tela QUE TEM TABELA vira coluna de altura cheia. `:has()` evita
-   marcar cada página com uma classe, e onde ele não existir a regra
-   simplesmente não aplica: a página volta a rolar inteira, que é o
-   comportamento antigo, não um defeito.
-
-   `height` e não `min-height`: o `flex` da tabela precisa de uma altura
-   DEFINIDA para descontar; com mínimo, a conta não fecha e a tabela
-   cresce sem limite, que era o que acontecia. */
-.layout__conteudo > *:has(.tabela__rolagem) {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-/* Abas, filtros e barra de ações não encolhem: são a moldura da tela e
-   precisam ficar do tamanho que são. Quem cede espaço é a tabela. */
-.layout__conteudo > *:has(.tabela__rolagem) > *:not(.tabela__rolagem) {
-  flex: 0 0 auto;
-}
-
-/* Piso para a tabela nunca virar uma fresta. No fechamento, por exemplo,
-   os dois painéis já ocupam 635px: sem o mínimo, a tabela ficaria com uns
-   50px e não caberia nem três linhas. Quando nem o mínimo couber, o
-   conjunto passa do quadro e o conteúdo rola como antes — degradar para
-   a rolagem da página é melhor que mostrar uma tabela ilegível. */
-.layout__conteudo > *:has(.tabela__rolagem) > .tabela__rolagem {
-  min-height: 180px;
-}
-
-/* Margem embaixo do último elemento é espaço morto: dentro de um quadro
-   que rola ela vira uma faixa vazia no fim, e o `padding` do próprio
-   quadro já dá o respiro. Em telas apertadas, esses 20px são a diferença
-   entre caber e rolar. */
-.layout__conteudo > * > *:last-child {
-  margin-bottom: 0;
-}
-
-/* ---------- Login ---------- */
-
-.login {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 24px;
-}
-
-.login__caixa {
-  width: 100%;
-  max-width: 360px;
-  padding: 32px;
-  background-color: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
-}
-
-.login__marca {
-  margin: 0;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
-.login__subtitulo {
-  margin: 4px 0 24px;
-  color: var(--cor-texto-suave);
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-/* ---------- Campos e botões ---------- */
-
-.campo {
-  display: block;
-  margin-bottom: 16px;
-}
-
-.campo__rotulo {
-  display: block;
-  margin-bottom: 6px;
+  color: var(--texto-suave);
   font-size: 0.875rem;
-  font-weight: 500;
 }
 
-.campo__entrada {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  font-size: 1rem;
-  font-family: inherit;
-}
-
-.campo__entrada:focus {
-  outline: 2px solid var(--cor-primaria);
-  outline-offset: 1px;
-}
+/* =====================================================================
+   BOTÕES
+   ===================================================================== */
 
 .botao {
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--raio);
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  background-color: var(--superficie);
+  color: var(--texto);
   font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
   cursor: pointer;
+  transition:
+    background-color 90ms ease-out,
+    border-color 90ms ease-out;
+}
+
+.botao:hover:not(:disabled) {
+  background-color: var(--c-50);
+  border-color: var(--borda-forte);
+}
+
+.botao:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .botao--primario {
   width: 100%;
-  background-color: var(--cor-primaria);
-  color: #fff;
+  border-color: var(--acao);
+  background-color: var(--acao);
+  color: var(--c-0);
   font-weight: 500;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
 }
 
 .botao--primario:hover:not(:disabled) {
-  background-color: var(--cor-primaria-escura);
-}
-
-.botao:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.botao--texto {
-  padding: 4px 8px;
-  background: none;
-  color: var(--cor-primaria);
-  font-size: 0.875rem;
-}
-
-/* ---------- Cartões, indicadores e avisos ---------- */
-
-.pagina__titulo {
-  margin: 0 0 4px;
-  font-size: 1.5rem;
-}
-
-.pagina__texto {
-  margin: 0 0 24px;
-  color: var(--cor-texto-suave);
-}
-
-.cartao {
-  padding: 24px;
-  background-color: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
-}
-
-.cartao__titulo {
-  margin: 0 0 4px;
-  font-size: 1.5rem;
-}
-
-.cartao__subtitulo {
-  margin: 24px 0 8px;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--cor-texto-suave);
-}
-
-.cartao__texto {
-  margin: 0;
-  color: var(--cor-texto-suave);
-}
-
-.cartao__lista {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.cartao__aviso {
-  margin-top: 24px;
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--cor-texto-suave);
-}
-
-.indicadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.indicador {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 20px;
-  background-color: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
-}
-
-.indicador__rotulo {
-  font-size: 0.875rem;
-  color: var(--cor-texto-suave);
-}
-
-.indicador__valor {
-  font-size: 1.75rem;
-}
-
-.indicador__dica {
-  font-size: 0.75rem;
-  color: var(--cor-texto-suave);
-}
-
-.alerta {
-  padding: 10px 12px;
-  border-radius: var(--raio);
-  font-size: 0.875rem;
-}
-
-.alerta--erro {
-  background-color: #fdecea;
-  color: var(--cor-erro);
-}
-
-.carregando,
-.pagina-erro {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  min-height: 100vh;
-  color: var(--cor-texto-suave);
-}
-
-/* =====================================================================
-   Telas dos módulos (caixa, estoque, produção, dashboard)
-   ===================================================================== */
-
-.pagina__cabecalho {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-
-.filtro-periodo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--cor-texto-suave);
-}
-
-.filtro-periodo .campo__entrada {
-  width: auto;
-  padding: 6px 10px;
-  font-size: 0.875rem;
-}
-
-/* ---------- Abas ---------- */
-
-.abas {
-  display: flex;
-  gap: 4px;
-  margin: 20px 0 16px;
-  border-bottom: 1px solid var(--cor-borda);
-}
-
-.abas__item {
-  padding: 8px 16px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
-  font-family: inherit;
-  font-size: 0.95rem;
-  color: var(--cor-texto-suave);
-  cursor: pointer;
-}
-
-.abas__item:hover {
-  color: var(--cor-texto);
-}
-
-.abas__item--ativo {
-  color: var(--cor-primaria);
-  border-bottom-color: var(--cor-primaria);
-  font-weight: 500;
-}
-
-/* ---------- Barra de ações ---------- */
-
-.barra-acoes {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.barra-acoes__resumo {
-  font-size: 0.9rem;
-  color: var(--cor-texto-suave);
+  background-color: var(--acao-hover);
+  border-color: var(--acao-hover);
 }
 
 .botao--auto {
   width: auto;
 }
 
-.botao--perigo {
-  color: var(--cor-erro);
-}
-
-/* ---------- Tabela ---------- */
-
-/* A tabela ocupa o espaço que sobra e rola DENTRO do próprio quadro.
-   Assim as abas, o filtro e a barra de ações ficam parados: ela nunca
-   precisa rolar de volta ao topo para trocar de aba ou lançar algo.
-   `min-height: 0` de novo, pelo mesmo motivo do conteúdo principal — sem
-   ele o filho flex se recusa a encolher e o `overflow` não entra. */
-.tabela__rolagem {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  background-color: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
-}
-
-/* Com as linhas rolando por dentro, o cabeçalho tem que ficar: rolar
-   dez linhas e não saber mais qual coluna é qual é pior que rolar a
-   página inteira. */
-.tabela thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background-color: var(--cor-superficie);
-}
-
-.tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.tabela th {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--cor-texto-suave);
-  border-bottom: 1px solid var(--cor-borda);
-  white-space: nowrap;
-}
-
-.tabela td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--cor-fundo);
-  vertical-align: middle;
-}
-
-.tabela tr:last-child td {
-  border-bottom: none;
-}
-
-.tabela__linha--clicavel {
-  cursor: pointer;
-}
-
-.tabela__linha--clicavel:hover {
-  background-color: var(--cor-fundo);
-}
-
-.tabela__aviso {
-  padding: 32px;
-  text-align: center;
-  color: var(--cor-texto-suave);
-  background-color: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-}
-
-.riscado {
-  text-decoration: line-through;
-  color: var(--cor-texto-suave);
-}
-
-/* ---------- Etiquetas e saldos ---------- */
-
-.etiqueta {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background-color: var(--cor-fundo);
-  border: 1px solid var(--cor-borda);
-  font-size: 0.75rem;
-  color: var(--cor-texto-suave);
-  white-space: nowrap;
-}
-
-.etiqueta--retirada {
-  background-color: #fdf3e0;
-  border-color: #efd9a9;
-  color: #8a6520;
-}
-
-.etiqueta--alerta {
-  margin-left: 8px;
-  background-color: #fdecea;
-  border-color: #f5c6c0;
-  color: var(--cor-erro);
-}
-
-.saldo--baixo {
-  color: var(--cor-erro);
-  font-weight: 700;
-}
-
-/* ---------- Modal ---------- */
-
-.modal {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 24px;
-  overflow-y: auto;
-  background-color: rgba(61, 47, 40, 0.45);
-}
-
-.modal__caixa {
-  width: 100%;
-  margin: auto;
-  background-color: var(--cor-superficie);
-  border-radius: var(--raio);
-  box-shadow: 0 10px 40px rgba(61, 47, 40, 0.25);
-}
-
-.modal__topo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--cor-borda);
-}
-
-.modal__titulo {
-  margin: 0;
-  font-size: 1.125rem;
-}
-
-.modal__fechar {
-  border: none;
+.botao--texto {
+  padding: 5px 8px;
+  border-color: transparent;
   background: none;
-  font-size: 1.5rem;
-  line-height: 1;
-  color: var(--cor-texto-suave);
-  cursor: pointer;
+  color: var(--c-600);
+  font-size: 0.875rem;
 }
 
-.modal__corpo {
-  padding: 24px;
+.botao--texto:hover:not(:disabled) {
+  background-color: var(--c-100);
+  border-color: transparent;
 }
 
-/* ---------- Formulários ---------- */
-
-.form__linha {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
+.botao--perigo {
+  color: var(--erro);
 }
 
-.form__linha > .campo {
-  flex: 1;
+.botao--perigo:hover:not(:disabled) {
+  background-color: var(--erro-fundo);
+  border-color: var(--erro-borda);
+}
+
+/* =====================================================================
+   FORMULÁRIO
+   ===================================================================== */
+
+.campo {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.campo__rotulo {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--c-700);
+}
+
+.campo__entrada {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--r-1);
+  background-color: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.campo__entrada::placeholder {
+  color: var(--texto-fraco);
+}
+
+.campo__entrada:focus {
+  outline: none;
+  border-color: var(--acao);
+  box-shadow: 0 0 0 3px rgb(20 24 29 / 0.09);
+}
+
+.campo__dica {
+  display: block;
+  margin-top: 5px;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
 }
 
 .campo--inline {
@@ -821,257 +531,976 @@ body {
   width: auto;
 }
 
-.campo__dica {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.75rem;
-  color: var(--cor-texto-suave);
+.form__linha {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
 }
 
-.total-previa {
-  margin: 20px 0 16px;
-  padding: 12px 16px;
-  background-color: var(--cor-fundo);
-  border-radius: var(--raio);
-  font-size: 1.05rem;
+.form__linha > .campo {
+  flex: 1;
 }
 
-.previsao {
-  margin: 16px 0;
-  padding: 16px;
-  background-color: var(--cor-fundo);
-  border-radius: var(--raio);
+.filtro-periodo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
 }
 
-.previsao__titulo {
-  margin: 0 0 8px;
-  font-size: 0.8rem;
+.filtro-periodo .campo__entrada {
+  width: auto;
+  padding: 6px 9px;
+  font-size: 0.875rem;
+}
+
+/* =====================================================================
+   SUPERFÍCIES
+   ===================================================================== */
+
+.cartao {
+  padding: 20px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+}
+
+.cartao--estreito {
+  max-width: 480px;
+}
+
+.cartao--alerta {
+  border-color: var(--erro-borda);
+  background-color: var(--erro-fundo);
+}
+
+.cartao__titulo {
+  margin: 0 0 4px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+/* O espaço de 20px em cima é para SEPARAR de um bloco anterior. Quando o
+   subtítulo abre o cartão não há nada acima dele para separar, e os 20px
+   viram um buraco entre a borda e a primeira palavra — na tela de
+   fechamento eram dois cartões, dois buracos, 40px de nada num celular
+   que já não fechava a conta. */
+.cartao__subtitulo:first-child {
+  margin-top: 0;
+}
+
+.cartao__subtitulo {
+  margin: 20px 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--cor-texto-suave);
+  color: var(--texto-fraco);
 }
 
-.previsao__lista {
+.cartao__texto {
   margin: 0;
-  padding-left: 20px;
-  font-size: 0.9rem;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
 }
 
-.previsao__aviso {
-  margin: 0 0 12px;
-  font-size: 0.85rem;
-  color: var(--cor-texto-suave);
+.cartao__lista {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.875rem;
 }
 
-/* ---------- Dashboard ---------- */
-
-.indicador--positivo .indicador__valor {
-  color: var(--cor-positivo);
-}
-
-.indicador--negativo .indicador__valor {
-  color: var(--cor-erro);
+.cartao__aviso {
+  margin: 14px 0 0;
+  padding: 9px 11px;
+  border-radius: var(--r-1);
+  background-color: var(--c-100);
+  color: var(--c-600);
+  font-size: 0.8125rem;
 }
 
 .painel-duplo {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  margin-top: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
 }
 
-.cartao--alerta {
-  margin-top: 16px;
-  border-color: #f5c6c0;
-  background-color: #fffaf9;
-}
+/* =====================================================================
+   INDICADORES (tela de resumo)
+   ===================================================================== */
 
-.lista-simples {
-  margin: 0 0 8px;
-  padding: 0;
-  list-style: none;
-  font-size: 0.9rem;
-}
-
-.lista-simples li {
-  display: flex;
-  justify-content: space-between;
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--cor-fundo);
 }
 
-.lista-simples li:last-child {
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+}
+
+.indicador__rotulo {
+  font-size: 0.8125rem;
+  color: var(--texto-suave);
+}
+
+.indicador__valor {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.indicador__dica {
+  font-size: 0.75rem;
+  color: var(--texto-fraco);
+}
+
+.indicador--positivo .indicador__valor {
+  color: var(--ok);
+}
+
+.indicador--negativo .indicador__valor {
+  color: var(--erro);
+}
+
+/* =====================================================================
+   TABELA
+   ===================================================================== */
+
+.tabela__rolagem {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--c-50);
+}
+
+.tabela th {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--borda);
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabela td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--c-100);
+  vertical-align: middle;
+}
+
+.tabela tr:last-child td {
   border-bottom: none;
 }
 
-.saldo-grande {
-  margin: 8px 0 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--cor-positivo);
+.tabela__linha--clicavel {
+  cursor: pointer;
 }
 
-.saldo-grande--negativo {
-  color: var(--cor-erro);
+.tabela__linha--clicavel:hover {
+  background-color: var(--c-50);
 }
 
-/* ---------- Gráfico ---------- */
+.tabela__aviso {
+  padding: 40px 24px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  text-align: center;
+}
 
-.grafico {
+.riscado {
+  color: var(--texto-fraco);
+  text-decoration: line-through;
+}
+
+.barra-acoes {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  height: 160px;
-  margin-bottom: 8px;
-}
-
-.grafico__coluna {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  height: 100%;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
-.grafico__barras {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  width: 100%;
-  height: 100%;
+.barra-acoes__resumo {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
 }
 
-.grafico__barra {
-  width: 45%;
-  min-height: 2px;
-  border-radius: 3px 3px 0 0;
-  transition: height 0.2s;
-}
+/* =====================================================================
+   ETIQUETAS E AVISOS
+   ===================================================================== */
 
-.grafico__barra--venda {
-  background-color: var(--cor-primaria);
-}
-
-.grafico__barra--despesa {
-  /* Dourado da logo. A diferença de LUMINOSIDADE para o vinho das vendas
-     é o que separa as duas séries — quem não distingue matiz ainda lê o
-     gráfico, porque uma barra é escura e a outra é clara. */
-  background-color: var(--cor-dourado);
-}
-
-.grafico__rotulo {
-  font-size: 0.7rem;
-  color: var(--cor-texto-suave);
-}
-
-.grafico__legenda {
-  display: flex;
-  gap: 16px;
-  font-size: 0.75rem;
-  color: var(--cor-texto-suave);
-}
-
-.ponto {
+.etiqueta {
   display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 4px;
-  border-radius: 50%;
+  padding: 1px 7px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  background-color: var(--c-50);
+  color: var(--c-600);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.ponto--venda {
-  background-color: var(--cor-primaria);
+.etiqueta--retirada {
+  border-color: var(--aviso-borda);
+  background-color: var(--aviso-fundo);
+  color: var(--aviso);
 }
 
-.ponto--despesa {
-  background-color: var(--cor-dourado);
+.etiqueta--alerta {
+  margin-left: 6px;
+  border-color: var(--erro-borda);
+  background-color: var(--erro-fundo);
+  color: var(--erro);
+}
+
+.alerta {
+  padding: 9px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  font-size: 0.875rem;
+}
+
+.alerta--erro {
+  border-color: var(--erro-borda);
+  background-color: var(--erro-fundo);
+  color: var(--erro);
+}
+
+.alerta--ok {
+  border-color: var(--ok-borda);
+  background-color: var(--ok-fundo);
+  color: var(--ok);
+}
+
+.alerta--atencao {
+  border-color: var(--aviso-borda);
+  background-color: var(--aviso-fundo);
+  color: var(--aviso);
+}
+
+/* =====================================================================
+   ABAS E SELETOR DE PERÍODO
+   ===================================================================== */
+
+.abas {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 16px;
+  padding: 3px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  background-color: var(--c-100);
+}
+
+.abas__item {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--texto-suave);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+}
+
+.abas__item:hover {
+  color: var(--texto);
+}
+
+/* O ativo é uma pastilha branca sobre o trilho cinza. Sublinhado vira um
+   traço solto quando a aba quebra em duas linhas no celular; a pastilha
+   acompanha o formato do item, qualquer que seja a altura dele. */
+.abas__item--ativo,
+.abas__item--ativo:hover {
+  background-color: var(--superficie);
+  color: var(--texto);
+  box-shadow: 0 1px 2px rgb(20 24 29 / 0.08);
 }
 
 .seletor-periodo {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   padding: 3px;
-  background-color: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: 999px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  background-color: var(--c-100);
 }
 
 .seletor-periodo__item {
-  padding: 6px 14px;
+  padding: 5px 11px;
   border: none;
-  border-radius: 999px;
+  border-radius: 4px;
   background: none;
+  color: var(--texto-suave);
   font-family: inherit;
-  font-size: 0.85rem;
-  color: var(--cor-texto-suave);
-  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
   white-space: nowrap;
+  cursor: pointer;
 }
 
-.seletor-periodo__item--ativo {
-  background-color: var(--cor-primaria);
-  color: #fff;
+.seletor-periodo__item:hover {
+  color: var(--texto);
+}
+
+.seletor-periodo__item--ativo,
+.seletor-periodo__item--ativo:hover {
+  background-color: var(--superficie);
+  color: var(--texto);
+  box-shadow: 0 1px 2px rgb(20 24 29 / 0.08);
+}
+
+/* =====================================================================
+   MODAL
+   ===================================================================== */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 24px;
+  background-color: rgb(20 24 29 / 0.5);
+  overflow-y: auto;
+}
+
+.modal__caixa {
+  width: 100%;
+  margin: auto;
+  border-radius: var(--r-3);
+  background-color: var(--superficie);
+  box-shadow: var(--sombra-modal);
+}
+
+.modal__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.modal__titulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.modal__fechar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--texto-suave);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal__fechar:hover {
+  background-color: var(--c-100);
+  color: var(--texto);
+}
+
+.modal__corpo {
+  padding: 20px;
+}
+
+/* =====================================================================
+   TELA INICIAL — botões de ação
+   ===================================================================== */
+
+/* A saudação some do bloco próprio e vira uma linha, com a data ao lado.
+   Ela é cortesia, não informação: em duas linhas custava mais altura que
+   um botão inteiro. */
+.saudacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 16px;
+}
+
+.saudacao__titulo {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.saudacao__data {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+.saudacao__data::first-letter {
+  text-transform: uppercase;
+}
+
+/* Grade de 6 colunas: o tamanho do botão é quantas colunas ele ocupa —
+   6 em Venda, 3 nos dois do meio, 2 nos três de baixo. Uma grade só, um
+   passo só, e as bordas externas das três fileiras alinham por
+   construção e não por coincidência de o vão ser igual. */
+/* A tela inicial não acompanha a largura de leitura das outras: um botão
+   de mil e quinhentos pixels com um valor de vinte e oito é quase tudo
+   vão. Aqui a coluna para onde a proporção ainda faz sentido. */
+.inicio {
+  max-width: 880px;
+}
+
+.acoes {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* O botão agora é uma FICHA: rótulo em cima, número grande no meio,
+   detalhe embaixo, ícone no canto. A versão anterior era um quadrado com
+   o ícone no alto e um vão vazio de 100px até o rótulo — ocupava a tela
+   inteira para dizer uma palavra. Aqui o mesmo toque continua grande e o
+   espaço passa a mostrar o movimento do dia. */
+.cartao-acao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: var(--altura, 92px);
+  padding: 13px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 90ms ease-out,
+    background-color 90ms ease-out;
+}
+
+.cartao-acao:hover {
+  border-color: var(--borda-forte);
+  background-color: var(--c-50);
+}
+
+.cartao-acao__selo {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--texto-fraco);
+}
+
+.cartao-acao:hover .cartao-acao__selo {
+  color: var(--c-600);
+}
+
+.cartao-acao__rotulo {
+  padding-right: 26px; /* o ícone mora aqui */
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--c-600);
+  line-height: 1.3;
+}
+
+.cartao-acao__valor {
+  margin-top: auto;
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.cartao-acao__rodape {
+  font-size: 0.75rem;
+  color: var(--texto-fraco);
+}
+
+/* Venda ocupa a linha: é o que ela repete dez vezes por dia, e o tamanho
+   é a hierarquia inteira — nenhum botão é preenchido de cor. */
+.cartao-acao--grande {
+  grid-column: span 6;
+  --altura: 104px;
+}
+
+.cartao-acao--grande .cartao-acao__rotulo {
+  font-size: 0.875rem;
+}
+
+.cartao-acao--grande .cartao-acao__valor {
+  font-size: 1.75rem;
+}
+
+.cartao-acao--medio {
+  grid-column: span 3;
+}
+
+/* Os três de fim de expediente não têm número: só rótulo e ícone, e por
+   isso são mais baixos.
+
+   Aqui o ícone sai do canto e volta para cima do rótulo, centralizado. No
+   canto ele obrigava a reservar 26px à direita do texto, e num celular de
+   375px sobravam 59 para "Fechar dia", que pede 66 — o rótulo quebrava em
+   duas linhas e só ESSE cartão crescia, desalinhando a fileira. Sem a
+   reserva sobram 83px e ele cabe inteiro. */
+.cartao-acao--pequeno {
+  grid-column: span 2;
+  --altura: 68px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.cartao-acao--pequeno .cartao-acao__selo {
+  position: static;
+}
+
+.cartao-acao--pequeno .cartao-acao__rotulo {
+  padding-right: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--texto);
+  text-align: center;
+}
+
+/* ---------- Faixa de alerta de estoque ---------- */
+
+.faixa-alerta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--aviso-borda);
+  border-radius: var(--r-2);
+  background-color: var(--aviso-fundo);
+  color: var(--texto);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.faixa-alerta:hover {
+  background-color: #fef5d9;
+}
+
+.faixa-alerta--critica {
+  border-color: var(--erro-borda);
+  background-color: var(--erro-fundo);
+}
+
+.faixa-alerta--critica:hover {
+  background-color: #fee9e7;
+}
+
+.faixa-alerta__selo {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--aviso);
+}
+
+.faixa-alerta--critica .faixa-alerta__selo {
+  color: var(--erro);
+}
+
+.faixa-alerta__corpo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.faixa-alerta__texto {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--aviso);
+}
+
+.faixa-alerta--critica .faixa-alerta__texto {
+  color: var(--erro);
+}
+
+.faixa-alerta__resto {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--c-600);
+}
+
+.faixa-alerta__seta {
+  flex: 0 0 auto;
+  color: var(--texto-suave);
+}
+
+/* =====================================================================
+   VENDA RÁPIDA — grade de doces
+   ===================================================================== */
+
+.grade-produtos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+  gap: 8px;
+  max-height: 44vh;
+  margin-bottom: 16px;
+  overflow-y: auto;
+}
+
+.doce {
+  position: relative;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+}
+
+/* Escolhido = borda preta, não cor de fundo. A borda não precisa de
+   nenhuma cor da marca para se ver e não muda o contraste do texto. */
+.doce--escolhido {
+  border-color: var(--acao);
+  box-shadow: 0 0 0 1px var(--acao);
+}
+
+.doce__toque {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: var(--r-2);
+  background: none;
+  color: var(--texto);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* A cor sai do NOME do doce, não de um campo no banco: o schema está
+   fechado e o nome já é único. É o único ponto colorido que sobrou na
+   interface, e é dado — serve para ela achar o doce pela mancha de cor
+   antes de ler o nome. */
+.doce__cor {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-1);
+  box-shadow: inset 0 0 0 1px rgb(20 24 29 / 0.1);
+}
+
+.doce__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.doce__nome {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.doce__preco {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.doce__estoque {
+  font-size: 0.6875rem;
+  color: var(--texto-fraco);
+}
+
+/* Contador no canto de baixo, não no de cima: em cima ele cobria o nome
+   do doce, e apertar o nome para caber do lado quebrava "Bolo de pote"
+   em três linhas. */
+.doce__contador {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 3px;
+  border-radius: var(--r-1);
+  background-color: var(--acao);
+  color: var(--c-0);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.doce__passo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 4px;
+  background-color: rgb(255 255 255 / 0.22);
+  color: var(--c-0);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.doce__passo:hover {
+  background-color: rgb(255 255 255 / 0.35);
+}
+
+.barra-confirmar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--borda);
+}
+
+.barra-confirmar__valor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.barra-confirmar__itens {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.barra-confirmar__total {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.barra-confirmar .botao--primario {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+/* =====================================================================
+   DINHEIRO RÁPIDO — valor, atalhos, teclado, formas
+   ===================================================================== */
+
+.valor {
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.valor__rotulo {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+}
+
+.valor__linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+}
+
+.valor__moeda {
+  color: var(--texto-suave);
+  font-size: 1.25rem;
   font-weight: 500;
 }
 
-/* ---------- Marca ----------
-   A logo entra aqui quando chegar: o tamanho máximo evita que uma imagem
-   grande quebre o cabeçalho, e o alinhamento já fica pronto. */
+.valor__campo {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
 
-.marca {
-  display: inline-flex;
+.valor__campo:focus {
+  outline: none;
+}
+
+.atalhos-valor {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.atalho-valor {
+  min-height: 34px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  background-color: var(--superficie);
+  color: var(--c-600);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.atalho-valor:hover {
+  border-color: var(--borda-forte);
+  background-color: var(--c-50);
+  color: var(--texto);
+}
+
+.formas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 5px 0 16px;
+}
+
+.forma {
+  flex: 1 0 auto;
+  padding: 9px 13px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  background-color: var(--superficie);
+  color: var(--c-600);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.forma:hover {
+  border-color: var(--borda-forte);
+  color: var(--texto);
+}
+
+.forma--ativa,
+.forma--ativa:hover {
+  border-color: var(--acao);
+  background-color: var(--acao);
+  color: var(--c-0);
+}
+
+.teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.teclado__tecla {
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  min-height: 48px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-1);
+  background-color: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
 }
 
-.marca__logo {
-  height: 36px;
-  width: auto;
-  /* Sem arredondamento: a arte veio com fundo transparente, então a
-     medalha já recorta sozinha contra o creme do sistema. */
+.teclado__tecla:active {
+  background-color: var(--c-100);
+  border-color: var(--borda-forte);
 }
 
-.marca__nome {
-  font-family: 'Fraunces', Georgia, serif;
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
-  color: var(--cor-texto);
-  white-space: nowrap;
+.teclado__tecla--apagar {
+  background-color: var(--c-50);
 }
 
-/* Na tela de login a marca é o elemento principal: a medalha aparece
-   grande, onde o detalhe dela finalmente se lê, e o nome vai embaixo. */
-.marca--grande {
-  flex-direction: column;
-  gap: 12px;
+/* =====================================================================
+   FECHAMENTO E RESUMO
+   ===================================================================== */
+
+.total-previa,
+.previsao {
+  padding: 12px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--c-50);
 }
 
-.marca--grande .marca__logo {
-  height: 140px;
+.total-previa {
+  margin: 16px 0 14px;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-.marca--grande .marca__nome {
-  font-size: 1.5rem;
+.previsao {
+  margin: 14px 0;
 }
 
-.cartao--estreito {
-  max-width: 520px;
+.previsao__titulo {
+  margin: 0 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
 }
 
-.alerta--ok {
-  background-color: #e8f5ec;
-  color: #1b5e34;
+.previsao__lista {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.875rem;
 }
 
-/* ---------- Fechamento de caixa ---------- */
+.previsao__aviso {
+  margin: 0 0 10px;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
 
-/* A conta aparece linha a linha, do jeito que ela faria no papel: o que
-   sobrou de ontem, o que entrou, o que saiu, e o total embaixo. Mostrar
-   só o resultado final esconderia de onde veio o número. */
 .conta {
   margin: 0 0 8px;
   padding: 0;
@@ -1082,717 +1511,362 @@ body {
 .conta__total {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--cor-borda);
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--c-100);
+  font-size: 0.9375rem;
 }
 
 .conta__linha {
-  color: var(--cor-texto-suave);
+  color: var(--c-600);
 }
 
 .conta__total {
+  padding-top: 12px;
   border-bottom: none;
-  padding-top: 14px;
-  font-size: 1.15rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
 }
 
 .conta__sinal {
   margin-right: 4px;
-  color: var(--cor-texto-suave);
+  color: var(--texto-fraco);
 }
 
-.alerta--atencao {
-  background-color: #fdf3e2;
-  color: #8a5a10;
+.lista-simples {
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 0.875rem;
+  list-style: none;
+}
+
+.lista-simples li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--c-100);
+}
+
+.lista-simples li:last-child {
+  border-bottom: none;
+}
+
+.saldo-grande {
+  margin: 6px 0 0;
+  color: var(--ok);
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.saldo-grande--negativo {
+  color: var(--erro);
+}
+
+.saldo--baixo {
+  color: var(--erro);
+  font-weight: 600;
 }
 
 .fechamento__falta {
-  color: var(--cor-erro);
-  font-weight: 700;
+  color: var(--erro);
+  font-weight: 600;
 }
 
 .fechamento__sobra {
-  color: #8a5a10;
-  font-weight: 700;
+  color: var(--aviso);
+  font-weight: 600;
 }
 
 .fechamento__certo {
-  color: var(--cor-positivo);
-  font-weight: 700;
+  color: var(--ok);
+  font-weight: 600;
 }
 
 .fechamento__neutro {
-  color: var(--cor-texto-suave);
-  font-style: italic;
-}
-
-/* Conteúdo que continua na tela enquanto dados novos chegam. Ao trocar o
-   período, os números antigos ficam visíveis — esmaecer avisa que aquilo
-   ainda não é a resposta do que ela acabou de pedir. */
-.conteudo--atualizando {
-  opacity: 0.55;
-  transition: opacity 120ms ease-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .conteudo--atualizando {
-    transition: none;
-  }
-}
-/* ---------- Tela inicial: ações rápidas ---------- */
-
-/* Cartões brancos, ícone no alto, rótulo embaixo — nenhum preenchido de
-   cor. O TAMANHO é toda a hierarquia: Venda ocupa a linha inteira porque
-   é o que ela repete o dia todo, entrada e saída dividem a seguinte, e as
-   tarefas de fim de expediente ficam na fileira menor.
-
-   As alturas saíram medidas da referência e convertidas para 390px de
-   tela: 176 no grande, quadrado no médio, 135 no pequeno. O vão grande
-   entre ícone e rótulo é o que faz o cartão ser alvo de dedo em vez de
-   linha de lista — encolher isso devolve a tela para a leitura. */
-/* UMA grade de 6 colunas, não três linhas empilhadas cada uma com a sua
-   própria contagem de colunas.
-
-   Antes eram três `div` de linha: uma de 2 colunas e outra de 3, com o mesmo
-   vão. Cada linha dividia a largura por conta própria, então as bordas
-   externas coincidiam por acidente de o vão ser igual — mudar o vão de uma
-   desalinhava a outra. Com 6 colunas o passo é um só e o tamanho do cartão
-   passa a ser quantas colunas ele ocupa: 6, 3 ou 2.
-
-   A hierarquia por tamanho fica de pé. Ela é o que a referência do Itaú
-   resolve sem pintar cartão nenhum de cor, e Venda é o que a cliente repete
-   dez vezes por dia: igualar os seis no mesmo tamanho colocaria Venda no
-   mesmo peso de "Resumo", que ela abre uma vez por semana.
-
-   14 no vão e não 20: num notebook de 800px a tela inicial passava por
-   exatos 5px, e este é o espaço que sobra sem apertar nada que se leia. */
-.acoes {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 14px;
-  margin-bottom: 14px;
-}
-
-.cartao-acao {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
-  /* Os três tamanhos mudam por estas quatro medidas, declaradas uma vez
-     aqui e trocadas por cartão logo abaixo. Antes cada tamanho reescrevia
-     altura, respiro, selo e corpo em regras separadas — quatro lugares
-     para manter em fase, e o bloco de tela baixa tinha de mexer em todos
-     de novo. */
-  --altura: 176px;
-  --respiro: 18px;
-  --selo: 42px;
-  --rotulo: 1.05rem;
-  min-height: var(--altura);
-  padding: var(--respiro);
-  border: none;
-  border-radius: var(--raio-cartao);
-  background-color: var(--cor-superficie);
-  /* Sombra no lugar de borda: o fundo da marca é creme, não cinza como o
-     da referência, e sem um destes dois o cartão branco se dissolveria
-     no fundo. A sombra separa sem desenhar um contorno duro. */
-  box-shadow: 0 1px 3px rgba(63, 22, 11, 0.08);
-  color: var(--cor-texto);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    box-shadow 120ms ease-out,
-    transform 80ms ease-out;
-}
-
-.cartao-acao:hover {
-  box-shadow: 0 3px 10px rgba(63, 22, 11, 0.16);
-}
-
-.cartao-acao:active {
-  transform: scale(0.99);
-}
-
-/* O ícone ganha um selo rosa claro atrás. Solto sobre o branco ele some;
-   no selo, vira âncora visual e o cartão fica reconhecível de relance,
-   antes de ela ler o rótulo. */
-.cartao-acao__selo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--selo);
-  height: var(--selo);
-  border-radius: var(--raio-selo);
-  background-color: var(--cor-rosa-claro);
-  flex: 0 0 auto;
-}
-
-.cartao-acao .icone {
-  color: var(--cor-primaria);
-  flex: 0 0 auto;
-}
-
-.cartao-acao__texto {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.cartao-acao__rotulo {
-  font-size: var(--rotulo);
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-/* O movimento do dia, dentro do próprio cartão: ela vê o número no mesmo
-   lugar onde decide o que lançar, sem abrir o resumo. */
-.cartao-acao__rodape {
-  font-size: 0.75rem;
-  color: var(--cor-texto-suave);
-}
-
-/* A faixa rosa de 4px na borda esquerda saiu. Ela engordava um lado só do
-   cartão e empurrava o conteúdo 4px adiante dos dois cartões de baixo —
-   a assimetria que se via na tela. A largura inteira já diz que este é o
-   principal, sem desenhar nada. */
-.cartao-acao--grande {
-  grid-column: span 6;
-  --altura: 176px;
-  --rotulo: 1.3rem;
-}
-
-/* Altura própria aqui; o quadrado da referência vale só no celular e está
-   no bloco de 640px.
-
-   `aspect-ratio` com `max-height` não serve: a proporção passa a definir
-   também a LARGURA, e no desktop os cartões encolhiam para quadradinhos
-   de 190px dentro de uma célula de 533px, encostados à esquerda. */
-.cartao-acao--medio {
-  grid-column: span 3;
-  --altura: 176px;
-}
-
-/* 12px de respiro e não 14: com 14 sobram 84px úteis e "Fechar dia" pede
-   85 — quebrava em duas linhas por um pixel, e como só esse rótulo subia,
-   a fileira inteira desalinhava. */
-.cartao-acao--pequeno {
-  grid-column: span 2;
-  --altura: 135px;
-  --respiro: 12px;
-  --selo: 36px;
-  --rotulo: 0.9rem;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cartao-acao {
-    transition: none;
-  }
-  .cartao-acao:active {
-    transform: none;
-  }
-}
-
-/* Uma linha de confirmação, não um painel: só para ela ver que o que
-   lançou chegou onde devia. Os números de verdade estão em /resumo. */
-.resumo-dia {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  margin-bottom: 20px;
-  padding: 14px 18px;
-  background-color: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  color: var(--cor-texto);
-  font-family: inherit;
-  font-size: 0.95rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.resumo-dia:hover {
-  border-color: var(--cor-primaria);
-}
-
-.resumo-dia__link {
-  color: var(--cor-primaria);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* ---------- Venda rápida ---------- */
-
-/* Os doces são botões, não um select. No celular um select abre uma
-   roleta que cobre a tela e exige três gestos; aqui é um toque. */
-/* Dois por linha, e cada um deitado: a bolinha de cor à esquerda e o
-   texto à direita. Empilhado, a cor ficava longe do nome e não ajudava a
-   reconhecer. */
-.grade-produtos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-  max-height: 46vh;
-  overflow-y: auto;
-}
-
-.doce {
-  position: relative;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-cartao);
-  background-color: var(--cor-superficie);
-}
-
-.doce--escolhido {
-  border: 2px solid var(--cor-primaria);
-}
-
-.doce__toque {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 11px;
-  border: none;
-  background: none;
-  border-radius: var(--raio-cartao);
-  color: var(--cor-texto);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* A cor sai do NOME do doce, não de um campo no banco: o schema está
-   fechado e o nome já é único, então some as letras e escolha a matiz. */
-.doce__cor {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--raio-selo);
-  flex: 0 0 auto;
-  box-shadow: inset 0 0 0 1px rgba(63, 22, 11, 0.08);
-}
-
-.doce__info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.doce__nome {
-  font-weight: 700;
-  font-size: 0.9rem;
-  line-height: 1.2;
-}
-
-.doce__preco {
-  color: var(--cor-primaria);
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.doce__estoque {
-  font-size: 0.7rem;
-  color: var(--cor-texto-suave);
-}
-
-/* O contador aparece só depois do primeiro toque, e traz os DOIS passos.
-   Antes só dava para tirar um por vez pelo "−" e somar tocando o cartão
-   inteiro — dois gestos diferentes para a mesma coisa. */
-/* Canto INFERIOR direito, não superior. Em cima ele disputava espaço com
-   o nome: reservar margem para ele espremia "Bolo de pote" em três
-   linhas, o que é pior que o problema original. Embaixo, a linha do
-   estoque é curta e sobra espaço vazio. */
-.doce__contador {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 26px;
-  padding: 0 4px;
-  background-color: var(--cor-primaria);
-  border-radius: 999px;
-  color: #fff;
-  font-size: 0.8rem;
-}
-
-.doce__passo {
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.28);
-  color: #fff;
-  font-size: 0.95rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.formas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 6px 0 20px;
-}
-
-.forma {
-  flex: 1 0 auto;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  background-color: var(--cor-superficie);
-  color: var(--cor-texto-suave);
-  font-family: inherit;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.forma--ativa {
-  background-color: var(--cor-primaria);
-  border-color: var(--cor-primaria);
-  color: #fff;
-  font-weight: 500;
-}
-
-.barra-confirmar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--cor-borda);
-}
-
-.barra-confirmar__valor {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.barra-confirmar__itens {
-  font-size: 0.72rem;
-  color: var(--cor-texto-suave);
-}
-
-.barra-confirmar__total {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--cor-texto);
-  line-height: 1.1;
-}
-
-.barra-confirmar .botao--primario {
-  width: auto;
-  flex: 0 0 auto;
-}
-
-/* ---------- Lançamento de valor com teclado próprio ----------
-
-   O valor é o único dado de uma entrada rápida, então é o maior elemento
-   da tela. E quem digita é um teclado DESENHADO PARA DEDO, não o do
-   sistema: aquele cobre metade da tela, tem tecla de 6mm e some quando ela
-   toca fora sem querer. Aqui a tecla tem 44px e nada se move.            */
-
-.valor {
-  text-align: center;
-  margin-bottom: 14px;
-}
-
-.valor__rotulo {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--cor-texto-suave);
-}
-
-/* O "R$" fica de fora do input e o campo encolhe para o tamanho do que
-   ela digitou, para os dois ficarem juntos e centralizados. Com o campo
-   em 100%, o cifrão ficava solto na borda esquerda. */
-.valor__linha {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 6px;
-}
-
-.valor__moeda {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--cor-texto-suave);
-}
-
-.valor__campo {
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 2.6rem;
-  font-weight: 700;
-  color: var(--cor-texto);
-  text-align: center;
-  letter-spacing: -0.02em;
-  padding: 0;
-}
-
-.valor__campo:focus {
-  outline: none;
-}
-
-.atalhos-valor {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 7px;
-  margin-bottom: 16px;
-}
-
-.atalho-valor {
-  min-height: 38px;
-  border: 1px solid var(--cor-borda);
-  border-radius: 999px;
-  background-color: var(--cor-superficie);
-  color: var(--cor-texto-suave);
-  font-family: inherit;
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-
-.atalho-valor:hover {
-  border-color: var(--cor-primaria);
-  color: var(--cor-primaria);
-}
-
-.teclado {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.teclado__tecla {
-  min-height: 52px;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-cartao);
-  background-color: var(--cor-superficie);
-  color: var(--cor-texto);
-  font-family: inherit;
-  font-size: 1.45rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.teclado__tecla:active {
-  background-color: var(--cor-rosa-claro);
-  border-color: var(--cor-primaria);
-}
-
-.teclado__tecla--apagar {
-  background-color: var(--cor-fundo);
-}
-
-.teclado__tecla--apagar .icone {
-  color: var(--cor-texto);
-}
-/* Faixa de alerta: uma linha, não uma lista. O que ela precisa notar sem
-   procurar cabe numa frase; a lista inteira mora no Estoque.
-
-   A barra de 4px na borda esquerda saiu junto com a do cartão de Venda:
-   eram as duas bordas assimétricas da tela, e aqui ela ainda encostava num
-   canto de 10px embaixo de cartões de 16. Agora a faixa tem o mesmo canto e
-   o mesmo desenho de selo dos cartões, e é um irmão deles em vez de um
-   elemento de outro sistema colado no fim da tela.
-
-   O que marca a urgência passou a ser a cor DO SELO e do texto, não uma
-   barra: chama do mesmo jeito e não precisa quebrar a simetria. */
-.faixa-alerta {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #ecd9b4;
-  border-radius: var(--raio-cartao);
-  background-color: #fdf6e9;
-  color: var(--cor-texto);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* O crítico era rosa-claro — o MESMO tom do selo dos cartões de ação. Com o
-   sistema todo em framboesa isso lia como "elemento da marca", não como
-   "vencido". Este fundo é um vermelho lavado, que não existe em nenhum outro
-   lugar da interface, então só aparece quando há o que jogar fora. */
-.faixa-alerta--critica {
-  border-color: #f6d2d2;
-  background-color: var(--cor-erro-fundo);
-}
-
-/* O ícone ganha o selo arredondado dos cartões: é o que "integra" em vez de
-   deixar um símbolo solto encostado na borda. */
-.faixa-alerta__selo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--raio-selo);
-  background-color: #f7e7c8;
-}
-
-.faixa-alerta--critica .faixa-alerta__selo {
-  background-color: #f9dada;
-}
-
-.faixa-alerta .icone {
-  flex: 0 0 auto;
-  color: #8a5a10;
-}
-
-.faixa-alerta--critica .icone {
-  color: var(--cor-erro);
-}
-
-.faixa-alerta__corpo {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.faixa-alerta__texto {
-  display: block;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #8a5a10;
-}
-
-.faixa-alerta--critica .faixa-alerta__texto {
-  color: var(--cor-erro);
-}
-
-/* O resto vira segunda linha, em tom calmo: o alerta chama atenção pela
-   cor da barra, não por gritar duas frases em vermelho. */
-.faixa-alerta__resto {
-  display: block;
-  margin-top: 1px;
-  font-size: 0.75rem;
-  color: var(--cor-texto-suave);
-}
-
-/* No crítico o fundo é mais escuro e o marrom suave cai para 4,49 — um
-   centésimo abaixo do mínimo da WCAG. Aqui a segunda linha usa o marrom
-   cheio, que dá 7,63. */
-.faixa-alerta--critica .faixa-alerta__resto {
-  color: var(--cor-texto);
-}
-
-.faixa-alerta__seta {
-  flex: 0 0 auto;
-  color: var(--cor-texto-suave);
-}
-/* Saudação: quem abre isto às dez da noite não é a mesma pessoa que abriu
-   às oito da manhã. Custa uma linha e faz a tela parecer feita para ela. */
-.saudacao {
-  margin-bottom: 14px;
-}
-
-.saudacao__titulo {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--cor-texto);
-}
-
-/* Só a PRIMEIRA letra sobe. `text-transform: capitalize` maiúscula cada
-   palavra e devolveria "Quinta-Feira, 24 De Setembro" — em português
-   "de" e "feira" são minúsculas. */
-.saudacao__data {
-  margin: 2px 0 0;
-  font-size: 0.82rem;
-  color: var(--cor-texto-suave);
-}
-
-.saudacao__data::first-letter {
-  text-transform: uppercase;
+  color: var(--texto-fraco);
 }
 
 /* =====================================================================
-   Celular
-   ---------------------------------------------------------------------
-   A cliente lança venda no balcão, com o telefone na mão — não sentada
-   num desktop. Estas regras existem porque a tela rolava de lado em
-   390px: o cabeçalho somava 402px e o seletor de período 376px.
+   GRÁFICO
    ===================================================================== */
 
-@media (max-width: 640px) {
-  /* Nada pode empurrar a página para os lados */
-  html,
-  body {
-    overflow-x: hidden;
+.grafico {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  height: 150px;
+  margin-bottom: 8px;
+}
+
+.grafico__coluna {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+  height: 100%;
+}
+
+.grafico__barras {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+.grafico__barra {
+  width: 45%;
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.2s;
+}
+
+/* Venda é o preto cheio; despesa é o cinza médio. Duas cores não fazem
+   falta: a legenda diz qual é qual e a diferença de valor já se lê pela
+   altura. */
+.grafico__barra--venda {
+  background-color: var(--c-800);
+}
+
+.grafico__barra--despesa {
+  background-color: var(--c-300);
+}
+
+.grafico__rotulo {
+  font-size: 0.6875rem;
+  color: var(--texto-fraco);
+}
+
+.grafico__legenda {
+  display: flex;
+  gap: 14px;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.ponto {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 2px;
+}
+
+.ponto--venda {
+  background-color: var(--c-800);
+}
+
+.ponto--despesa {
+  background-color: var(--c-300);
+}
+
+/* =====================================================================
+   LOGIN E ESTADOS DE PÁGINA INTEIRA
+   ===================================================================== */
+
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+  background-color: var(--fundo);
+}
+
+.login__caixa {
+  width: 100%;
+  max-width: 352px;
+  padding: 28px;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-3);
+  background-color: var(--superficie);
+}
+
+.login__marca {
+  margin: 0;
+  font-size: 1.25rem;
+  text-align: center;
+}
+
+.login__subtitulo {
+  margin: 6px 0 22px;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.carregando,
+.pagina-erro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--texto-suave);
+}
+
+.conteudo--atualizando {
+  opacity: 0.5;
+  transition: opacity 0.12s ease-out;
+}
+
+/* =====================================================================
+   MARCA
+   ===================================================================== */
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.app__topo > .marca {
+  padding: 2px 8px 6px;
+}
+
+.marca__logo {
+  width: auto;
+  height: 30px;
+}
+
+.marca__nome {
+  color: var(--texto);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.marca--grande {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.marca--grande .marca__logo {
+  height: 84px;
+}
+
+.marca--grande .marca__nome {
+  font-size: 1.25rem;
+}
+
+.icone {
+  flex: 0 0 auto;
+}
+
+/* =====================================================================
+   CELULAR — a navegação desce para baixo
+
+   Abaixo de 900px a coluna da esquerda vira uma barra colada no rodapé.
+   O `<nav>` é o MESMO elemento: muda de área na grade, de direção e de
+   aparência, e nenhum item existe em dois lugares do markup.
+   ===================================================================== */
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'topo'
+      'principal'
+      'lado';
   }
 
-  .hero__interno {
-    padding: 12px 14px 0;
+  /* O mesmo bloco de cima, agora numa linha só: marca à esquerda, conta e
+     sair à direita. */
+  .app__topo {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 10px 7px 14px;
+    border-right: none;
+    border-bottom: 1px solid var(--borda);
   }
 
-  .hero__titulo {
-    margin: 14px 0 12px;
-    font-size: 1.35rem;
+  .app__topo > .marca {
+    padding: 0;
   }
 
-  /* No celular o menu rola de lado dentro da faixa em vez de quebrar em
-     duas linhas: aqui, diferente do cabeçalho antigo, o item ativo é
-     branco e a rolagem revela que há mais — não some item sem pista. */
-  .hero__menu {
-    margin: 0 -14px;
-    padding: 0 14px;
+  /* O nome inteiro não cabe ao lado da marca em 390px; a inicial e o
+     botão de sair cabem, e o nome completo está na tela Minha conta. */
+  .conta-link__nome {
+    display: none;
   }
 
-  .hero__marca .marca__nome {
-    font-size: 0.95rem;
+  .app__lado {
+    border-right: none;
+    border-top: 1px solid var(--borda);
+    /* A barra encosta no fim da tela; no iPhone o "queixo" do gesto de
+       voltar para casa fica por cima dela sem este respiro. */
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .hero__usuario {
-    gap: 4px;
+  /* Fechar dia e Resumo saem da barra: com seis itens cada alvo cairia
+     para 65px com rótulo de duas linhas. Os dois continuam a um toque,
+     como botões na tela inicial. */
+  .nav__item--so-desktop {
+    display: none;
   }
 
-  .hero__conta {
-    max-width: 96px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: block;
+  .nav {
+    flex-direction: row;
+    gap: 0;
+    padding: 0;
+    overflow: visible;
   }
 
-  .marca__logo {
-    height: 28px;
+  .nav__grupo {
+    display: none;
   }
 
-  .marca__nome {
-    font-size: 0.95rem;
+  /* Ícone em cima, palavra embaixo, e o item inteiro é o alvo: a fileira
+     divide a largura por igual, então o dedo acerta um quarto da tela. */
+  .nav__item {
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    min-height: var(--barra-baixo);
+    padding: 7px 2px 6px;
+    border-radius: 0;
+    font-size: 0.6875rem;
+    font-weight: 500;
   }
 
-  .layout__conteudo {
-    padding: 20px 14px;
+  .nav__item:hover {
+    background: none;
   }
 
-  /* Cabeçalho de página e seus filtros empilham */
+  /* Sem pastilha cinza aqui: numa barra de quatro itens colados, o bloco
+     de fundo vira uma mancha. O que marca o ativo é o preto no ícone e no
+     texto, mais o peso. */
+  .nav__item--ativo,
+  .nav__item--ativo:hover {
+    background: none;
+    color: var(--texto);
+    font-weight: 600;
+  }
+
+  .nav__rotulo {
+    max-width: 100%;
+  }
+
+  .app__conteudo {
+    padding: 16px 14px 20px;
+  }
+
   .pagina__cabecalho {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
   }
 
   .filtro-periodo,
@@ -1807,77 +1881,65 @@ body {
 
   .seletor-periodo__item {
     flex: 1;
-    padding: 8px 6px;
-    font-size: 0.8rem;
+    padding: 6px 4px;
+    font-size: 0.75rem;
     text-align: center;
   }
 
-  /* Campos lado a lado viram um por linha: dedo não acerta campo estreito */
   .form__linha {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
   }
 
-  /* As quatro abas precisavam de 438px e a tela dá 362: "Histórico"
-     ficava cortado e, como a casca tem `overflow: hidden`, não havia nem
-     como rolar até ele — o item existia e era inalcançável. Dividindo a
-     largura por igual, os quatro cabem; "Doces prontos" quebra em duas
-     linhas, que é preço bem menor que sumir com uma aba. */
-  .abas {
-    margin: 14px 0 12px;
-    gap: 2px;
-  }
-
   .abas__item {
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 8px 4px;
-    font-size: 0.85rem;
-    text-align: center;
-  }
-
-  /* Quadrado como na referência, que é um layout de celular. No desktop
-     isso viraria uma torre, então a proporção fica só aqui. */
-  .cartao-acao--medio {
-    aspect-ratio: 1 / 1;
-    --altura: 0;
-  }
-
-  /* Dois por linha, não um. Quatro indicadores empilhados somavam ~520px
-     de rolagem no Resumo, e cada um carrega só um rótulo e um número —
-     não precisam da largura inteira para caber sem espremer. */
-  .indicadores {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .indicador {
-    padding: 14px;
-  }
-
-  .indicador__valor {
-    font-size: 1.35rem;
+    padding: 7px 4px;
+    font-size: 0.8125rem;
   }
 
   .painel-duplo {
     grid-template-columns: 1fr;
   }
 
-  /* Ações empilham e o botão ocupa a linha inteira, fácil de acertar */
   .barra-acoes {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
   }
 
   .botao--auto {
     width: 100%;
   }
 
-  /* A tabela rola dentro do seu próprio quadro, nunca empurrando a página */
-  .tabela__rolagem {
-    max-width: 100%;
+  .indicadores {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cartao {
+    padding: 16px;
+  }
+
+  /* Formulário mais apertado no celular. O respiro entre campos é o que
+     dá ritmo de leitura numa tela larga; num aparelho de 390px ele é o
+     que empurra o botão de enviar para fora da tela, e aí ela não vê que
+     existe um botão. */
+  .campo {
+    margin-bottom: 11px;
+  }
+
+  .campo__rotulo {
+    margin-bottom: 4px;
+  }
+
+  .cartao__aviso {
+    margin-top: 10px;
+  }
+
+  .indicador {
+    padding: 13px;
+  }
+
+  .indicador__valor {
+    font-size: 1.25rem;
   }
 
   .tabela th,
@@ -1886,10 +1948,10 @@ body {
     white-space: nowrap;
   }
 
-  /* O modal vira tela cheia: em 390px, margem lateral é espaço perdido */
+  /* O modal vira tela cheia: em 390px, margem lateral é espaço perdido. */
   .modal {
-    padding: 0;
     align-items: stretch;
+    padding: 0;
   }
 
   .modal__caixa {
@@ -1903,27 +1965,17 @@ body {
   }
 
   .grafico {
-    height: 130px;
-  }
-
-  .grafico__rotulo {
-    font-size: 0.6rem;
-  }
-
-  .login__caixa {
-    padding: 24px 20px;
-  }
-
-  .marca--grande .marca__logo {
-    height: 110px;
+    height: 120px;
   }
 }
 
-/* Alvos de toque: o padrão da plataforma é 44px. Campo baixo demais faz
+/* Alvos de toque: o padrão das plataformas é 44px. Campo baixo demais faz
    a cliente errar o toque e desistir de lançar pelo celular. */
 @media (pointer: coarse) {
   .campo__entrada,
-  .botao {
+  .botao,
+  .forma,
+  .abas__item {
     min-height: 44px;
   }
 
@@ -1931,26 +1983,11 @@ body {
      "cancelar"). Subir para 44px engordaria a tabela inteira sem
      necessidade: ali o alvo já passa o mínimo de 24px da WCAG 2.5.8. */
   .botao--texto {
-    min-height: 36px;
-    padding: 8px 10px;
+    min-height: 34px;
   }
 
-  /* O cabeçalho é a exceção: menu, conta e sair são tocados em pé, no
-     balcão, com uma mão só. Aqui vale os 44px padrão das plataformas. */
-  .hero__link,
-  .hero__conta,
-  .hero__sair {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-  }
-
-  /* Nenhum dos dois usa a classe `.botao`, então a regra acima não os
-     alcançava. São controles de uso constante: o seletor abre o dashboard
-     e as abas trocam vendas/despesas no caixa. */
-  .seletor-periodo__item,
-  .abas__item {
-    min-height: 44px;
+  .seletor-periodo__item {
+    min-height: 40px;
   }
 }
 
@@ -1958,104 +1995,56 @@ body {
    Telas BAIXAS — o celular real, não o número do catálogo.
 
    Um iPhone 13 é 390x844 no papel, mas com a barra do navegador à mostra
-   sobram ~664px, e num SE sobram ~553. Os cartões com altura fixa de
-   176/174/135 foram medidos contra os 844 e não cabem no que existe de
-   verdade: na tela inicial faltavam de 8 a 173px, dependendo do aparelho.
-
-   Aqui eles passam a encolher junto com a tela. `clamp` em vez de valores
-   por faixa porque a altura varia de forma contínua — a barra do
-   navegador some e volta conforme ela rola, e um degrau faria o layout
-   pular no meio do uso.
+   sobram ~664px; num SE sobram ~553. As medidas desta folha foram
+   escolhidas para caber nos 553, e este bloco é a margem de segurança
+   para o que ficar no limite.
    --------------------------------------------------------------------- */
 
-@media (max-height: 760px) {
-  .layout__conteudo {
-    padding: 14px;
+@media (max-height: 640px) {
+  .app__conteudo {
+    padding: 12px 14px 16px;
   }
 
-  .acoes {
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  /* Encolher a tela inteira é trocar as variáveis do cartão. Elas ficam em
-     regras de um único nome de classe, então quem vem depois no arquivo
-     vence — por isso `--rotulo` é declarado por tamanho aqui, e não uma vez
-     em `.cartao-acao`: ali ele passaria por cima do 0,9rem do pequeno e
-     AUMENTARIA a letra do menor cartão justamente na tela mais apertada. */
-  .cartao-acao {
-    --respiro: 12px;
-    gap: 8px;
-  }
-
-  .cartao-acao--grande {
-    --altura: clamp(84px, 17vh, 176px);
-    --rotulo: 1.15rem;
-  }
-
-  /* A proporção quadrada é o que mais custa altura: 174px de largura
-     viravam 174 de altura. Em tela baixa ela sai e entra altura própria. */
-  .cartao-acao--medio {
-    aspect-ratio: auto;
-    --altura: clamp(78px, 15vh, 174px);
-    --rotulo: 0.95rem;
-  }
-
-  .cartao-acao--pequeno {
-    --altura: clamp(68px, 13vh, 135px);
-  }
-
-  .resumo-dia {
-    padding: 10px 14px;
-    margin-bottom: 10px;
-  }
-
-  .faixa-alerta {
-    padding: 9px 12px;
-  }
-}
-
-/* ---------------------------------------------------------------------
-   Telas MUITO baixas — um iPhone SE com a barra do navegador à mostra dá
-   553px úteis, e o conteúdo da tela inicial pedia 582.
-
-   O degrau de 760px já encolheu os cartões até o que o conteúdo deles
-   permite: abaixo disso não sobra altura para cortar sem apertar o alvo
-   do dedo, que é a razão de a tela existir. Então o que cede aqui é o que
-   NÃO é ação — a saudação vira uma linha e o selo do alerta diminui.
-
-   A saudação em duas linhas custa 53px, mais do que um cartão pequeno
-   inteiro. Ela é gentil, não é informação: num aparelho deste tamanho
-   cabe "Boa tarde, Dalila · quinta-feira, 24 de setembro" numa linha só,
-   e os 28px voltam para os botões.
-   --------------------------------------------------------------------- */
-
-@media (max-height: 620px) {
   .saudacao {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 2px 8px;
     margin-bottom: 10px;
   }
 
   .saudacao__titulo {
-    font-size: 1.05rem;
+    font-size: 1rem;
   }
 
-  .saudacao__data {
-    margin: 0;
+  .acoes {
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
-  /* O selo do alerta passa a ser o que define a altura da faixa quando há
-     um aviso só — 32px de selo contra 20px de texto. Aqui ele encosta no
-     texto e deixa de puxar a faixa para cima do que ela precisa. */
-  .faixa-alerta__selo {
-    width: 26px;
-    height: 26px;
+  .cartao-acao {
+    padding: 10px 12px;
+  }
+
+  .cartao-acao--grande {
+    --altura: 88px;
+  }
+
+  .cartao-acao--grande .cartao-acao__valor {
+    font-size: 1.5rem;
+  }
+
+  .cartao-acao--medio {
+    --altura: 84px;
   }
 
   .cartao-acao--pequeno {
-    --selo: 32px;
+    --altura: 60px;
+  }
+
+  .nav__item {
+    min-height: 54px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
   }
 }
