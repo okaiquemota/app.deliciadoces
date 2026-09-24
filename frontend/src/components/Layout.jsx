@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Marca } from './Marca.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -42,20 +43,42 @@ import {
  * saber que a página mudou.
  */
 
-const SECOES = [
-  { para: '/dashboard', rotulo: 'Início', titulo: null, Icone: IconeInicio },
-  { para: '/caixa', rotulo: 'Caixa', titulo: 'Caixa', Icone: IconeCaixa },
-  { para: '/producao', rotulo: 'Produção', titulo: 'Produção', Icone: IconeProducao },
-  { para: '/estoque', rotulo: 'Estoque', titulo: 'Estoque', Icone: IconeEstoque },
+/**
+ * O menu em dois grupos, com cabeçalho — o arranjo de barra lateral do
+ * macOS. Não é enfeite: separa o que ela toca durante o expediente do que
+ * ela abre quando senta para fechar a conta, e sem essa divisão os seis
+ * itens viram uma lista sem ordem aparente.
+ *
+ * `soDesktop` não aparece na barra do celular. Com seis itens ali cada
+ * alvo cairia para 65px de largura com rótulo de duas linhas; os dois
+ * continuam a um toque, como botões na tela inicial.
+ */
+const GRUPOS = [
   {
-    para: '/fechamento',
-    rotulo: 'Fechar dia',
-    titulo: 'Fechamento de caixa',
-    Icone: IconeFechamento,
-    soDesktop: true,
+    grupo: 'No expediente',
+    itens: [
+      { para: '/dashboard', rotulo: 'Início', titulo: null, Icone: IconeInicio },
+      { para: '/caixa', rotulo: 'Caixa', titulo: 'Caixa', Icone: IconeCaixa },
+      { para: '/producao', rotulo: 'Produção', titulo: 'Produção', Icone: IconeProducao },
+      { para: '/estoque', rotulo: 'Estoque', titulo: 'Estoque', Icone: IconeEstoque },
+    ],
   },
-  { para: '/resumo', rotulo: 'Resumo', titulo: 'Resumo', Icone: IconeResumo, soDesktop: true },
+  {
+    grupo: 'Fim do dia',
+    itens: [
+      {
+        para: '/fechamento',
+        rotulo: 'Fechar dia',
+        titulo: 'Fechamento de caixa',
+        Icone: IconeFechamento,
+        soDesktop: true,
+      },
+      { para: '/resumo', rotulo: 'Resumo', titulo: 'Resumo', Icone: IconeResumo, soDesktop: true },
+    ],
+  },
 ];
+
+const SECOES = GRUPOS.flatMap((g) => g.itens);
 
 const TITULOS_EXTRA = { '/minha-conta': 'Minha conta' };
 
@@ -98,25 +121,34 @@ export function Layout() {
 
       <div className="app__lado">
         <nav className="nav" aria-label="Seções do sistema">
-          {SECOES.map(({ para, rotulo, Icone, soDesktop }) => (
-            <NavLink
-              key={para}
-              to={para}
-              className={({ isActive }) =>
-                [
-                  'nav__item',
-                  isActive ? 'nav__item--ativo' : '',
-                  soDesktop ? 'nav__item--so-desktop' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')
-              }
-            >
-              <Icone tamanho={20} />
-              <span className="nav__rotulo">{rotulo}</span>
-            </NavLink>
+          {GRUPOS.map(({ grupo, itens }) => (
+            <Fragment key={grupo}>
+              <span className="nav__grupo" aria-hidden="true">
+                {grupo}
+              </span>
+              {itens.map(({ para, rotulo, Icone, soDesktop }) => (
+                <NavLink
+                  key={para}
+                  to={para}
+                  className={({ isActive }) =>
+                    [
+                      'nav__item',
+                      isActive ? 'nav__item--ativo' : '',
+                      soDesktop ? 'nav__item--so-desktop' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                  }
+                >
+                  <Icone tamanho={20} />
+                  <span className="nav__rotulo">{rotulo}</span>
+                </NavLink>
+              ))}
+            </Fragment>
           ))}
         </nav>
+
+        <span className="app__versao">Delícia Doces · v1.0</span>
       </div>
 
       <div className="app__principal">
