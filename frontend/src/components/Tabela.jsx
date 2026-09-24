@@ -16,9 +16,13 @@ export function Tabela({ colunas, dados, carregando, vazio = 'Nada por aqui aind
       <table className="tabela">
         <thead>
           <tr>
+            {/* Coluna sem título é a de ações ("editar", "cancelar"). Deixar
+                o `th` vazio quebra a tabela para leitor de tela: ele lê a
+                célula e não sabe dizer de que coluna ela é. O nome existe,
+                só não é desenhado. */}
             {colunas.map((c) => (
               <th key={c.chave} style={c.alinhar ? { textAlign: c.alinhar } : undefined}>
-                {c.titulo}
+                {c.titulo || <span className="so-leitor">{c.rotulo ?? 'Ações'}</span>}
               </th>
             ))}
           </tr>

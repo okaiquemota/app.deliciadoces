@@ -37,19 +37,10 @@
 }
 
 :root {
-  /* ----- Cinza na paleta da Apple, com os tons CLAROS puxados p/ rosa
-
-     Os dois degraus mais claros são superfície de fundo — a página, o
-     trilho do controle segmentado, o realce do menu. Postos na matiz do
-     laço da marca (≈345°), eles trazem a confeitaria de volta sem que
-     nada fique "cor-de-rosa": texto, borda, ícone e botão seguem cinzas.
-
-     A luminosidade é praticamente a mesma do cinza que saiu, então o
-     contraste quase não mexeu: o texto dá 15,39 no fundo (era 15,46) e o
-     secundário 4,64 (era 4,66), ambos bem acima do mínimo de 4,5. */
+  /* ----- Cinza, na paleta da Apple --------------------------------- */
   --c-0: #ffffff;
-  --c-50: #fdf2f6; /* fundo da página */
-  --c-100: #f8e8ef; /* realce: item de menu aceso, hover, aviso */
+  --c-50: #f5f5f7; /* o cinza de fundo da apple.com */
+  --c-100: #ececf0; /* realce: item de menu aceso, hover, aviso */
   --c-200: #e8e8ed; /* borda de cartão */
   --c-300: #d2d2d7; /* borda forte, régua */
   --c-400: #86868b; /* terciário: 3,62 no branco — ÍCONE, nunca texto */
@@ -65,7 +56,12 @@
   --borda-forte: var(--c-300);
   --texto: var(--c-900);
   --texto-suave: var(--c-500);
-  --texto-fraco: var(--c-400); /* só ícone e traço; texto usa o suave */
+  /* 3,62 no branco: REPROVA como texto e por isso nem se chama texto.
+     Serve a ícone e traço, onde o mínimo é 3. A tentação é usá-lo em
+     rótulo miúdo para "dar hierarquia"; o que dá hierarquia ali é o
+     corpo menor, o versalete e o espacejamento, não um cinza que nem
+     todo mundo enxerga. */
+  --icone-fraco: var(--c-400);
 
   /* Ação primária é PRETO, não uma cor de marca: numa paleta neutra o
      contraste é o que destaca, e a Apple faz o mesmo nos botões da loja
@@ -270,7 +266,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .nav__item {
@@ -340,7 +336,7 @@ body {
    você está usando?". */
 .app__versao {
   padding: 10px 18px 14px;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
   font-size: 0.6875rem;
   letter-spacing: var(--tr-miudo);
 }
@@ -515,7 +511,7 @@ body {
 .botao--texto:hover:not(:disabled) {
   background-color: var(--c-100);
   border-color: transparent;
-  /* Sobre o realce rosa o cinza secundário do estado normal daria 4,29. */
+  /* Sobre o realce, o cinza secundário do estado normal daria 4,30. */
   color: var(--texto);
 }
 
@@ -557,7 +553,7 @@ body {
 }
 
 .campo__entrada::placeholder {
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .campo__entrada:focus {
@@ -650,7 +646,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .cartao__texto {
@@ -665,10 +661,10 @@ body {
   font-size: 0.875rem;
 }
 
-/* Texto em --c-700 e não no cinza secundário: sobre o realce rosa o
-   secundário cai para 4,29, abaixo do mínimo de 4,5 da WCAG. Este dá
-   8,48 e a caixa continua lendo como nota de rodapé pelo corpo menor,
-   que é o que a distingue — não pela cor apagada. */
+/* Texto em --c-700 e não no cinza secundário: sobre o realce, o
+   secundário cai para 4,30 — abaixo do mínimo de 4,5 da WCAG. Este dá
+   8,50, e a caixa continua lendo como nota de rodapé pelo corpo menor,
+   que é o que a distingue, não a cor apagada. */
 .cartao__aviso {
   margin: 14px 0 0;
   padding: 9px 11px;
@@ -727,7 +723,7 @@ body {
 
 .indicador__dica {
   font-size: 0.75rem;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .indicador--positivo .indicador__valor {
@@ -807,7 +803,7 @@ body {
 }
 
 .riscado {
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
   text-decoration: line-through;
 }
 
@@ -894,9 +890,13 @@ body {
   padding: 2px;
   border: none;
   border-radius: 9px;
-  background-color: rgb(198 128 152 / 0.16);
+  background-color: rgb(118 118 128 / 0.12);
 }
 
+/* O item apagado usa --c-700 e não o cinza secundário: o trilho é uma
+   mancha translúcida, e sobre ela o secundário cai para 4,07 — abaixo do
+   mínimo. O que separa aceso de apagado continua sendo a pastilha branca
+   e o peso, não a cor do texto. */
 .abas__item {
   flex: 1 1 0;
   min-width: 0;
@@ -904,7 +904,7 @@ body {
   border: none;
   border-radius: 7px;
   background: none;
-  color: var(--texto-suave);
+  color: var(--c-700);
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
@@ -935,7 +935,7 @@ body {
   padding: 2px;
   border: none;
   border-radius: 9px;
-  background-color: rgb(198 128 152 / 0.16);
+  background-color: rgb(118 118 128 / 0.12);
 }
 
 .seletor-periodo__item {
@@ -943,7 +943,7 @@ body {
   border: none;
   border-radius: 7px;
   background: none;
-  color: var(--texto-suave);
+  color: var(--c-700);
   font-family: inherit;
   font-size: 0.8125rem;
   font-weight: 500;
@@ -1107,7 +1107,7 @@ body {
   position: absolute;
   top: 12px;
   right: 12px;
-  color: var(--texto-fraco);
+  color: var(--icone-fraco);
 }
 
 .cartao-acao:hover .cartao-acao__selo {
@@ -1132,7 +1132,7 @@ body {
 
 .cartao-acao__rodape {
   font-size: 0.75rem;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 /* Venda ocupa a linha: é o que ela repete dez vezes por dia, e o tamanho
@@ -1304,7 +1304,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .registro__valor {
@@ -1326,7 +1326,7 @@ body {
 }
 
 .registro--vazio .registro__detalhe {
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 /* =====================================================================
@@ -1403,7 +1403,7 @@ body {
 
 .doce__estoque {
   font-size: 0.6875rem;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 /* Contador no canto de baixo, não no de cima: em cima ele cobria o nome
@@ -1559,7 +1559,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .valor__linha {
@@ -1680,7 +1680,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .previsao__lista {
@@ -1725,7 +1725,7 @@ body {
 
 .conta__sinal {
   margin-right: 4px;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .lista-simples {
@@ -1780,7 +1780,7 @@ body {
 }
 
 .fechamento__neutro {
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 /* =====================================================================
@@ -1833,7 +1833,7 @@ body {
 
 .grafico__rotulo {
   font-size: 0.6875rem;
-  color: var(--texto-fraco);
+  color: var(--texto-suave);
 }
 
 .grafico__legenda {
@@ -1991,10 +1991,20 @@ body {
     padding: 0;
   }
 
-  /* O nome inteiro não cabe ao lado da marca em 390px; a inicial e o
-     botão de sair cabem, e o nome completo está na tela Minha conta. */
+  /* O nome inteiro não cabe ao lado da marca em 390px — mas `display:
+     none` o tirava também do leitor de tela, e como a inicial ao lado é
+     decorativa (`aria-hidden`), o link ficava SEM NOME NENHUM: quem
+     navega por voz ouvia só "link". Aqui ele sai do desenho e continua
+     na árvore de acessibilidade. */
   .conta-link__nome {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
   }
 
   .app__lado {
@@ -2120,6 +2130,8 @@ body {
   .abas__item {
     padding: 7px 4px;
     font-size: 0.8125rem;
+    white-space: normal;
+    line-height: 1.2;
   }
 
   .painel-duplo {
@@ -2200,19 +2212,54 @@ body {
   .campo__entrada,
   .botao,
   .forma,
-  .abas__item {
+  .abas__item,
+  .seletor-periodo__item,
+  /* Os três abaixo escaparam da regra por não usarem a classe `.botao`.
+     Todos são de uso constante: o item de menu na barra lateral de um
+     tablet, e a conta e o sair, que ficam no canto onde a mão já segura o
+     aparelho — justamente onde errar o alvo é mais fácil. */
+  .nav__item,
+  .conta-link,
+  .app__sair {
     min-height: 44px;
   }
 
+  .app__sair {
+    min-width: 44px;
+  }
+
   /* `botao--texto` é ação secundária dentro de linha de tabela ("editar",
-     "cancelar"). Subir para 44px engordaria a tabela inteira sem
-     necessidade: ali o alvo já passa o mínimo de 24px da WCAG 2.5.8. */
+     "cancelar"), e é a única exceção. Subir para 44 engordaria a tabela
+     inteira: com dez linhas são 100px a mais de rolagem para nada. Os
+     34px passam o mínimo de 24 da WCAG 2.5.8 (AA); os 44 são recomendação
+     de plataforma, não exigência. */
   .botao--texto {
     min-height: 34px;
   }
+}
 
-  .seletor-periodo__item {
-    min-height: 40px;
+/* ---------------------------------------------------------------------
+   Telas ESTREITAS — abaixo de 400px o controle segmentado quebra em duas
+   fileiras de dois.
+
+   Em 320px as quatro abas do Estoque dividem 288: sobram 71 por aba e
+   "Ingredientes" pede 84 numa palavra só, que não tem onde quebrar — a
+   palavra saía cortada dentro da pastilha. Espremer a fonte não resolve
+   (12px ainda pede 77) e quebrar no meio da palavra é pior que o
+   problema.
+
+   Em 2x2 cada aba fica com 143px e sobra folga para o rótulo mais longo.
+   As quatro continuam à vista de uma vez, que é a razão de isto ser um
+   controle segmentado e não uma barra que rola.
+   --------------------------------------------------------------------- */
+
+@media (max-width: 400px) {
+  .abas {
+    flex-wrap: wrap;
+  }
+
+  .abas__item {
+    flex: 1 1 44%;
   }
 }
 

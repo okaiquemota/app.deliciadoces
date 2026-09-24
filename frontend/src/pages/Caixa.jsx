@@ -23,15 +23,26 @@ export function Caixa() {
   return (
     <section>
       <header className="pagina__cabecalho">
+        {/* Cada data tem rótulo próprio, invisível no desenho: o "até" no
+            meio orienta quem vê, mas não diz a um leitor de tela qual dos
+            dois campos é o começo do período. */}
         <div className="filtro-periodo">
+          <label className="so-leitor" htmlFor="periodo-inicio">
+            Início do período
+          </label>
           <input
+            id="periodo-inicio"
             type="date"
             className="campo__entrada"
             value={periodo.inicio}
             onChange={(e) => setPeriodo((p) => ({ ...p, inicio: e.target.value }))}
           />
-          <span>até</span>
+          <span aria-hidden="true">até</span>
+          <label className="so-leitor" htmlFor="periodo-fim">
+            Fim do período
+          </label>
           <input
+            id="periodo-fim"
             type="date"
             className="campo__entrada"
             value={periodo.fim}

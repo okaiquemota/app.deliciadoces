@@ -33,7 +33,7 @@ export function Login() {
   }
 
   return (
-    <div className="login">
+    <main className="login">
       <form className="login__caixa" onSubmit={aoEnviar}>
         <h1 className="login__marca">
           <Marca tamanho="grande" />
@@ -76,6 +76,6 @@ export function Login() {
           {enviando ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
-    </div>
+    </main>
   );
 }
