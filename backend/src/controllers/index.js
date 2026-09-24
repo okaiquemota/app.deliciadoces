@@ -189,6 +189,9 @@ export const dashboardController = {
   async porDia(req, res) {
     res.json(await dashboardService.porDia(filtrosPeriodo(req.query)));
   },
+  async ultimos(_req, res) {
+    res.json(await dashboardService.ultimos());
+  },
 };
 
 export const fechamentoController = {
