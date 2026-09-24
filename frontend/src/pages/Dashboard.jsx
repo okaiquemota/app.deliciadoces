@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { dashboard, estoque } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { moeda, quantidade, data as formatarData } from '../utils/formato.js';
@@ -12,6 +13,8 @@ import {
   IconeRetirada,
   IconeFechamento,
   IconeResumo,
+  IconeAtencao,
+  IconeSeta,
 } from '../components/Icones.jsx';
 
 /**
@@ -49,6 +52,20 @@ const MEDIAS = [
   { id: 'saida', rotulo: 'Saiu dinheiro', Icone: IconeSaida },
 ];
 
+/** "Boa tarde" conforme a hora — ela abre isso a manhã e a noite inteira. */
+function saudacao(agora = new Date()) {
+  const h = agora.getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+const DIA_LONGO = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+});
+
 const PEQUENAS = [
   { id: 'retirada', rotulo: 'Retirada', Icone: IconeRetirada },
   { id: 'fechamento', rotulo: 'Fechar dia', Icone: IconeFechamento, rota: '/fechamento' },
@@ -56,6 +73,7 @@ const PEQUENAS = [
 ];
 
 export function Dashboard() {
+  const { usuario } = useAuth();
   const navegar = useNavigate();
   const [aberto, setAberto] = useState(null);
   const [alertas, setAlertas] = useState(null);
@@ -105,16 +123,42 @@ export function Dashboard() {
   const alertaTopo = listaAlertas[0];
   const alertasRestantes = listaAlertas.length - 1;
 
+  /**
+   * O dado do dia vai PARA DENTRO do cartão.
+   *
+   * O espaço entre o ícone e o rótulo estava vazio, e o número que
+   * interessa àquela ação vivia noutra tela. Agora ela vê o movimento de
+   * hoje no mesmo lugar onde decide o que lançar — sem abrir o resumo.
+   */
+  const rodape = {
+    venda: hoje && `${hoje.quantidadeVendas} hoje · ${moeda(hoje.vendas)}`,
+    entrada: hoje && `${moeda(hoje.vendasAvulsas)} hoje`,
+    saida: hoje && `${moeda(hoje.custos)} hoje`,
+    retirada: hoje && `${moeda(hoje.retiradas)} hoje`,
+  };
+
   return (
     <section>
       {erro && <p className="alerta alerta--erro">{erro}</p>}
 
+      <header className="saudacao">
+        <h2 className="saudacao__titulo">
+          {saudacao()}, {usuario?.nome?.split(' ')[0]}
+        </h2>
+        <p className="saudacao__data">{DIA_LONGO.format(new Date())}</p>
+      </header>
+
       <div className="acoes">
-        <Cartao acao={PRINCIPAL} tamanho="grande" onClick={() => setAberto(PRINCIPAL.id)} />
+        <Cartao
+          acao={PRINCIPAL}
+          tamanho="grande"
+          rodape={rodape.venda}
+          onClick={() => setAberto(PRINCIPAL.id)}
+        />
 
         <div className="acoes__linha acoes__linha--dupla">
           {MEDIAS.map((a) => (
-            <Cartao key={a.id} acao={a} onClick={() => setAberto(a.id)} />
+            <Cartao key={a.id} acao={a} rodape={rodape[a.id]} onClick={() => setAberto(a.id)} />
           ))}
         </div>
 
@@ -130,29 +174,25 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Uma linha só: quanto entrou hoje. Não é painel, é confirmação de
-          que os lançamentos do dia chegaram onde deviam. */}
-      {hoje && (
-        <button type="button" className="resumo-dia" onClick={() => navegar('/resumo')}>
-          <span>
-            Hoje entraram <strong>{moeda(hoje.vendas)}</strong> em {hoje.quantidadeVendas} venda(s)
-          </span>
-          <span className="resumo-dia__link">ver o resumo</span>
-        </button>
-      )}
-
       {alertaTopo && (
         <button
           type="button"
           className={alertaTopo.critico ? 'faixa-alerta faixa-alerta--critica' : 'faixa-alerta'}
           onClick={() => navegar('/estoque')}
         >
-          <span className="faixa-alerta__texto">
-            {alertaTopo.texto}
-            {alertasRestantes > 0 &&
-              ` · e mais ${alertasRestantes} ${alertasRestantes === 1 ? 'item' : 'itens'}`}
+          <IconeAtencao tamanho={20} />
+          <span className="faixa-alerta__corpo">
+            <span className="faixa-alerta__texto">{alertaTopo.texto}</span>
+            {alertasRestantes > 0 && (
+              <span className="faixa-alerta__resto">
+                e mais {alertasRestantes} {alertasRestantes === 1 ? 'item' : 'itens'} precisam de
+                atenção
+              </span>
+            )}
           </span>
-          <span className="faixa-alerta__link">ver no estoque</span>
+          <span className="faixa-alerta__seta">
+            <IconeSeta tamanho={17} />
+          </span>
         </button>
       )}
 
@@ -177,12 +217,17 @@ export function Dashboard() {
  * grande em vez de linha de lista. O dedo acerta o cartão inteiro, não só
  * o texto.
  */
-function Cartao({ acao, tamanho = 'medio', onClick }) {
+function Cartao({ acao, tamanho = 'medio', rodape, onClick }) {
   const { Icone, rotulo } = acao;
   return (
     <button type="button" className={`cartao-acao cartao-acao--${tamanho}`} onClick={onClick}>
-      <Icone tamanho={tamanho === 'pequeno' ? 24 : 28} />
-      <span className="cartao-acao__rotulo">{rotulo}</span>
+      <span className="cartao-acao__selo">
+        <Icone tamanho={tamanho === 'pequeno' ? 22 : 24} />
+      </span>
+      <span className="cartao-acao__texto">
+        <span className="cartao-acao__rotulo">{rotulo}</span>
+        {rodape && <span className="cartao-acao__rodape">{rodape}</span>}
+      </span>
     </button>
   );
 }

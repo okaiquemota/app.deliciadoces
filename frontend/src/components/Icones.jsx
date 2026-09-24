@@ -81,3 +81,27 @@ export const IconeResumo = (p) => (
     <path d="M17 20v-9" />
   </Base>
 );
+
+/** Triângulo de atenção: acompanha a faixa de alerta. */
+export const IconeAtencao = (p) => (
+  <Base {...p}>
+    <path d="M12 4.5 21 19.5H3Z" />
+    <path d="M12 10v4" />
+    <path d="M12 17h.01" />
+  </Base>
+);
+
+/** Seta para a direita: indica que a faixa leva a outra tela. */
+export const IconeSeta = (p) => (
+  <Base {...p}>
+    <path d="m9 5 7 7-7 7" />
+  </Base>
+);
+
+/** Tecla de apagar do teclado numérico. */
+export const IconeApagar = (p) => (
+  <Base {...p}>
+    <path d="M9 5h10a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 19H9l-6-7Z" />
+    <path d="m12 9.5 5 5M17 9.5l-5 5" />
+  </Base>
+);

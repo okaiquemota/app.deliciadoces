@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { produtos as apiProdutos, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { Modal } from './Modal.jsx';
-import { moeda, quantidade } from '../utils/formato.js';
+import { corDoDoce, moeda, quantidade } from '../utils/formato.js';
 
 const FORMAS = [
   ['DINHEIRO', 'Dinheiro'],
@@ -110,10 +110,20 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
                     onClick={() => mexer(p.id, 1)}
                     aria-label={`Adicionar ${p.nome}`}
                   >
-                    <span className="doce__nome">{p.nome}</span>
-                    <span className="doce__preco">{moeda(p.precoVenda)}</span>
-                    <span className="doce__estoque">
-                      {quantidade(p.quantidadeAtual, p.unidade)}
+                    {/* A bolinha de cor vem do nome do doce. Ela reconhece
+                        pela cor antes de ler, que no balcão é a diferença
+                        entre achar e procurar. */}
+                    <span
+                      className="doce__cor"
+                      style={{ backgroundColor: corDoDoce(p.nome) }}
+                      aria-hidden="true"
+                    />
+                    <span className="doce__info">
+                      <span className="doce__nome">{p.nome}</span>
+                      <span className="doce__preco">{moeda(p.precoVenda)}</span>
+                      <span className="doce__estoque">
+                        {quantidade(p.quantidadeAtual, p.unidade)}
+                      </span>
                     </span>
                   </button>
 
@@ -121,13 +131,21 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
                     <div className="doce__contador">
                       <button
                         type="button"
-                        className="doce__menos"
+                        className="doce__passo"
                         onClick={() => mexer(p.id, -1)}
                         aria-label={`Tirar um ${p.nome}`}
                       >
                         −
                       </button>
                       <strong>{qtd}</strong>
+                      <button
+                        type="button"
+                        className="doce__passo"
+                        onClick={() => mexer(p.id, 1)}
+                        aria-label={`Somar um ${p.nome}`}
+                      >
+                        +
+                      </button>
                     </div>
                   )}
                 </div>
@@ -150,7 +168,12 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
           </div>
 
           <div className="barra-confirmar">
-            <span className="barra-confirmar__total">{moeda(total)}</span>
+            <span className="barra-confirmar__valor">
+              <span className="barra-confirmar__itens">
+                {itens.reduce((n, [, q]) => n + q, 0)} {itens.length === 1 ? 'item' : 'itens'}
+              </span>
+              <span className="barra-confirmar__total">{moeda(total)}</span>
+            </span>
             <button
               type="button"
               className="botao botao--primario"

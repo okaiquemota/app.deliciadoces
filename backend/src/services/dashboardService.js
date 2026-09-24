@@ -34,9 +34,23 @@ export const dashboardService = {
     const ate = fim ?? fimDaSemana();
     const periodo = { gte: de, lte: ate };
 
-    const [vendas, porForma, despesasPorTipo, alertas, ultimasVendas] = await Promise.all([
+    const [vendas, avulsas, porForma, despesasPorTipo, alertas, ultimasVendas] = await Promise.all([
       prisma.venda.aggregate({
         where: { data: periodo, cancelada: false },
+        _sum: { total: true },
+        _count: true,
+      }),
+
+      /**
+       * Entradas avulsas: venda SEM itens, o caminho de um toque.
+       *
+       * Separado porque o número diz algo que o total não diz: quanto
+       * dinheiro entrou sem o sistema saber qual doce saiu. Se essa fatia
+       * cresce, o estoque está derivando em silêncio — e é ela que precisa
+       * ver isso, não só quem lê o banco.
+       */
+      prisma.venda.aggregate({
+        where: { data: periodo, cancelada: false, itens: { none: {} } },
         _sum: { total: true },
         _count: true,
       }),
@@ -82,6 +96,8 @@ export const dashboardService = {
 
       vendas: totalVendas,
       quantidadeVendas: vendas._count,
+      vendasAvulsas: Number(avulsas._sum.total ?? 0),
+      quantidadeAvulsas: avulsas._count,
       custos,
       retiradas,
 

@@ -306,3 +306,37 @@ describe('entrada de dinheiro avulsa', () => {
     expect((await fechamentoService.previa(new Date())).totalEntradas).toBe(0);
   });
 });
+
+describe('o painel separa a entrada avulsa', () => {
+  it('conta a avulsa à parte, sem tirá-la do total', async () => {
+    // A fatia avulsa é o dinheiro que entrou sem o sistema saber qual doce
+    // saiu. Se ela cresce, o estoque está derivando — e o número só serve
+    // se continuar somando no total, que é o faturamento de verdade.
+    const { dashboardService } = await import('../src/services/dashboardService.js');
+    const p = await produtoComEstoque(100, 10);
+    await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 3 }], formaPagamento: 'DINHEIRO' },
+      null
+    );
+    await vendaService.criar({ valor: 45, formaPagamento: 'DINHEIRO' }, null);
+
+    const r = await dashboardService.resumo({});
+    expect(r.vendas).toBe(75);
+    expect(r.vendasAvulsas).toBe(45);
+    expect(r.quantidadeAvulsas).toBe(1);
+    expect(r.quantidadeVendas).toBe(2);
+  });
+
+  it('devolve zero quando não houve avulsa', async () => {
+    const { dashboardService } = await import('../src/services/dashboardService.js');
+    const p = await produtoComEstoque(100, 10);
+    await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 2 }], formaPagamento: 'PIX' },
+      null
+    );
+
+    const r = await dashboardService.resumo({});
+    expect(r.vendasAvulsas).toBe(0);
+    expect(r.quantidadeAvulsas).toBe(0);
+  });
+});
