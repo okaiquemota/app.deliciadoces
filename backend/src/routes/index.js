@@ -120,6 +120,7 @@ router.delete('/producoes/:id', producaoController.excluir);
 // -------------------------------------------------------------- dashboard
 router.get('/dashboard', dashboardController.resumo);
 router.get('/dashboard/por-dia', dashboardController.porDia);
+router.get('/dashboard/ultimos', dashboardController.ultimos);
 
 // ------------------------------------------------------- fechamento diário
 // `/previa` antes de `/:id` — senão "previa" seria lido como um id.

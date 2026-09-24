@@ -125,6 +125,63 @@ export const dashboardService = {
     };
   },
 
+  /**
+   * O último lançamento de CADA tipo — o mini-histórico da tela inicial.
+   *
+   * Três consultas e não uma lista de cinco: o que a cliente quer saber ao
+   * abrir o sistema é "o que eu registrei por último em cada coisa", e uma
+   * lista única ordenada por data responde isso mal — num dia de dez
+   * vendas, as cinco últimas são todas venda e a saída de ontem some.
+   *
+   * Sem recorte de período, de propósito. Se ela não vendeu hoje, o cartão
+   * mostrando a venda de ontem com a data é informação; um cartão vazio
+   * não é. O período fica a cargo de quem lê a data.
+   */
+  async ultimos() {
+    const [venda, entrada, saida] = await Promise.all([
+      // Venda COM itens: o caminho que baixa estoque.
+      prisma.venda.findFirst({
+        where: { cancelada: false, itens: { some: {} } },
+        include: { itens: { include: { produto: { select: { nome: true } } } } },
+        orderBy: { data: 'desc' },
+      }),
+
+      // Venda SEM itens: a entrada avulsa, o caminho de um toque.
+      prisma.venda.findFirst({
+        where: { cancelada: false, itens: { none: {} } },
+        orderBy: { data: 'desc' },
+      }),
+
+      // Saída é custo do negócio. Retirada pessoal sai do caixa mas é
+      // outra coisa, e tem o próprio botão — misturar as duas aqui daria
+      // à cliente a impressão de ter gasto na confeitaria o que ela levou
+      // para casa.
+      prisma.despesa.findFirst({
+        where: { categoria: { tipo: 'CUSTO_OPERACIONAL' } },
+        include: { categoria: { select: { nome: true } } },
+        orderBy: { data: 'desc' },
+      }),
+    ]);
+
+    return {
+      venda: venda && {
+        data: venda.data,
+        valor: Number(venda.total),
+        descricao: descreverItens(venda.itens),
+      },
+      entrada: entrada && {
+        data: entrada.data,
+        valor: Number(entrada.total),
+        descricao: FORMAS[entrada.formaPagamento] ?? 'Entrada avulsa',
+      },
+      saida: saida && {
+        data: saida.data,
+        valor: Number(saida.valor),
+        descricao: saida.descricao || saida.categoria.nome,
+      },
+    };
+  },
+
   /** Série diária do período, para o gráfico. */
   async porDia({ inicio, fim } = {}) {
     const de = inicio ?? inicioDaSemana();
@@ -155,3 +212,27 @@ export const dashboardService = {
     }));
   },
 };
+
+const FORMAS = {
+  DINHEIRO: 'Em dinheiro',
+  PIX: 'No Pix',
+  CARTAO_DEBITO: 'No débito',
+  CARTAO_CREDITO: 'No crédito',
+};
+
+/**
+ * "2x Brigadeiro" quando é um doce só, "Brigadeiro +2 itens" quando é mais.
+ *
+ * O cartão tem uma linha. Listar tudo estouraria a largura e seria cortado
+ * no meio de uma palavra; o primeiro nome mais a contagem cabe e diz o
+ * suficiente para ela reconhecer a venda que acabou de fazer.
+ */
+function descreverItens(itens = []) {
+  if (!itens.length) return 'Venda';
+  const [primeiro] = itens;
+  const nome = primeiro.produto?.nome ?? 'Doce';
+  if (itens.length > 1)
+    return `${nome} +${itens.length - 1} ${itens.length === 2 ? 'item' : 'itens'}`;
+  const qtd = Number(primeiro.quantidade);
+  return `${Number.isInteger(qtd) ? qtd : qtd.toFixed(3).replace(/\.?0+$/, '')}x ${nome}`;
+}

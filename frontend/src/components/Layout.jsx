@@ -1,7 +1,8 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Marca } from './Marca.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { estoque } from '../services/recursos.js';
 import {
   IconeInicio,
   IconeCaixa,
@@ -60,7 +61,13 @@ const GRUPOS = [
       { para: '/dashboard', rotulo: 'Início', titulo: null, Icone: IconeInicio },
       { para: '/caixa', rotulo: 'Caixa', titulo: 'Caixa', Icone: IconeCaixa },
       { para: '/producao', rotulo: 'Produção', titulo: 'Produção', Icone: IconeProducao },
-      { para: '/estoque', rotulo: 'Estoque', titulo: 'Estoque', Icone: IconeEstoque },
+      {
+        para: '/estoque',
+        rotulo: 'Estoque',
+        titulo: 'Estoque',
+        Icone: IconeEstoque,
+        contador: true,
+      },
     ],
   },
   {
@@ -85,6 +92,40 @@ const TITULOS_EXTRA = { '/minha-conta': 'Minha conta' };
 export function Layout() {
   const { usuario, sair } = useAuth();
   const { pathname } = useLocation();
+
+  /**
+   * O contador de estoque vive AQUI, e não na tela inicial.
+   *
+   * Antes era uma faixa de aviso na inicial: ela só via o problema se
+   * estivesse naquela tela, e a faixa ocupava altura que os botões
+   * queriam. Como número no item do menu, o aviso fica à vista nas seis
+   * telas, custa nada de espaço, e o toque que resolve — abrir o Estoque —
+   * é o próprio item onde o número aparece.
+   *
+   * Recarrega a cada troca de tela: é quando ela pode ter mexido no
+   * estoque, e evita uma consulta em laço só para manter o número fresco.
+   */
+  const [alertas, setAlertas] = useState(0);
+
+  useEffect(() => {
+    let vivo = true;
+    estoque
+      .alertas()
+      .then((a) => {
+        if (!vivo) return;
+        const total =
+          (a.insumosBaixos?.length ?? 0) +
+          (a.produtosBaixos?.length ?? 0) +
+          (a.validadeProxima?.length ?? 0);
+        setAlertas(total);
+      })
+      // Um contador que não carregou não é motivo para quebrar a casca do
+      // sistema inteiro: sem número, o menu segue funcionando.
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [pathname]);
 
   const primeiroNome = usuario?.nome?.split(' ')[0] ?? '';
   const inicial = (usuario?.nome?.trim()?.[0] ?? '?').toUpperCase();
@@ -126,7 +167,7 @@ export function Layout() {
               <span className="nav__grupo" aria-hidden="true">
                 {grupo}
               </span>
-              {itens.map(({ para, rotulo, Icone, soDesktop }) => (
+              {itens.map(({ para, rotulo, Icone, soDesktop, contador }) => (
                 <NavLink
                   key={para}
                   to={para}
@@ -142,6 +183,14 @@ export function Layout() {
                 >
                   <Icone tamanho={20} />
                   <span className="nav__rotulo">{rotulo}</span>
+                  {contador && alertas > 0 && (
+                    <span className="nav__contador">
+                      {alertas}
+                      <span className="so-leitor">
+                        {alertas === 1 ? ' item precisa de atenção' : ' itens precisam de atenção'}
+                      </span>
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </Fragment>

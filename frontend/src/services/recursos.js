@@ -59,6 +59,7 @@ export const producoes = {
 export const dashboard = {
   resumo: (params) => dados(api.get('/dashboard', { params })),
   porDia: (params) => dados(api.get('/dashboard/por-dia', { params })),
+  ultimos: () => dados(api.get('/dashboard/ultimos')),
 };
 
 export const fechamentos = {

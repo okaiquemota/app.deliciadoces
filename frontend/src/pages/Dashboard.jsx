@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { dashboard, estoque } from '../services/recursos.js';
+import { dashboard } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { moeda, quantidade, data as formatarData } from '../utils/formato.js';
+import { moeda } from '../utils/formato.js';
 import { VendaRapida } from '../components/VendaRapida.jsx';
 import { DinheiroRapido } from '../components/DinheiroRapido.jsx';
 import {
@@ -13,8 +13,6 @@ import {
   IconeRetirada,
   IconeFechamento,
   IconeResumo,
-  IconeAtencao,
-  IconeSeta,
 } from '../components/Icones.jsx';
 
 /**
@@ -28,9 +26,14 @@ import {
  * Então os quadrados viraram botões grandes, e os números mudaram para
  * /resumo, que ela abre quando senta para olhar o resultado.
  *
- * Os alertas ficaram aqui de propósito. São a única coisa que ela precisa
- * NOTAR sem ter ido procurar — ingrediente acabando ou vencendo não pode
- * depender de ela lembrar de abrir outra tela.
+ * Embaixo dos botões, o último lançamento de cada tipo. Serve de recibo:
+ * ela registra uma venda no balcão, o cartão muda, e ela vê que entrou —
+ * sem abrir o Caixa para conferir. É também onde um erro aparece rápido:
+ * um valor digitado errado fica ali, à vista, em vez de esperar o
+ * fechamento do dia.
+ *
+ * O aviso de estoque saiu daqui. Ele não sumiu: virou um contador no item
+ * Estoque do menu, que fica à vista em TODAS as telas e não só nesta.
  */
 
 /**
@@ -48,8 +51,8 @@ import {
 const PRINCIPAL = { id: 'venda', rotulo: 'Venda', Icone: IconeVenda };
 
 const MEDIAS = [
-  { id: 'entrada', rotulo: 'Entrou dinheiro', Icone: IconeEntrada },
-  { id: 'saida', rotulo: 'Saiu dinheiro', Icone: IconeSaida },
+  { id: 'entrada', rotulo: 'Entrada avulsa', Icone: IconeEntrada },
+  { id: 'saida', rotulo: 'Saída', Icone: IconeSaida },
 ];
 
 /** "Boa tarde" conforme a hora — ela abre isso a manhã e a noite inteira. */
@@ -66,8 +69,18 @@ const DIA_LONGO = new Intl.DateTimeFormat('pt-BR', {
   month: 'long',
 });
 
+/**
+ * O mini-histórico: o último de cada tipo, na mesma ordem dos botões
+ * acima, para o olho descer de "Venda" para "Última venda" sem procurar.
+ */
+const HISTORICO = [
+  { chave: 'venda', rotulo: 'Última venda' },
+  { chave: 'entrada', rotulo: 'Última entrada' },
+  { chave: 'saida', rotulo: 'Última saída' },
+];
+
 const PEQUENAS = [
-  { id: 'retirada', rotulo: 'Retirada', Icone: IconeRetirada },
+  { id: 'retirada', rotulo: 'Retirada pessoal', Icone: IconeRetirada },
   { id: 'fechamento', rotulo: 'Fechar dia', Icone: IconeFechamento, rota: '/fechamento' },
   { id: 'resumo', rotulo: 'Resumo', Icone: IconeResumo, rota: '/resumo' },
 ];
@@ -76,7 +89,7 @@ export function Dashboard() {
   const { usuario } = useAuth();
   const navegar = useNavigate();
   const [aberto, setAberto] = useState(null);
-  const [alertas, setAlertas] = useState(null);
+  const [ultimos, setUltimos] = useState(null);
   const [hoje, setHoje] = useState(null);
   const [erro, setErro] = useState('');
 
@@ -84,12 +97,12 @@ export function Dashboard() {
     try {
       const inicio = new Date();
       inicio.setHours(0, 0, 0, 0);
-      const [a, r] = await Promise.all([
-        estoque.alertas(),
+      const [r, u] = await Promise.all([
         dashboard.resumo({ inicio: paraDia(inicio), fim: paraDia(new Date()) }),
+        dashboard.ultimos(),
       ]);
-      setAlertas(a);
       setHoje(r);
+      setUltimos(u);
       setErro('');
     } catch (e) {
       setErro(mensagemDeErro(e));
@@ -104,24 +117,6 @@ export function Dashboard() {
     setAberto(null);
     carregar();
   }
-
-  const listaAlertas = montarAlertas(alertas);
-
-  /**
-   * Os alertas viram UMA FAIXA, não uma lista.
-   *
-   * A lista não tinha teto: com doze ingredientes em falta ela ocupava
-   * 300px e empurrava os cartões de ação para fora da tela — o contrário
-   * do que esta tela existe para fazer. Mas sumir com o aviso também não
-   * serve, porque é a única coisa que ela precisa NOTAR sem ter ido
-   * procurar.
-   *
-   * A faixa mostra o caso mais urgente (vencido primeiro, pela ordem que
-   * `montarAlertas` já devolve) e o total. O resto fica a um toque, no
-   * Estoque, onde a lista completa cabe.
-   */
-  const alertaTopo = listaAlertas[0];
-  const alertasRestantes = listaAlertas.length - 1;
 
   /**
    * O movimento do dia vai PARA DENTRO do botão, e é o número que manda.
@@ -180,29 +175,18 @@ export function Dashboard() {
         ))}
       </div>
 
-      {alertaTopo && (
-        <button
-          type="button"
-          className={alertaTopo.critico ? 'faixa-alerta faixa-alerta--critica' : 'faixa-alerta'}
-          onClick={() => navegar('/estoque')}
-        >
-          <span className="faixa-alerta__selo">
-            <IconeAtencao tamanho={18} />
-          </span>
-          <span className="faixa-alerta__corpo">
-            <span className="faixa-alerta__texto">{alertaTopo.texto}</span>
-            {alertasRestantes > 0 && (
-              <span className="faixa-alerta__resto">
-                e mais {alertasRestantes} {alertasRestantes === 1 ? 'item' : 'itens'} precisam de
-                atenção
-              </span>
-            )}
-          </span>
-          <span className="faixa-alerta__seta">
-            <IconeSeta tamanho={17} />
-          </span>
-        </button>
-      )}
+      {/*
+        O mini-histórico. Cada cartão é um recibo do último lançamento
+        daquele tipo, e não um botão: clicar leva para o Caixa, onde a
+        lista inteira está. Sem dado ainda, o cartão fica em tom apagado
+        dizendo o que falta — um espaço em branco faria a tela parecer
+        quebrada no primeiro dia de uso.
+      */}
+      <div className="historico">
+        {HISTORICO.map(({ chave, rotulo }) => (
+          <Registro key={chave} rotulo={rotulo} dado={ultimos?.[chave]} />
+        ))}
+      </div>
 
       <VendaRapida
         aberto={aberto === 'venda'}
@@ -249,49 +233,60 @@ function Cartao({ acao, tamanho = 'medio', dado, onClick }) {
   );
 }
 
+/**
+ * Um cartão do mini-histórico.
+ *
+ * O horário é relativo ("há 5 min", "ontem") e não absoluto. A pergunta
+ * que ela faz olhando para cá é "isto é o que eu acabei de lançar?", e
+ * "há 2 min" responde direto; "14:32" obriga a comparar com o relógio.
+ * Passado um dia a informação vira outra — aí a data absoluta é que
+ * serve, e é o que a função devolve.
+ */
+function Registro({ rotulo, dado }) {
+  return (
+    <div className={dado ? 'registro' : 'registro registro--vazio'}>
+      <span className="registro__rotulo">{rotulo}</span>
+      {dado ? (
+        <>
+          <span className="registro__valor">{moeda(dado.valor)}</span>
+          <span className="registro__detalhe">
+            {dado.descricao} · {quando(dado.data)}
+          </span>
+        </>
+      ) : (
+        <span className="registro__detalhe">Nada registrado ainda</span>
+      )}
+    </div>
+  );
+}
+
+const DIA_CURTO = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' });
+
+/** "agora", "há 12 min", "há 3 h", "ontem", "14/09". */
+function quando(valor) {
+  const quandoFoi = new Date(valor);
+  const minutos = Math.floor((Date.now() - quandoFoi.getTime()) / 60000);
+
+  if (minutos < 1) return 'agora';
+  if (minutos < 60) return `há ${minutos} min`;
+
+  // Vira "ontem" pela VIRADA DO DIA, não por 24h: um lançamento das 23h
+  // visto às 8h da manhã é de ontem, ainda que tenham passado 9 horas.
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dia = new Date(quandoFoi);
+  dia.setHours(0, 0, 0, 0);
+  const diasAtras = Math.round((hoje - dia) / 86400000);
+
+  if (diasAtras === 0) return `há ${Math.floor(minutos / 60)} h`;
+  if (diasAtras === 1) return 'ontem';
+  return DIA_CURTO.format(quandoFoi);
+}
+
 /** Data no formato do input, montada com componentes locais (fuso). */
 function paraDia(valor) {
   const d = new Date(valor);
   const mes = String(d.getMonth() + 1).padStart(2, '0');
   const dia = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mes}-${dia}`;
-}
-
-/**
- * Junta os alertas numa lista só, já em linguagem de gente.
- *
- * Lote VENCIDO é separado de lote VENCENDO: a ação é diferente — um se
- * joga fora, o outro se usa primeiro. Chamar os dois de "vence em breve",
- * como era antes, fazia o vencido há meses aparecer no topo com rótulo
- * errado, empurrando para baixo o que ainda dava para salvar.
- */
-function montarAlertas(alertas) {
-  if (!alertas) return [];
-  const linhas = [];
-
-  for (const i of alertas.insumosBaixos ?? []) {
-    linhas.push({
-      chave: `i-${i.id}`,
-      texto: `${i.nome} está acabando`,
-      valor: quantidade(i.quantidadeAtual, i.unidade),
-    });
-  }
-  for (const p of alertas.produtosBaixos ?? []) {
-    linhas.push({
-      chave: `p-${p.id}`,
-      texto: `${p.nome} está acabando`,
-      valor: quantidade(p.quantidadeAtual, p.unidade),
-    });
-  }
-  for (const m of alertas.validadeProxima ?? []) {
-    const vencido = new Date(m.validade) < new Date();
-    linhas.push({
-      chave: `v-${m.id}`,
-      texto: `${m.insumo?.nome} ${vencido ? 'está VENCIDO' : 'vence em breve'}`,
-      valor: formatarData(m.validade),
-      critico: vencido,
-    });
-  }
-  // Vencido primeiro: é o que exige ação hoje.
-  return linhas.sort((a, b) => Number(Boolean(b.critico)) - Number(Boolean(a.critico)));
 }
