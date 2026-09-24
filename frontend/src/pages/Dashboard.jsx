@@ -124,21 +124,25 @@ export function Dashboard() {
   const alertasRestantes = listaAlertas.length - 1;
 
   /**
-   * O dado do dia vai PARA DENTRO do cartão.
+   * O movimento do dia vai PARA DENTRO do botão, e é o número que manda.
    *
-   * O espaço entre o ícone e o rótulo estava vazio, e o número que
-   * interessa àquela ação vivia noutra tela. Agora ela vê o movimento de
-   * hoje no mesmo lugar onde decide o que lançar — sem abrir o resumo.
+   * A versão anterior era um quadrado com o ícone no alto e um vão vazio
+   * de cem pixels até o rótulo — ocupava a tela inteira para dizer uma
+   * palavra, e o número que interessava àquela ação vivia noutra tela.
+   * Agora o botão é uma ficha: o que ela faz em cima, quanto já deu hoje
+   * no meio, o detalhe embaixo.
    */
-  const rodape = {
-    venda: hoje && `${hoje.quantidadeVendas} hoje · ${moeda(hoje.vendas)}`,
-    entrada: hoje && `${moeda(hoje.vendasAvulsas)} hoje`,
-    saida: hoje && `${moeda(hoje.custos)} hoje`,
-    retirada: hoje && `${moeda(hoje.retiradas)} hoje`,
+  const dados = {
+    venda: hoje && {
+      valor: moeda(hoje.vendas),
+      detalhe: `${hoje.quantidadeVendas} ${hoje.quantidadeVendas === 1 ? 'venda' : 'vendas'} hoje`,
+    },
+    entrada: hoje && { valor: moeda(hoje.vendasAvulsas), detalhe: 'entrou hoje' },
+    saida: hoje && { valor: moeda(hoje.custos), detalhe: 'saiu hoje' },
   };
 
   return (
-    <section>
+    <section className="inicio">
       {erro && <p className="alerta alerta--erro">{erro}</p>}
 
       <header className="saudacao">
@@ -148,30 +152,32 @@ export function Dashboard() {
         <p className="saudacao__data">{DIA_LONGO.format(new Date())}</p>
       </header>
 
+      {/*
+        Uma grade de 6 colunas, sem `div` de linha no meio. O tamanho do
+        cartão é quantas colunas ele ocupa — 6, 3 ou 2 — e quem decide isso
+        é o CSS, pelo nome do tamanho. Antes cada fileira era um `div` que
+        montava a sua própria grade, com a sua própria contagem de colunas.
+      */}
       <div className="acoes">
         <Cartao
           acao={PRINCIPAL}
           tamanho="grande"
-          rodape={rodape.venda}
+          dado={dados.venda}
           onClick={() => setAberto(PRINCIPAL.id)}
         />
 
-        <div className="acoes__linha acoes__linha--dupla">
-          {MEDIAS.map((a) => (
-            <Cartao key={a.id} acao={a} rodape={rodape[a.id]} onClick={() => setAberto(a.id)} />
-          ))}
-        </div>
+        {MEDIAS.map((a) => (
+          <Cartao key={a.id} acao={a} dado={dados[a.id]} onClick={() => setAberto(a.id)} />
+        ))}
 
-        <div className="acoes__linha acoes__linha--tripla">
-          {PEQUENAS.map((a) => (
-            <Cartao
-              key={a.id}
-              acao={a}
-              tamanho="pequeno"
-              onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
-            />
-          ))}
-        </div>
+        {PEQUENAS.map((a) => (
+          <Cartao
+            key={a.id}
+            acao={a}
+            tamanho="pequeno"
+            onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
+          />
+        ))}
       </div>
 
       {alertaTopo && (
@@ -180,7 +186,9 @@ export function Dashboard() {
           className={alertaTopo.critico ? 'faixa-alerta faixa-alerta--critica' : 'faixa-alerta'}
           onClick={() => navegar('/estoque')}
         >
-          <IconeAtencao tamanho={20} />
+          <span className="faixa-alerta__selo">
+            <IconeAtencao tamanho={18} />
+          </span>
           <span className="faixa-alerta__corpo">
             <span className="faixa-alerta__texto">{alertaTopo.texto}</span>
             {alertasRestantes > 0 && (
@@ -211,23 +219,32 @@ export function Dashboard() {
 }
 
 /**
- * Cartão de ação: ícone no alto, rótulo embaixo.
+ * Botão de ação em forma de ficha: rótulo, valor do dia, detalhe, e o
+ * ícone discreto no canto.
  *
- * O vão entre os dois é de propósito — é ele que faz o cartão virar alvo
- * grande em vez de linha de lista. O dedo acerta o cartão inteiro, não só
- * o texto.
+ * O ícone saiu do lugar de destaque de propósito. Ele serve para ela
+ * reconhecer o botão de relance depois de usar o sistema uma semana; nos
+ * primeiros dias quem carrega a leitura é a palavra, e nos dois casos o
+ * que ela quer ver é o número.
+ *
+ * `dado` só existe onde há movimento para mostrar. Retirada, Fechar dia e
+ * Resumo não têm número — são tarefa, não medida — e por isso ficam mais
+ * baixos, o que também é o que dá a hierarquia da tela.
  */
-function Cartao({ acao, tamanho = 'medio', rodape, onClick }) {
+function Cartao({ acao, tamanho = 'medio', dado, onClick }) {
   const { Icone, rotulo } = acao;
   return (
     <button type="button" className={`cartao-acao cartao-acao--${tamanho}`} onClick={onClick}>
       <span className="cartao-acao__selo">
-        <Icone tamanho={tamanho === 'pequeno' ? 22 : 24} />
+        <Icone tamanho={tamanho === 'grande' ? 20 : 18} />
       </span>
-      <span className="cartao-acao__texto">
-        <span className="cartao-acao__rotulo">{rotulo}</span>
-        {rodape && <span className="cartao-acao__rodape">{rodape}</span>}
-      </span>
+      <span className="cartao-acao__rotulo">{rotulo}</span>
+      {dado && (
+        <>
+          <span className="cartao-acao__valor">{dado.valor}</span>
+          <span className="cartao-acao__rodape">{dado.detalhe}</span>
+        </>
+      )}
     </button>
   );
 }

@@ -105,3 +105,57 @@ export const IconeApagar = (p) => (
     <path d="m12 9.5 5 5M17 9.5l-5 5" />
   </Base>
 );
+
+/* ---------------------------------------------------------------------
+   Ícones de navegação.
+
+   Entram com a barra lateral/inferior: numa barra de quatro itens colados
+   no rodapé, o rótulo sozinho é pequeno demais para mirar de relance — o
+   desenho é o que ela reconhece antes de ler.
+   --------------------------------------------------------------------- */
+
+/** Casa: a tela para onde tudo volta. */
+export const IconeInicio = (p) => (
+  <Base {...p}>
+    <path d="M3.5 10.5 12 3.5l8.5 7" />
+    <path d="M5.5 9.5v10h13v-10" />
+    <path d="M9.75 19.5v-5.5h4.5v5.5" />
+  </Base>
+);
+
+/** Cupom com linhas: o lançamento de caixa. */
+export const IconeCaixa = (p) => (
+  <Base {...p}>
+    <path d="M5 3.5h14v17l-2.3-1.6-2.35 1.6L12 19l-2.35 1.5L7.3 18.9 5 20.5Z" />
+    <path d="M8.75 8.5h6.5" />
+    <path d="M8.75 12.5h6.5" />
+  </Base>
+);
+
+/** Batedeira vista de frente: o que se faz na cozinha. */
+export const IconeProducao = (p) => (
+  <Base {...p}>
+    <path d="M4 4.5h9a4.5 4.5 0 0 1 0 9H8.5" />
+    <path d="M8.5 13.5 7 20.5" />
+    <path d="M12.5 13.5 14 20.5" />
+    <path d="M5.5 20.5h11" />
+  </Base>
+);
+
+/** Caixas empilhadas: o estoque. */
+export const IconeEstoque = (p) => (
+  <Base {...p}>
+    <path d="M3.5 7.5 12 3.5l8.5 4L12 11.5Z" />
+    <path d="M3.5 7.5v9L12 20.5l8.5-4v-9" />
+    <path d="M12 11.5v9" />
+  </Base>
+);
+
+/** Porta com seta saindo: encerrar a sessão. */
+export const IconeSair = (p) => (
+  <Base {...p}>
+    <path d="M14.5 4.5h-8v15h8" />
+    <path d="M11 12h9.5" />
+    <path d="m17.5 8.5 3.5 3.5-3.5 3.5" />
+  </Base>
+);
