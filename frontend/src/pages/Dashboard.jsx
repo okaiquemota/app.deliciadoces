@@ -148,6 +148,12 @@ export function Dashboard() {
         <p className="saudacao__data">{DIA_LONGO.format(new Date())}</p>
       </header>
 
+      {/*
+        Uma grade de 6 colunas, sem `div` de linha no meio. O tamanho do
+        cartão é quantas colunas ele ocupa — 6, 3 ou 2 — e quem decide isso
+        é o CSS, pelo nome do tamanho. Antes cada fileira era um `div` que
+        montava a sua própria grade, com a sua própria contagem de colunas.
+      */}
       <div className="acoes">
         <Cartao
           acao={PRINCIPAL}
@@ -156,22 +162,18 @@ export function Dashboard() {
           onClick={() => setAberto(PRINCIPAL.id)}
         />
 
-        <div className="acoes__linha acoes__linha--dupla">
-          {MEDIAS.map((a) => (
-            <Cartao key={a.id} acao={a} rodape={rodape[a.id]} onClick={() => setAberto(a.id)} />
-          ))}
-        </div>
+        {MEDIAS.map((a) => (
+          <Cartao key={a.id} acao={a} rodape={rodape[a.id]} onClick={() => setAberto(a.id)} />
+        ))}
 
-        <div className="acoes__linha acoes__linha--tripla">
-          {PEQUENAS.map((a) => (
-            <Cartao
-              key={a.id}
-              acao={a}
-              tamanho="pequeno"
-              onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
-            />
-          ))}
-        </div>
+        {PEQUENAS.map((a) => (
+          <Cartao
+            key={a.id}
+            acao={a}
+            tamanho="pequeno"
+            onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
+          />
+        ))}
       </div>
 
       {alertaTopo && (
@@ -180,7 +182,9 @@ export function Dashboard() {
           className={alertaTopo.critico ? 'faixa-alerta faixa-alerta--critica' : 'faixa-alerta'}
           onClick={() => navegar('/estoque')}
         >
-          <IconeAtencao tamanho={20} />
+          <span className="faixa-alerta__selo">
+            <IconeAtencao tamanho={18} />
+          </span>
           <span className="faixa-alerta__corpo">
             <span className="faixa-alerta__texto">{alertaTopo.texto}</span>
             {alertasRestantes > 0 && (

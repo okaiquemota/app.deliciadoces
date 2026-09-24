@@ -57,18 +57,29 @@
      dourado  -> os fios finos da moldura                                  */
 
 :root {
-  --cor-fundo: #fbf8f0; /* creme do miolo — tom dominante da arte */
+  /* Creme do miolo da medalha, agora com metade da saturação (58% -> 37%
+     em HSL). O creme carregado puxava tudo para o amarelo; este continua
+     quente o bastante para ser a marca e não um template branco, sem
+     tingir os cartões brancos que ficam sobre ele. O contraste do texto
+     não mudou (8,21). */
+  --cor-fundo: #faf8f4;
   --cor-superficie: #ffffff;
   --cor-borda: #ece0cf;
 
   --cor-texto: #743c21; /* marrom da tipografia, escurecido p/ AAA */
   --cor-texto-suave: #986045;
 
-  /* Rosa, na matiz do laço e das rosas da arte, escurecido o bastante para
-     carregar texto branco: o rosa puro da logo (#fa9eb0) dá 1,98 de
-     contraste, ilegível. Este dá 4,84, acima do mínimo da WCAG. */
-  --cor-primaria: #d6295d;
-  --cor-primaria-escura: #ad1f49;
+  /* Framboesa, na matiz do laço e das rosas da arte, escurecido o bastante
+     para carregar texto branco: o rosa puro da logo (#fa9eb0) dá 1,98 de
+     contraste, ilegível.
+
+     Saiu de #d6295d (68% de saturação, 4,84 de contraste) para este:
+     59% de saturação e 5,85 de contraste. Dessaturar costuma CUSTAR
+     contraste; aqui os dois melhoraram porque o tom também desceu de
+     luminosidade. A matiz ficou em 344°, ainda framboesa e longe do
+     vermelho de erro (ΔE 29,4 no CIELAB). */
+  --cor-primaria: #b83055;
+  --cor-primaria-escura: #96274a;
 
   --cor-rosa: #fa9eb0; /* laço, fouet e rosas */
   --cor-rosa-claro: #fde7ee; /* fundo suave derivado do rosa da marca */
@@ -76,9 +87,18 @@
   --cor-marca: #743c21; /* marrom puro da marca, sem ajuste */
 
   --cor-erro: #c62828;
+  --cor-erro-fundo: #fdecec; /* fundo do alerta crítico: 4,92 com o erro */
   --cor-positivo: #2e7d4f;
 
-  --raio: 10px;
+  /* Escala de canto: TRÊS degraus, não sete valores soltos. Antes havia
+     10, 11, 12, 13, 14 e 16px espalhados pelo arquivo — um pixel de
+     diferença não se lê como intenção, se lê como desalinhado, e é
+     exatamente o que aparecia quando a faixa de alerta (10) encostava no
+     cartão de ação (16) na tela inicial. */
+  --raio-selo: 10px; /* selo de ícone, amostra de cor */
+  --raio: 12px; /* padrão: campo, botão, aba, faixa */
+  --raio-cartao: 16px; /* cartão, tecla grande */
+
   --sombra: 0 1px 3px rgba(63, 22, 11, 0.1);
 }
 
@@ -94,7 +114,21 @@ body {
      fora de propósito: são a fonte padrão de todo template, e a marca é de
      uma confeitaria — a serifa arredondada do Fraunces diz isso sem
      precisar de enfeite. A pilha de sistema continua atrás, para a tela
-     não ficar sem texto enquanto a fonte carrega. */
+     não ficar sem texto enquanto a fonte carrega.
+
+     TRÊS pesos, e só os três que existem em arquivo — 400, 500 e 700:
+
+       400  texto corrido, rótulo secundário, dado de apoio
+       500  ênfase e estado ligado (aba ativa, forma escolhida, botão cheio)
+       700  título, nome de ação e VALOR (dinheiro, saldo, diferença)
+
+     Havia um quarto peso, 600, em nove regras. Não existe arquivo de 600:
+     o navegador procura o peso igual ou maior mais próximo e cai no 700.
+     Medido aqui, "Confirmar venda 0123" a 64px dá 650px em 400, 658 em
+     500, e 681 tanto em 600 quanto em 700 — idênticos. Ou seja, o degrau
+     intermediário que essas regras pediam nunca chegou à tela: aba ativa e
+     botão primário saíam com o mesmo peso de um título, e a hierarquia
+     tinha três níveis escritos e dois aparecendo. */
   font-family:
     'DM Sans',
     system-ui,
@@ -217,7 +251,7 @@ body {
 
 .hero__link {
   padding: 10px 14px;
-  border-radius: 10px 10px 0 0;
+  border-radius: var(--raio) var(--raio) 0 0;
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.95rem;
   text-decoration: none;
@@ -404,7 +438,7 @@ body {
   width: 100%;
   background-color: var(--cor-primaria);
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -583,7 +617,7 @@ body {
 .abas__item--ativo {
   color: var(--cor-primaria);
   border-bottom-color: var(--cor-primaria);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* ---------- Barra de ações ---------- */
@@ -714,7 +748,7 @@ body {
 
 .saldo--baixo {
   color: var(--cor-erro);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ---------- Modal ---------- */
@@ -980,7 +1014,7 @@ body {
 .seletor-periodo__item--ativo {
   background-color: var(--cor-primaria);
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* ---------- Marca ----------
@@ -1075,17 +1109,17 @@ body {
 
 .fechamento__falta {
   color: var(--cor-erro);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .fechamento__sobra {
   color: #8a5a10;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .fechamento__certo {
   color: var(--cor-positivo);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .fechamento__neutro {
@@ -1117,26 +1151,27 @@ body {
    tela: 176 no grande, quadrado no médio, 135 no pequeno. O vão grande
    entre ícone e rótulo é o que faz o cartão ser alvo de dedo em vez de
    linha de lista — encolher isso devolve a tela para a leitura. */
-/* 14 e não 20 embaixo: num notebook de 800px a tela inicial passava por
+/* UMA grade de 6 colunas, não três linhas empilhadas cada uma com a sua
+   própria contagem de colunas.
+
+   Antes eram três `div` de linha: uma de 2 colunas e outra de 3, com o mesmo
+   vão. Cada linha dividia a largura por conta própria, então as bordas
+   externas coincidiam por acidente de o vão ser igual — mudar o vão de uma
+   desalinhava a outra. Com 6 colunas o passo é um só e o tamanho do cartão
+   passa a ser quantas colunas ele ocupa: 6, 3 ou 2.
+
+   A hierarquia por tamanho fica de pé. Ela é o que a referência do Itaú
+   resolve sem pintar cartão nenhum de cor, e Venda é o que a cliente repete
+   dez vezes por dia: igualar os seis no mesmo tamanho colocaria Venda no
+   mesmo peso de "Resumo", que ela abre uma vez por semana.
+
+   14 no vão e não 20: num notebook de 800px a tela inicial passava por
    exatos 5px, e este é o espaço que sobra sem apertar nada que se leia. */
 .acoes {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 14px;
   margin-bottom: 14px;
-}
-
-.acoes__linha {
-  display: grid;
-  gap: 14px;
-}
-
-.acoes__linha--dupla {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.acoes__linha--tripla {
-  grid-template-columns: repeat(3, 1fr);
 }
 
 .cartao-acao {
@@ -1144,9 +1179,19 @@ body {
   flex-direction: column;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px;
+  /* Os três tamanhos mudam por estas quatro medidas, declaradas uma vez
+     aqui e trocadas por cartão logo abaixo. Antes cada tamanho reescrevia
+     altura, respiro, selo e corpo em regras separadas — quatro lugares
+     para manter em fase, e o bloco de tela baixa tinha de mexer em todos
+     de novo. */
+  --altura: 176px;
+  --respiro: 18px;
+  --selo: 42px;
+  --rotulo: 1.05rem;
+  min-height: var(--altura);
+  padding: var(--respiro);
   border: none;
-  border-radius: 16px;
+  border-radius: var(--raio-cartao);
   background-color: var(--cor-superficie);
   /* Sombra no lugar de borda: o fundo da marca é creme, não cinza como o
      da referência, e sem um destes dois o cartão branco se dissolveria
@@ -1176,9 +1221,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: var(--selo);
+  height: var(--selo);
+  border-radius: var(--raio-selo);
   background-color: var(--cor-rosa-claro);
   flex: 0 0 auto;
 }
@@ -1195,7 +1240,7 @@ body {
 }
 
 .cartao-acao__rotulo {
-  font-size: 1.05rem;
+  font-size: var(--rotulo);
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1207,43 +1252,36 @@ body {
   color: var(--cor-texto-suave);
 }
 
-/* Faixa rosa na borda esquerda: distingue a ação principal sem preencher
-   o cartão de cor, que faria a cor virar o assunto da tela. */
+/* A faixa rosa de 4px na borda esquerda saiu. Ela engordava um lado só do
+   cartão e empurrava o conteúdo 4px adiante dos dois cartões de baixo —
+   a assimetria que se via na tela. A largura inteira já diz que este é o
+   principal, sem desenhar nada. */
 .cartao-acao--grande {
-  min-height: 176px;
-  border-left: 4px solid var(--cor-primaria);
+  grid-column: span 6;
+  --altura: 176px;
+  --rotulo: 1.3rem;
 }
 
-.cartao-acao--grande .cartao-acao__rotulo {
-  font-size: 1.3rem;
-}
-
-/* Altura fixa aqui; o quadrado da referência vale só no celular e está
+/* Altura própria aqui; o quadrado da referência vale só no celular e está
    no bloco de 640px.
 
    `aspect-ratio` com `max-height` não serve: a proporção passa a definir
    também a LARGURA, e no desktop os cartões encolhiam para quadradinhos
    de 190px dentro de uma célula de 533px, encostados à esquerda. */
 .cartao-acao--medio {
-  min-height: 176px;
+  grid-column: span 3;
+  --altura: 176px;
 }
 
-/* 12px e não 14: com 14 sobram 84px úteis e "Fechar dia" pede 85 —
-   quebrava em duas linhas por um pixel, e como só esse rótulo subia, a
-   fileira inteira desalinhava. */
+/* 12px de respiro e não 14: com 14 sobram 84px úteis e "Fechar dia" pede
+   85 — quebrava em duas linhas por um pixel, e como só esse rótulo subia,
+   a fileira inteira desalinhava. */
 .cartao-acao--pequeno {
-  min-height: 135px;
-  padding: 12px;
-}
-
-.cartao-acao--pequeno .cartao-acao__rotulo {
-  font-size: 0.9rem;
-}
-
-.cartao-acao--pequeno .cartao-acao__selo {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  grid-column: span 2;
+  --altura: 135px;
+  --respiro: 12px;
+  --selo: 36px;
+  --rotulo: 0.9rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1281,7 +1319,7 @@ body {
 
 .resumo-dia__link {
   color: var(--cor-primaria);
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -1304,7 +1342,7 @@ body {
 .doce {
   position: relative;
   border: 1px solid var(--cor-borda);
-  border-radius: 14px;
+  border-radius: var(--raio-cartao);
   background-color: var(--cor-superficie);
 }
 
@@ -1320,7 +1358,7 @@ body {
   padding: 11px;
   border: none;
   background: none;
-  border-radius: 14px;
+  border-radius: var(--raio-cartao);
   color: var(--cor-texto);
   font-family: inherit;
   text-align: left;
@@ -1332,7 +1370,7 @@ body {
 .doce__cor {
   width: 38px;
   height: 38px;
-  border-radius: 11px;
+  border-radius: var(--raio-selo);
   flex: 0 0 auto;
   box-shadow: inset 0 0 0 1px rgba(63, 22, 11, 0.08);
 }
@@ -1422,7 +1460,7 @@ body {
   background-color: var(--cor-primaria);
   border-color: var(--cor-primaria);
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .barra-confirmar {
@@ -1543,7 +1581,7 @@ body {
 .teclado__tecla {
   min-height: 52px;
   border: 1px solid var(--cor-borda);
-  border-radius: 13px;
+  border-radius: var(--raio-cartao);
   background-color: var(--cor-superficie);
   color: var(--cor-texto);
   font-family: inherit;
@@ -1568,35 +1606,60 @@ body {
   color: var(--cor-texto);
 }
 /* Faixa de alerta: uma linha, não uma lista. O que ela precisa notar sem
-   procurar cabe numa frase; a lista inteira mora no Estoque. */
-/* Barra grossa na borda esquerda em vez de contorno inteiro: marca a
-   urgência sem transformar a faixa num bloco de cor, e deixa o texto
-   sobre fundo claro, onde ele se lê. */
+   procurar cabe numa frase; a lista inteira mora no Estoque.
+
+   A barra de 4px na borda esquerda saiu junto com a do cartão de Venda:
+   eram as duas bordas assimétricas da tela, e aqui ela ainda encostava num
+   canto de 10px embaixo de cartões de 16. Agora a faixa tem o mesmo canto e
+   o mesmo desenho de selo dos cartões, e é um irmão deles em vez de um
+   elemento de outro sistema colado no fim da tela.
+
+   O que marca a urgência passou a ser a cor DO SELO e do texto, não uma
+   barra: chama do mesmo jeito e não precisa quebrar a simetria. */
 .faixa-alerta {
   display: flex;
   align-items: center;
   gap: 11px;
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid var(--cor-dourado);
-  border-left: 4px solid var(--cor-dourado);
-  border-radius: var(--raio);
-  background-color: #fdf3e2;
+  border: 1px solid #ecd9b4;
+  border-radius: var(--raio-cartao);
+  background-color: #fdf6e9;
   color: var(--cor-texto);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
 }
 
+/* O crítico era rosa-claro — o MESMO tom do selo dos cartões de ação. Com o
+   sistema todo em framboesa isso lia como "elemento da marca", não como
+   "vencido". Este fundo é um vermelho lavado, que não existe em nenhum outro
+   lugar da interface, então só aparece quando há o que jogar fora. */
 .faixa-alerta--critica {
-  border-color: #f2c4d2;
-  border-left-color: var(--cor-erro);
-  background-color: var(--cor-rosa-claro);
+  border-color: #f6d2d2;
+  background-color: var(--cor-erro-fundo);
+}
+
+/* O ícone ganha o selo arredondado dos cartões: é o que "integra" em vez de
+   deixar um símbolo solto encostado na borda. */
+.faixa-alerta__selo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--raio-selo);
+  background-color: #f7e7c8;
+}
+
+.faixa-alerta--critica .faixa-alerta__selo {
+  background-color: #f9dada;
 }
 
 .faixa-alerta .icone {
   flex: 0 0 auto;
-  color: var(--cor-dourado);
+  color: #8a5a10;
 }
 
 .faixa-alerta--critica .icone {
@@ -1626,6 +1689,13 @@ body {
   margin-top: 1px;
   font-size: 0.75rem;
   color: var(--cor-texto-suave);
+}
+
+/* No crítico o fundo é mais escuro e o marrom suave cai para 4,49 — um
+   centésimo abaixo do mínimo da WCAG. Aqui a segunda linha usa o marrom
+   cheio, que dá 7,63. */
+.faixa-alerta--critica .faixa-alerta__resto {
+  color: var(--cor-texto);
 }
 
 .faixa-alerta__seta {
@@ -1771,7 +1841,7 @@ body {
      isso viraria uma torre, então a proporção fica só aqui. */
   .cartao-acao--medio {
     aspect-ratio: 1 / 1;
-    min-height: 0;
+    --altura: 0;
   }
 
   /* Dois por linha, não um. Quatro indicadores empilhados somavam ~520px
@@ -1908,37 +1978,31 @@ body {
     margin-bottom: 10px;
   }
 
-  .acoes__linha {
-    gap: 10px;
-  }
-
+  /* Encolher a tela inteira é trocar as variáveis do cartão. Elas ficam em
+     regras de um único nome de classe, então quem vem depois no arquivo
+     vence — por isso `--rotulo` é declarado por tamanho aqui, e não uma vez
+     em `.cartao-acao`: ali ele passaria por cima do 0,9rem do pequeno e
+     AUMENTARIA a letra do menor cartão justamente na tela mais apertada. */
   .cartao-acao {
-    min-height: 0;
-    padding: 12px;
+    --respiro: 12px;
     gap: 8px;
   }
 
   .cartao-acao--grande {
-    min-height: clamp(84px, 17vh, 176px);
-  }
-
-  .cartao-acao--grande .cartao-acao__rotulo {
-    font-size: 1.15rem;
+    --altura: clamp(84px, 17vh, 176px);
+    --rotulo: 1.15rem;
   }
 
   /* A proporção quadrada é o que mais custa altura: 174px de largura
      viravam 174 de altura. Em tela baixa ela sai e entra altura própria. */
   .cartao-acao--medio {
     aspect-ratio: auto;
-    min-height: clamp(78px, 15vh, 174px);
+    --altura: clamp(78px, 15vh, 174px);
+    --rotulo: 0.95rem;
   }
 
   .cartao-acao--pequeno {
-    min-height: clamp(68px, 13vh, 135px);
-  }
-
-  .cartao-acao__rotulo {
-    font-size: 0.95rem;
+    --altura: clamp(68px, 13vh, 135px);
   }
 
   .resumo-dia {
@@ -1948,5 +2012,50 @@ body {
 
   .faixa-alerta {
     padding: 9px 12px;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Telas MUITO baixas — um iPhone SE com a barra do navegador à mostra dá
+   553px úteis, e o conteúdo da tela inicial pedia 582.
+
+   O degrau de 760px já encolheu os cartões até o que o conteúdo deles
+   permite: abaixo disso não sobra altura para cortar sem apertar o alvo
+   do dedo, que é a razão de a tela existir. Então o que cede aqui é o que
+   NÃO é ação — a saudação vira uma linha e o selo do alerta diminui.
+
+   A saudação em duas linhas custa 53px, mais do que um cartão pequeno
+   inteiro. Ela é gentil, não é informação: num aparelho deste tamanho
+   cabe "Boa tarde, Dalila · quinta-feira, 24 de setembro" numa linha só,
+   e os 28px voltam para os botões.
+   --------------------------------------------------------------------- */
+
+@media (max-height: 620px) {
+  .saudacao {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    margin-bottom: 10px;
+  }
+
+  .saudacao__titulo {
+    font-size: 1.05rem;
+  }
+
+  .saudacao__data {
+    margin: 0;
+  }
+
+  /* O selo do alerta passa a ser o que define a altura da faixa quando há
+     um aviso só — 32px de selo contra 20px de texto. Aqui ele encosta no
+     texto e deixa de puxar a faixa para cima do que ela precisa. */
+  .faixa-alerta__selo {
+    width: 26px;
+    height: 26px;
+  }
+
+  .cartao-acao--pequeno {
+    --selo: 32px;
   }
 }
