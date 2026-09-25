@@ -778,6 +778,440 @@ body {
   margin-top: 18px;
 }
 
+/* Excluir de um lado, Editar do outro: a ação que destrói fica longe da
+   que o polegar procura. Sozinho (Restaurar), o botão volta para a
+   direita. */
+.modal__acoes--separadas {
+  justify-content: space-between;
+}
+
+.modal__acoes--separadas > :only-child {
+  margin-left: auto;
+}
+
+/* =====================================================================
+   EXTRATO (Caixa)
+
+   O desenho do extrato de banco: filtros no alto, o resumo do período
+   num cartão, e a lista agrupada por dia rolando dentro do próprio
+   quadro — os filtros e o resumo nunca saem da tela.
+   ===================================================================== */
+
+.extrato {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+}
+
+.extrato > * {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.extrato__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.extrato__filtros-linha {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Campo de busca no desenho do iOS: preenchido de cinza, sem borda, com
+   a lupa dentro. Mesma altura e mesmo cinza do controle segmentado ao
+   lado, para a barra de filtros ler como uma peça só. */
+.extrato__busca {
+  width: 260px;
+  margin-left: auto;
+  padding: 5px 10px 5px 32px;
+  border: none;
+  border-radius: 9px;
+  background: rgb(118 118 128 / 0.12)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4.5 4.5'/%3E%3C/svg%3E")
+    no-repeat 10px center / 15px;
+  font-size: 0.875rem;
+}
+
+.extrato__busca:focus {
+  border: none;
+  background-color: var(--superficie);
+  box-shadow:
+    0 0 0 1px var(--borda-forte),
+    0 0 0 4px rgb(0 0 0 / 0.08);
+}
+
+.extrato__busca::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.extrato__datas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.extrato__data {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.extrato__data .campo__entrada {
+  width: auto;
+  padding: 6px 9px;
+  font-size: 0.875rem;
+}
+
+/* ---------- Resumo do período: três números lado a lado ---------- */
+
+.extrato__resumo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+  box-shadow: var(--sombra-cartao);
+}
+
+.extrato__total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 14px 20px;
+}
+
+.extrato__total + .extrato__total {
+  border-left: 1px solid var(--borda);
+}
+
+.extrato__total-rotulo {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.extrato__total-valor {
+  overflow: hidden;
+  font-size: 1.375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tr-numero);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Verde só no que ENTRA, como no extrato do banco e na Carteira do
+   iPhone. A saída fica na cor do texto, com o sinal de menos: vermelho
+   em toda despesa pintaria de alarme um dia normal de compras. */
+.extrato__total-valor--entrada,
+.extrato__valor--entrada,
+.lancamento__valor--entrada {
+  color: var(--ok);
+}
+
+.extrato__total-valor--negativo {
+  color: var(--erro);
+}
+
+/* ---------- A lista ---------- */
+
+.extrato__lista {
+  flex: 1 1 auto;
+  min-height: 160px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+  box-shadow: var(--sombra-cartao);
+}
+
+.extrato__vazio {
+  margin: 0;
+  padding: 40px 24px;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.extrato__dia + .extrato__dia {
+  border-top: 1px solid var(--borda);
+}
+
+/* O cabeçalho do dia gruda no alto enquanto a lista do dia passa por
+   baixo: rolando uma semana, ela sempre sabe em que dia está. */
+.extrato__dia-titulo {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--borda);
+  background-color: var(--c-50);
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.extrato__dia-saldo {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.extrato__itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.extrato__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 62px;
+  padding: 11px 20px;
+  border: none;
+  background: none;
+  color: var(--texto);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 90ms ease-out;
+}
+
+.extrato__item:hover {
+  background-color: var(--c-50);
+}
+
+.extrato__item:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Fio entre lançamentos começando no texto, não na borda — o ícone
+   fica de fora, como nas listas do iOS. 20 de margem + 36 do ícone +
+   14 de vão. */
+.extrato__itens > li + li > .extrato__item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 70px;
+  height: 1px;
+  background-color: var(--c-100);
+}
+
+.extrato__icone {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--c-100);
+  color: var(--c-700);
+}
+
+.extrato__textos {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* O título de uma venda É a lista dos doces. Cortado numa linha só, o
+   celular mostrava "1× Bolo de pote, 2× Beijin..." e escondia justamente
+   o que foi vendido. Até duas linhas; o detalhe completo fica na janela. */
+.extrato__titulo {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.extrato__detalhe {
+  overflow: hidden;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.extrato__valor {
+  flex: 0 0 auto;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.extrato__seta {
+  display: flex;
+  flex: 0 0 auto;
+  margin-right: -6px;
+  color: var(--icone-fraco);
+}
+
+/* Venda cancelada continua à vista — ela pode querer restaurar —, mas
+   riscada e apagada, fora de toda soma. */
+.extrato__item--cancelado .extrato__titulo,
+.extrato__item--cancelado .extrato__valor {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+}
+
+.extrato__item--cancelado .extrato__icone {
+  opacity: 0.55;
+}
+
+/* ---------- Detalhe de um lançamento ---------- */
+
+.lancamento {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0 18px;
+  border-bottom: 1px solid var(--borda);
+  text-align: center;
+}
+
+.lancamento__valor {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tr-numero);
+  line-height: 1.15;
+}
+
+.lancamento__quando {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.lancamento .etiqueta {
+  margin-top: 4px;
+}
+
+.lancamento__dados {
+  margin: 0;
+}
+
+.lancamento__dados > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--c-100);
+  font-size: 0.9375rem;
+}
+
+.lancamento__dados dt {
+  flex: 0 0 auto;
+  color: var(--texto-suave);
+}
+
+.lancamento__dados dd {
+  margin: 0;
+  font-weight: 500;
+  text-align: right;
+}
+
+.lancamento__item {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.lancamento__pergunta {
+  margin: 0;
+  color: var(--c-700);
+  font-size: 0.9375rem;
+}
+
+.lancamento__alvo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: var(--r-2);
+  background-color: var(--c-50);
+}
+
+.lancamento__alvo-textos {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lancamento__alvo-titulo {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.lancamento__alvo-quando {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+.lancamento__alvo-valor {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Um doce por fileira na edição de venda: menu, quantidade e o tirar. */
+.edicao-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px auto;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.edicao-item > .campo {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.edicao-item__mais {
+  margin-bottom: 12px;
+}
+
+/* Da altura do campo ao lado, para o texto ficar na mesma linha dele. */
+.edicao-item__tirar {
+  height: 42px;
+}
+
 /* =====================================================================
    INDICADORES (tela de resumo)
    ===================================================================== */
@@ -891,11 +1325,6 @@ body {
   box-shadow: var(--sombra-cartao);
 }
 
-.riscado {
-  color: var(--texto-suave);
-  text-decoration: line-through;
-}
-
 .barra-acoes {
   display: flex;
   flex-wrap: wrap;
@@ -924,12 +1353,6 @@ body {
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
-}
-
-.etiqueta--retirada {
-  border-color: var(--aviso-borda);
-  background-color: var(--aviso-fundo);
-  color: var(--aviso);
 }
 
 .etiqueta--alerta {
@@ -1113,6 +1536,18 @@ body {
 .modal__fechar:hover {
   background-color: var(--c-100);
   color: var(--texto);
+}
+
+/* O desenho tem 30px; o alvo do toque, 44. A moldura invisível em volta
+   estica a área que responde sem engordar o cabeçalho da janela. */
+.modal__fechar {
+  position: relative;
+}
+
+.modal__fechar::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
 }
 
 .modal__corpo {
@@ -2123,6 +2558,114 @@ body {
     flex: 1 1 0;
   }
 
+  /* Extrato no celular: o período ganha a fileira inteira; tipo e busca
+     dividem a de baixo. Três fileiras de filtro comeriam a lista.
+
+     E a tela inteira rola, não só a lista. Presa entre filtros e resumo,
+     a lista ficava com 183px num iPhone SE — dois lançamentos e meio. Como
+     num app nativo, filtros e resumo sobem junto e a lista ganha a altura
+     toda; o cabeçalho do dia continua grudando no alto. */
+  .extrato {
+    gap: 12px;
+    height: auto;
+  }
+
+  .extrato__lista {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  /* Sem o recorte do quadro, o fundo do primeiro cabeçalho e o realce do
+     último lançamento passariam por cima dos cantos arredondados. */
+  .extrato__dia:first-child > .extrato__dia-titulo {
+    border-radius: calc(var(--r-2) - 1px) calc(var(--r-2) - 1px) 0 0;
+  }
+
+  .extrato__dia:last-child > .extrato__itens > li:last-child > .extrato__item {
+    border-radius: 0 0 calc(var(--r-2) - 1px) calc(var(--r-2) - 1px);
+  }
+
+  /* `nowrap` é o que segura a largura: em coluna com quebra, a fileira
+     tomava a largura natural do conteúdo (408px num iPhone de 393) e a
+     busca saía da tela. */
+  .extrato__filtros {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .extrato__filtros-linha {
+    gap: 8px;
+  }
+
+  .extrato__filtros-linha > .seletor-periodo {
+    flex: 1 1 60%;
+    width: auto;
+  }
+
+  .extrato__busca {
+    flex: 1 1 40%;
+    width: auto;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  /* As datas vão para baixo do rótulo: lado a lado com "De" e "Até",
+     o campo de data do iPhone não cabe em 320px. */
+  .extrato__datas {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .extrato__data {
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .extrato__data .campo__entrada {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .extrato__total {
+    padding: 10px 12px;
+  }
+
+  .extrato__total-valor {
+    font-size: 1.0625rem;
+  }
+
+  /* O "grudar no alto" conta a partir do respiro do quadro que rola: com
+     top 0, sobrava uma faixa de 16px acima do cabeçalho com lançamentos
+     passando por ela. Negativo, ele encosta na barra de cima. */
+  .extrato__dia-titulo {
+    top: calc(-1 * var(--respiro-topo, 0px));
+    padding: 7px 14px;
+  }
+
+  .extrato__item {
+    gap: 12px;
+    padding: 10px 14px;
+  }
+
+  .extrato__itens > li + li > .extrato__item::before {
+    left: 62px;
+  }
+
+  .extrato__icone {
+    width: 36px;
+    height: 36px;
+  }
+
+  .extrato__seta {
+    display: none;
+  }
+
   /* Sem teto no celular: os botões vão até a barra de baixo.
 
      O teto de 460px existe por causa do monitor grande — sem ele, num de
@@ -2206,7 +2749,8 @@ body {
   }
 
   .app__conteudo {
-    padding: 16px 14px 20px;
+    --respiro-topo: 16px;
+    padding: var(--respiro-topo) 14px 20px;
   }
 
   .pagina__cabecalho {
@@ -2347,6 +2891,10 @@ body {
   .botao--texto {
     min-height: 34px;
   }
+
+  .edicao-item__tirar {
+    height: 44px;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -2363,6 +2911,28 @@ body {
    As quatro continuam à vista de uma vez, que é a razão de isto ser um
    controle segmentado e não uma barra que rola.
    --------------------------------------------------------------------- */
+
+/* Resumo do extrato em tela estreita: três colunas de 90px não seguram
+   o total de um mês ("R$ 12.345,67" pede 110). Vira recibo — Entrou e
+   Saiu lado a lado, e o Saldo, que é a conta dos dois, numa linha
+   inteira embaixo. Dinheiro não se corta com reticências. */
+@media (max-width: 480px) {
+  .extrato__resumo {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .extrato__total:nth-child(3) {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    border-top: 1px solid var(--borda);
+    border-left: none;
+  }
+}
 
 @media (max-width: 400px) {
   .abas {
@@ -2385,7 +2955,8 @@ body {
 
 @media (max-height: 640px) {
   .app__conteudo {
-    padding: 12px 14px 16px;
+    --respiro-topo: 12px;
+    padding: var(--respiro-topo) 14px 16px;
   }
 
   .saudacao {

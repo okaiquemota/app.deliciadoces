@@ -175,26 +175,26 @@ Uma venda pode levar o estoque a negativo, porque a produção nem sempre é lan
 
 Cada requisito, onde ele vive no código.
 
-| Requisito  | Rota da API                                   | Tela                              | Teste                      |
-| ---------- | --------------------------------------------- | --------------------------------- | -------------------------- |
-| RF01, RF03 | `POST /api/auth/login`                        | Login                             | —                          |
-| RF02       | `PATCH /api/auth/senha`                       | Minha conta                       | `tests/senha.test.js`      |
-| RF04, RF09 | `POST` e `PUT /api/vendas`                    | Início → Venda; Caixa             | `tests/caixa.test.js`      |
-| RF05, RF06 | `POST /api/vendas` (campo `valor`)            | Início → Entrou dinheiro          | `tests/caixa.test.js`      |
-| RF07, RF08 | `POST /api/despesas`                          | Início → Saiu dinheiro / Retirada | —                          |
-| RF10, RF11 | `PATCH /api/vendas/:id/cancelar` e `/reabrir` | Caixa                             | `tests/caixa.test.js`      |
-| RF12       | `GET /api/vendas`, `GET /api/despesas`        | Caixa                             | —                          |
-| RF13, RF14 | `/api/insumos`, `/api/produtos`               | Estoque                           | —                          |
-| RF15–RF17  | `POST /api/estoque/movimentacoes`             | Estoque → Movimentar              | `tests/estoque.test.js`    |
-| RF18       | (efeito de `POST /api/vendas`)                | —                                 | `tests/caixa.test.js`      |
-| RF19       | `GET /api/estoque/movimentacoes`              | Estoque → Histórico               | `tests/estoque.test.js`    |
-| RF20       | `GET /api/estoque/alertas`                    | Início (faixa de alerta)          | `tests/validade.test.js`   |
-| RF21, RF22 | `GET /api/estoque/validades`                  | Estoque → Validade                | `tests/validade.test.js`   |
-| RF23       | `POST /api/estoque/recalcular`                | —                                 | `tests/estoque.test.js`    |
-| RF24–RF26  | `POST /api/producoes`                         | Produção                          | `tests/producao.test.js`   |
-| RF27       | `GET /api/producoes/previsao`                 | Produção                          | `tests/producao.test.js`   |
-| RF28–RF32  | `/api/fechamentos`                            | Fechamento                        | `tests/fechamento.test.js` |
-| RF33–RF36  | `GET /api/dashboard`                          | Resumo                            | —                          |
+| Requisito  | Rota da API                                   | Tela                              | Teste                                            |
+| ---------- | --------------------------------------------- | --------------------------------- | ------------------------------------------------ |
+| RF01, RF03 | `POST /api/auth/login`                        | Login                             | —                                                |
+| RF02       | `PATCH /api/auth/senha`                       | Minha conta                       | `tests/senha.test.js`                            |
+| RF04, RF09 | `POST` e `PUT /api/vendas`                    | Início → Venda; Caixa             | `tests/caixa.test.js`                            |
+| RF05, RF06 | `POST /api/vendas` (campo `valor`)            | Início → Entrada avulsa           | `tests/caixa.test.js`                            |
+| RF07, RF08 | `POST /api/despesas`                          | Início → Saída / Retirada pessoal | `tests/caixa.test.js`, `tests/dashboard.test.js` |
+| RF10, RF11 | `PATCH /api/vendas/:id/cancelar` e `/reabrir` | Caixa                             | `tests/caixa.test.js`                            |
+| RF12       | `GET /api/vendas`, `GET /api/despesas`        | Caixa (extrato)                   | `tests/periodo.test.js`                          |
+| RF13, RF14 | `/api/insumos`, `/api/produtos`               | Estoque                           | —                                                |
+| RF15–RF17  | `POST /api/estoque/movimentacoes`             | Estoque → Movimentar              | `tests/estoque.test.js`                          |
+| RF18       | (efeito de `POST /api/vendas`)                | —                                 | `tests/caixa.test.js`                            |
+| RF19       | `GET /api/estoque/movimentacoes`              | Estoque → Histórico               | `tests/estoque.test.js`                          |
+| RF20       | `GET /api/estoque/alertas`                    | Início (faixa de alerta)          | `tests/validade.test.js`                         |
+| RF21, RF22 | `GET /api/estoque/validades`                  | Estoque → Validade                | `tests/validade.test.js`                         |
+| RF23       | `POST /api/estoque/recalcular`                | —                                 | `tests/estoque.test.js`                          |
+| RF24–RF26  | `POST /api/producoes`                         | Produção                          | `tests/producao.test.js`                         |
+| RF27       | `GET /api/producoes/previsao`                 | Produção                          | `tests/producao.test.js`                         |
+| RF28–RF32  | `/api/fechamentos`                            | Fechamento                        | `tests/fechamento.test.js`                       |
+| RF33–RF36  | `GET /api/dashboard`                          | Resumo                            | —                                                |
 
 ---
 
