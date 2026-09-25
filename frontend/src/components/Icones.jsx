@@ -151,3 +151,36 @@ export const IconeSair = (p) => (
     <path d="m17.5 8.5 3.5 3.5-3.5 3.5" />
   </Base>
 );
+
+/* ---------------------------------------------------------------------
+   Ícones da tela Minha conta: um por linha da lista, para ela achar o
+   item pelo desenho antes de ler.
+   --------------------------------------------------------------------- */
+
+/** Crachá: nome da pessoa. */
+export const IconeNome = (p) => (
+  <Base {...p}>
+    <rect x="3.5" y="5" width="17" height="14" rx="2" />
+    <circle cx="9" cy="11" r="2" />
+    <path d="M6 16c.6-1.4 1.7-2 3-2s2.4.6 3 2" />
+    <path d="M14.5 10h3" />
+    <path d="M14.5 13.5h3" />
+  </Base>
+);
+
+/** Envelope: e-mail. */
+export const IconeEmail = (p) => (
+  <Base {...p}>
+    <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+    <path d="m4 7 8 6 8-6" />
+  </Base>
+);
+
+/** Cadeado: senha. */
+export const IconeSenha = (p) => (
+  <Base {...p}>
+    <rect x="5" y="10.5" width="14" height="10" rx="2" />
+    <path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" />
+    <path d="M12 14.5v2" />
+  </Base>
+);

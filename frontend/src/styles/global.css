@@ -671,125 +671,129 @@ body {
   }
 }
 
-/* ---------- Minha conta: lista agrupada, no desenho dos Ajustes ----------
+/* ---------- Minha conta, no desenho da página de perfil do Mercado Livre
 
-   Uma coluna centrada de 640px, e não cartões soltos lado a lado. É o
-   arranjo dos Ajustes do iPhone e da página de conta da Apple: grupos de
-   linhas numa superfície branca de canto arredondado, rótulo à esquerda,
-   campo à direita, e um fio fino entre as linhas que começa depois da
-   margem — não de ponta a ponta, que é o que faz a lista parecer uma
-   tabela.
+   A tela MOSTRA os dados; cada um se edita numa janela à parte. Coluna
+   centrada de 760px com cartões brancos: título do grupo em cima, uma
+   linha por dado com ícone, valor, legenda e seta.
 
-   O campo não tem borda: a LINHA é o campo. Borda em volta de cada input
-   dentro de um grupo que já tem borda é caixa dentro de caixa. */
+   O fio entre as linhas começa no ícone e termina antes da borda, como
+   na referência — de ponta a ponta é o que faz lista parecer tabela. */
 
-.ajustes {
+.perfil {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  max-width: 640px;
+  gap: 20px;
+  max-width: 760px;
   margin: 0 auto;
 }
 
-.ajustes__titulo {
-  margin: 0 0 8px;
-  padding-left: 16px;
-  color: var(--texto-suave);
-  font-size: 0.8125rem;
+.perfil__titulo {
+  margin: 0;
+  font-size: 1.625rem;
   font-weight: 600;
-  letter-spacing: var(--tr-miudo);
+  letter-spacing: var(--tr-titulo);
+  line-height: 1.2;
 }
 
-.ajustes__grupo {
+.perfil__descricao {
+  margin: 6px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+}
+
+.perfil__grupo {
   border: 1px solid var(--borda);
   border-radius: var(--r-2);
   background-color: var(--superficie);
   box-shadow: var(--sombra-cartao);
+  overflow: hidden;
 }
 
-.ajustes__linha {
+.perfil__grupo-titulo {
+  margin: 0;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--borda);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: var(--tr-titulo);
+}
+
+.perfil__item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 50px;
-  padding: 0 16px;
-}
-
-/* O fio entre linhas começa na margem do texto, como nas listas da Apple. */
-.ajustes__linha + .ajustes__linha::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 16px;
-  height: 1px;
-  background-color: var(--borda);
-}
-
-/* Foco na LINHA, já que o campo não tem borda. O anel acompanha o canto
-   arredondado do grupo na primeira e na última linha. */
-.ajustes__linha:first-child {
-  border-radius: var(--r-2) var(--r-2) 0 0;
-}
-
-.ajustes__linha:last-child {
-  border-radius: 0 0 var(--r-2) var(--r-2);
-}
-
-.ajustes__linha:only-child {
-  border-radius: var(--r-2);
-}
-
-/* Cinza e não preto: em preto o anel virava uma caixa desenhada por cima
-   da lista. O cinza dá 3,62 contra o branco, acima do 3:1 que a WCAG pede
-   para indicador de foco, e o fundo levemente mais claro reforça qual
-   linha está sendo editada sem gritar. */
-.ajustes__linha:focus-within {
-  background-color: #fbfbfd;
-  box-shadow: inset 0 0 0 2px var(--c-400);
-}
-
-.ajustes__rotulo {
-  flex: 0 0 132px;
-  color: var(--texto);
-  font-size: 0.9375rem;
-}
-
-.ajustes__campo {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 14px 0;
+  gap: 16px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 24px;
   border: none;
   background: none;
   color: var(--texto);
   font-family: inherit;
-  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 90ms ease-out;
 }
 
-.ajustes__campo::placeholder {
+.perfil__item:hover {
+  background-color: var(--c-50);
+}
+
+/* Dentro de um cartão com `overflow: hidden`, o anel de foco padrão (para
+   fora) seria cortado pela borda. Aqui ele vai para dentro. */
+.perfil__item:focus-visible {
+  outline-offset: -3px;
+}
+
+.perfil__item + .perfil__item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 24px;
+  left: 24px;
+  height: 1px;
+  background-color: var(--borda);
+}
+
+.perfil__icone {
+  display: flex;
+  flex: 0 0 auto;
   color: var(--texto-suave);
 }
 
-.ajustes__campo:focus {
-  outline: none;
+.perfil__textos {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-/* O preenchimento automático do Chrome pinta o campo de amarelo-claro, o
-   que num campo sem borda vira uma mancha no meio da linha branca. */
-.ajustes__campo:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 100px var(--superficie) inset;
-  -webkit-text-fill-color: var(--texto);
+.perfil__valor {
+  overflow: hidden;
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.ajustes__aviso {
-  margin: 10px 0 0;
+.perfil__rotulo {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
 }
 
-.ajustes__acoes {
+.perfil__seta {
+  display: flex;
+  flex: 0 0 auto;
+  color: var(--icone-fraco);
+}
+
+/* Cancelar e confirmar à direita, no pé da janela. */
+.modal__acoes {
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 /* =====================================================================
@@ -2117,12 +2121,27 @@ body {
     display: none;
   }
 
-  .ajustes {
-    gap: 24px;
+  .perfil__titulo {
+    font-size: 1.375rem;
   }
 
-  .ajustes__rotulo {
-    flex-basis: 104px;
+  .perfil__grupo-titulo {
+    padding: 16px;
+  }
+
+  .perfil__item {
+    gap: 14px;
+    padding: 14px 16px;
+  }
+
+  .perfil__item + .perfil__item::before {
+    right: 16px;
+    left: 16px;
+  }
+
+  /* No celular os botões da janela ocupam a largura toda, lado a lado. */
+  .modal__acoes > .botao {
+    flex: 1 1 0;
   }
 
   /* Sem teto no celular: os botões vão até a barra de baixo.
@@ -2367,17 +2386,6 @@ body {
    --------------------------------------------------------------------- */
 
 @media (max-width: 400px) {
-  /* Em 320px a coluna do rótulo de 104 deixava 142px para o campo, e o
-     texto de exemplo mais longo pede 150: saía cortado. */
-  .ajustes__linha {
-    gap: 10px;
-    padding: 0 14px;
-  }
-
-  .ajustes__rotulo {
-    flex-basis: 90px;
-  }
-
   .abas {
     flex-wrap: wrap;
   }
