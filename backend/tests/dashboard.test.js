@@ -3,7 +3,8 @@ import { prisma } from '../src/lib/prisma.js';
 import { dashboardService } from '../src/services/dashboardService.js';
 import { vendaService, despesaService } from '../src/services/caixaService.js';
 import { estoqueService } from '../src/services/estoqueService.js';
-import { limparTudo, criarProduto, criarCategoria } from './apoio.js';
+import { filtrosPeriodo } from '../src/utils/periodo.js';
+import { limparTudo, criarProduto } from './apoio.js';
 
 /**
  * O mini-histórico da tela inicial.
@@ -76,13 +77,10 @@ describe('dashboardService.ultimos', () => {
   });
 
   it('não confunde retirada pessoal com saída do negócio', async () => {
-    const custo = await criarCategoria('CUSTO_OPERACIONAL');
-    const pessoal = await criarCategoria('RETIRADA_PESSOAL');
-
-    await despesaService.criar({ descricao: 'Botijão', valor: 140, categoriaId: custo.id }, null);
+    await despesaService.criar({ descricao: 'Botijão', valor: 140 }, null);
     // Mais recente, e NÃO deve aparecer: sai do caixa, mas é dinheiro que
     // ela levou para casa, não gasto da confeitaria. Tem botão próprio.
-    await despesaService.criar({ descricao: 'Feira', valor: 200, categoriaId: pessoal.id }, null);
+    await despesaService.criar({ descricao: 'Feira', valor: 200, retirada: true }, null);
 
     const u = await dashboardService.ultimos();
     expect(u.saida.valor).toBe(140);
@@ -105,5 +103,49 @@ describe('dashboardService.ultimos', () => {
 
     const u = await dashboardService.ultimos();
     expect(u.venda.descricao).toBe('Bolo de pote +1 item');
+  });
+});
+
+/**
+ * O gráfico do Resumo, uma barra por dia — o dia de Brasília.
+ *
+ * Agrupada pelo UTC, a venda das 21h30 ia para a barra de amanhã. E o
+ * período termina às 23:59 de Brasília, que em UTC já é o dia seguinte:
+ * uma semana virava oito barras.
+ */
+describe('dashboardService.porDia', () => {
+  it('uma barra por dia pedido, nem uma a mais', async () => {
+    const serie = await dashboardService.porDia(
+      filtrosPeriodo({ inicio: '2026-03-09', fim: '2026-03-15' })
+    );
+    expect(serie.map((d) => d.dia)).toEqual([
+      '2026-03-09',
+      '2026-03-10',
+      '2026-03-11',
+      '2026-03-12',
+      '2026-03-13',
+      '2026-03-14',
+      '2026-03-15',
+    ]);
+  });
+
+  it('a venda das 21h30 fica na barra do dia em que aconteceu', async () => {
+    const p = await produtoComEstoque(10, 25);
+    await vendaService.criar(
+      {
+        itens: [{ produtoId: p.id, quantidade: 1 }],
+        formaPagamento: 'PIX',
+        data: new Date('2026-03-10T21:30:00-03:00'),
+      },
+      null
+    );
+
+    const serie = await dashboardService.porDia(
+      filtrosPeriodo({ inicio: '2026-03-10', fim: '2026-03-11' })
+    );
+    expect(serie).toEqual([
+      { dia: '2026-03-10', vendas: 25, despesas: 0 },
+      { dia: '2026-03-11', vendas: 0, despesas: 0 },
+    ]);
   });
 });

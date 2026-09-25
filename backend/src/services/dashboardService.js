@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { estoqueService } from './estoqueService.js';
+import { FUSO_CLIENTE, diaDaColuna, diaDoCliente } from '../utils/periodo.js';
 
 /**
  * Dashboard.
@@ -158,7 +159,6 @@ export const dashboardService = {
       // para casa.
       prisma.despesa.findFirst({
         where: { categoria: { tipo: 'CUSTO_OPERACIONAL' } },
-        include: { categoria: { select: { nome: true } } },
         orderBy: { data: 'desc' },
       }),
     ]);
@@ -179,15 +179,22 @@ export const dashboardService = {
       saida: saida && {
         data: saida.data,
         valor: Number(saida.valor),
-        descricao: saida.descricao || saida.categoria.nome,
+        descricao: saida.descricao,
       },
     };
   },
 
-  /** Série diária do período, para o gráfico. */
+  /**
+   * Série diária do período, para o gráfico.
+   *
+   * Os dias são os de Brasília. As colunas `data` guardam UTC, e agrupadas
+   * direto por `data::date` punham a venda das 21h30 na barra do dia
+   * seguinte; o período, que termina às 23:59 de Brasília (já o dia
+   * seguinte em UTC), ganhava uma barra a mais no fim.
+   */
   async porDia({ inicio, fim } = {}) {
-    const de = inicio ?? inicioDaSemana();
-    const ate = fim ?? fimDaSemana();
+    const de = diaDoCliente(inicio ?? inicioDaSemana());
+    const ate = diaDoCliente(fim ?? fimDaSemana());
 
     const linhas = await prisma.$queryRaw`
       SELECT dia::date AS dia,
@@ -195,20 +202,23 @@ export const dashboardService = {
              COALESCE(d.total, 0)  AS despesas
       FROM generate_series(${de}::date, ${ate}::date, '1 day') AS dia
       LEFT JOIN (
-        SELECT data::date AS d, SUM(total) AS total
-        FROM vendas WHERE cancelada = false GROUP BY data::date
+        SELECT (data + ${FUSO_CLIENTE}::interval)::date AS d, SUM(total) AS total
+        FROM vendas WHERE cancelada = false GROUP BY 1
       ) v ON v.d = dia::date
       LEFT JOIN (
-        SELECT de.data::date AS d, SUM(de.valor) AS total
+        SELECT (de.data + ${FUSO_CLIENTE}::interval)::date AS d, SUM(de.valor) AS total
         FROM despesas de
         JOIN categorias_despesa c ON c.id = de."categoriaId"
         WHERE c.tipo = 'CUSTO_OPERACIONAL'
-        GROUP BY de.data::date
+        GROUP BY 1
       ) d ON d.d = dia::date
       ORDER BY dia`;
 
     return linhas.map((l) => ({
-      dia: l.dia,
+      // Texto, como o dia do fechamento: um `Date` de meia-noite UTC era
+      // mostrado no navegador como a véspera, e o gráfico rotulava cada
+      // barra com o dia anterior.
+      dia: diaDaColuna(l.dia),
       vendas: Number(l.vendas),
       despesas: Number(l.despesas),
     }));

@@ -21,7 +21,7 @@ Sistema de gestão da **Delícia Doces**. O modelo abaixo descreve o banco que e
 | E5  | **PRODUCAO**             | Lote produzido: consome insumo e gera produto     |
 | E6  | **VENDA**                | Entrada de dinheiro, sempre à vista               |
 | E7  | **ITEM_VENDA**           | Cada doce vendido dentro de uma venda             |
-| E8  | **CATEGORIA_DESPESA**    | Classificação da saída de dinheiro                |
+| E8  | **CATEGORIA_DESPESA**    | Separa saída do negócio de retirada pessoal       |
 | E9  | **DESPESA**              | Saída de dinheiro                                 |
 | E10 | **MOVIMENTACAO_ESTOQUE** | Razão de tudo que entra e sai do estoque          |
 | E11 | **FECHAMENTO_DIARIO**    | Conferência diária da gaveta                      |
@@ -288,6 +288,8 @@ Cada compra tem a sua validade, então o campo mora em `movimentacoes_estoque`, 
 ### 4.5 Retirada pessoal não é custo
 
 A cliente mistura dinheiro pessoal e do negócio. `TipoCategoria.RETIRADA_PESSOAL` separa a saída que **reduz o caixa mas não é custo do negócio** — sem isso, o lucro dela apareceria pior do que é. No fechamento diário, porém, a retirada conta como saída: da gaveta o dinheiro saiu de verdade.
+
+A cliente **não usa categoria de despesa**: escolhe entre Saída e Retirada pessoal e descreve o que foi. A tabela continua no schema, que exige uma categoria em toda despesa, mas o sistema usa só duas, internas — "Diversos" (`CUSTO_OPERACIONAL`) e "Retirada pessoal" (`RETIRADA_PESSOAL`) —, escolhidas pelo servidor a partir do campo `retirada` da API. Nenhuma tela nem resposta da API mostra categoria.
 
 ### 4.6 O que NÃO foi modelado, e por quê
 

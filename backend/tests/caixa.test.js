@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { prisma } from '../src/lib/prisma.js';
-import { vendaService, despesaService, CATEGORIA_DIVERSOS } from '../src/services/caixaService.js';
+import { vendaService, despesaService, CATEGORIAS_INTERNAS } from '../src/services/caixaService.js';
 import { dashboardService } from '../src/services/dashboardService.js';
 import { estoqueService } from '../src/services/estoqueService.js';
-import { limparTudo, criarProduto, saldoProduto, razaoDe, criarCategoria } from './apoio.js';
+import { limparTudo, criarProduto, saldoProduto, razaoDe } from './apoio.js';
 
 /**
  * Editar e excluir venda é FLUXO PRINCIPAL para a cliente, não exceção —
@@ -368,39 +368,92 @@ describe('o painel separa a entrada avulsa', () => {
 });
 
 /**
- * A saída rápida da tela inicial não pergunta categoria.
+ * Saída e retirada pessoal, sem categoria.
  *
- * O risco que estes testes travam: sem categoria, cair na PRIMEIRA da
- * lista. Em ordem alfabética é "Ajudante" — o gás de cozinha viraria
- * pagamento de ajudante, e ninguém perceberia até olhar o relatório.
+ * A cliente não usa categoria de despesa. O schema exige uma em toda
+ * despesa, e é o TIPO dela que separa retirada (sai do caixa, não é
+ * custo) de saída do negócio no lucro — então o servidor escolhe sozinho
+ * entre duas internas. Estes testes travam as duas pontas: o lucro certo
+ * e nenhuma categoria vazando para a tela.
  */
-describe('despesa sem categoria', () => {
-  it('vai para Diversos, criada na hora se o banco ainda não tem', async () => {
-    // Simula um banco anterior à categoria: ela não pode ser pré-requisito.
-    await prisma.categoriaDespesa.deleteMany({ where: { nome: CATEGORIA_DIVERSOS } });
-    await criarCategoria('CUSTO_OPERACIONAL', 'Ajudante-teste-' + Date.now());
+describe('saída e retirada, sem categoria', () => {
+  const { saida: SAIDA, retirada: RETIRADA } = CATEGORIAS_INTERNAS;
+
+  it('a saída vai para a categoria interna de custo, criada na hora se faltar', async () => {
+    // Um banco sem ela não pode fazer a saída falhar.
+    await prisma.categoriaDespesa.deleteMany({
+      where: { nome: SAIDA.nome, despesas: { none: {} } },
+    });
 
     const d = await despesaService.criar({ descricao: 'Gás de cozinha', valor: 140 }, null);
 
-    expect(d.categoria.nome).toBe(CATEGORIA_DIVERSOS);
-    expect(d.categoria.tipo).toBe('CUSTO_OPERACIONAL');
+    expect(d.retirada).toBe(false);
+    const interna = await prisma.categoriaDespesa.findUnique({ where: { nome: SAIDA.nome } });
+    expect(interna.tipo).toBe('CUSTO_OPERACIONAL');
   });
 
-  it('reaproveita a mesma Diversos em vez de criar outra a cada saída', async () => {
-    const a = await despesaService.criar({ descricao: 'Gás', valor: 10 }, null);
-    const b = await despesaService.criar({ descricao: 'Luz', valor: 20 }, null);
-
-    expect(a.categoriaId).toBe(b.categoriaId);
-    expect(await prisma.categoriaDespesa.count({ where: { nome: CATEGORIA_DIVERSOS } })).toBe(1);
-  });
-
-  it('respeita a categoria quando ela é informada', async () => {
-    const aluguel = await criarCategoria('CUSTO_OPERACIONAL');
+  it('a retirada vai para a interna de retirada pessoal', async () => {
     const d = await despesaService.criar(
-      { descricao: 'Aluguel de setembro', valor: 800, categoriaId: aluguel.id },
+      { descricao: 'Mercado de casa', valor: 200, retirada: true },
       null
     );
-    expect(d.categoriaId).toBe(aluguel.id);
+    expect(d.retirada).toBe(true);
+  });
+
+  it('reaproveita as mesmas duas em vez de criar uma a cada lançamento', async () => {
+    await despesaService.criar({ descricao: 'Gás', valor: 10 }, null);
+    await despesaService.criar({ descricao: 'Luz', valor: 20 }, null);
+    await despesaService.criar({ descricao: 'Feira', valor: 30, retirada: true }, null);
+    await despesaService.criar({ descricao: 'Farmácia', valor: 40, retirada: true }, null);
+
+    expect(await prisma.categoriaDespesa.count({ where: { nome: SAIDA.nome } })).toBe(1);
+    expect(await prisma.categoriaDespesa.count({ where: { nome: RETIRADA.nome } })).toBe(1);
+  });
+
+  it('nenhuma resposta fala em categoria', async () => {
+    const criada = await despesaService.criar({ descricao: 'Gás', valor: 10 }, null);
+    const editada = await despesaService.atualizar(criada.id, { valor: 12 });
+    const [listada] = await despesaService.listar({});
+
+    for (const d of [criada, editada, listada]) {
+      expect(d).not.toHaveProperty('categoria');
+      expect(d).not.toHaveProperty('categoriaId');
+      expect(d.retirada).toBe(false);
+    }
+  });
+
+  it('a edição conserta a saída lançada no botão errado, e volta', async () => {
+    const d = await despesaService.criar({ descricao: 'Mercado de casa', valor: 90 }, null);
+
+    expect((await despesaService.atualizar(d.id, { retirada: true })).retirada).toBe(true);
+    expect((await despesaService.atualizar(d.id, { retirada: false })).retirada).toBe(false);
+  });
+
+  it('editar sem dizer o tipo mantém o que era', async () => {
+    const d = await despesaService.criar({ descricao: 'Feira', valor: 90, retirada: true }, null);
+    expect((await despesaService.atualizar(d.id, { valor: 95 })).retirada).toBe(true);
+  });
+
+  it('reafirma o tipo da interna, se alguém o mudou no banco', async () => {
+    // Senão a retirada passaria a contar como custo, em silêncio.
+    await despesaService.criar({ descricao: 'Feira', valor: 10, retirada: true }, null);
+    await prisma.categoriaDespesa.update({
+      where: { nome: RETIRADA.nome },
+      data: { tipo: 'CUSTO_OPERACIONAL' },
+    });
+
+    const d = await despesaService.criar({ descricao: 'Feira', valor: 20, retirada: true }, null);
+    expect(d.retirada).toBe(true);
+  });
+
+  it('retirada não entra no lucro como custo', async () => {
+    await despesaService.criar({ descricao: 'Feira', valor: 70, retirada: true }, null);
+    const r = await dashboardService.resumo({
+      inicio: new Date(Date.now() - 86400000),
+      fim: new Date(Date.now() + 86400000),
+    });
+    expect(r.custos).toBe(0);
+    expect(r.retiradas).toBe(70);
   });
 
   it('entra no lucro como custo do negócio, não como retirada', async () => {

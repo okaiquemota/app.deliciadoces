@@ -4,7 +4,8 @@ import { producaoService } from '../services/producaoService.js';
 import { dashboardService } from '../services/dashboardService.js';
 import { estoqueService } from '../services/estoqueService.js';
 import { fechamentoService } from '../services/fechamentoService.js';
-import { filtrosPeriodo, limiteDaListagem } from '../utils/periodo.js';
+import { diaDoCliente, filtrosPeriodo, limiteDaListagem } from '../utils/periodo.js';
+import { AppError } from '../utils/AppError.js';
 
 /**
  * Controllers: traduzem HTTP <-> serviço. Nenhuma regra de negócio aqui.
@@ -116,14 +117,10 @@ export const vendaController = {
 };
 
 export const despesaController = {
-  async categorias(_req, res) {
-    res.json(await despesaService.listarCategorias());
-  },
   async listar(req, res) {
     res.json(
       await despesaService.listar({
         ...filtrosPeriodo(req.query),
-        categoriaId: req.query.categoriaId,
         limite: limiteDaListagem(req.query),
       })
     );
@@ -185,10 +182,12 @@ export const fechamentoController = {
    * saber se está abrindo ou revisando.
    */
   async previa(req, res) {
-    const data = req.query.data ? new Date(req.query.data) : new Date();
+    // Sem `data`, é o dia de HOJE em Brasília — não o do relógio do servidor.
+    const dia = diaDoCliente(req.query.data ?? new Date());
+    if (!dia) throw new AppError('Data inválida.');
     const [previa, gravado] = await Promise.all([
-      fechamentoService.previa(data),
-      fechamentoService.porData(data),
+      fechamentoService.previa(dia),
+      fechamentoService.porData(dia),
     ]);
     res.json({ ...previa, fechamento: gravado });
   },

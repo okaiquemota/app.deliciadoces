@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../utils/AppError.js';
+import { colunaDoDia, diaDaColuna, diaDoCliente, limitesDoDia } from '../utils/periodo.js';
 
 /**
  * Fechamento diário de caixa.
@@ -25,18 +26,20 @@ import { AppError } from '../utils/AppError.js';
  * verdade e a contagem tem que refletir isso.
  */
 
-/** Meia-noite local da data informada — o schema guarda `data` como DATE. */
-function inicioDoDia(data) {
-  const d = new Date(data);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function fimDoDia(data) {
-  const d = new Date(data);
-  d.setHours(23, 59, 59, 999);
-  return d;
-}
+/*
+ * O DIA É O DA CLIENTE.
+ *
+ * Todo o serviço trabalha com o dia do calendário dela ("2026-09-25"), e
+ * o movimento de um dia vai das 00:00 às 23:59 de Brasília. Antes o dia
+ * saía do relógio do servidor, que roda em UTC: aberto às 21h30 — a hora
+ * de fechar o caixa —, o Fechar dia já mostrava o dia seguinte, e a venda
+ * das 21h30 entrava na conta de amanhã.
+ *
+ * A resposta devolve `data` como texto pelo mesmo motivo: a coluna é
+ * DATE, lida como meia-noite UTC, e no navegador em Brasília isso aparecia
+ * como o dia anterior no histórico.
+ */
+const comDia = (fechamento) => fechamento && { ...fechamento, data: diaDaColuna(fechamento.data) };
 
 /** Decimal do Prisma -> número. */
 const numero = (valor) => Number(valor ?? 0);
@@ -52,9 +55,9 @@ export const fechamentoService = {
    * precisa ver o esperado para então conferir a gaveta.
    */
   async previa(data = new Date()) {
-    const de = inicioDoDia(data);
-    const ate = fimDoDia(data);
-    const periodo = { gte: de, lte: ate };
+    const dia = diaDoCliente(data);
+    const { inicio, fim } = limitesDoDia(dia);
+    const periodo = { gte: inicio, lte: fim };
 
     const [vendasPorForma, despesas, anterior] = await Promise.all([
       prisma.venda.groupBy({
@@ -81,7 +84,7 @@ export const fechamentoService = {
         },
       }),
 
-      this.saldoDeAbertura(de),
+      this.saldoDeAbertura(dia),
     ]);
 
     const entradasDinheiro = centavos(
@@ -105,7 +108,7 @@ export const fechamentoService = {
     const saldoCalculado = centavos(saldoInicial + entradasDinheiro - saidasDinheiro);
 
     return {
-      data: de,
+      data: dia,
       saldoInicial,
       totalEntradas: entradasDinheiro,
       totalSaidas: saidasDinheiro,
@@ -130,9 +133,9 @@ export const fechamentoService = {
    * — senão a mesma diferença reapareceria todo dia, e ela perseguiria um
    * erro que já tinha encontrado.
    */
-  async saldoDeAbertura(data) {
+  async saldoDeAbertura(dia) {
     const anterior = await prisma.fechamentoDiario.findFirst({
-      where: { data: { lt: inicioDoDia(data) } },
+      where: { data: { lt: colunaDoDia(dia) } },
       orderBy: { data: 'desc' },
       select: { saldoConferido: true, saldoCalculado: true },
     });
@@ -148,9 +151,12 @@ export const fechamentoService = {
    * pode fechar o dia só para registrar o movimento e conferir depois.
    */
   async fechar({ data, saldoConferido, observacao }, usuarioId) {
-    const dia = inicioDoDia(data ?? new Date());
+    const dia = diaDoCliente(data ?? new Date());
+    if (!dia) throw new AppError('Data inválida.');
 
-    const jaFechado = await prisma.fechamentoDiario.findUnique({ where: { data: dia } });
+    const jaFechado = await prisma.fechamentoDiario.findUnique({
+      where: { data: colunaDoDia(dia) },
+    });
     if (jaFechado) {
       throw AppError.conflito(
         'Este dia já foi fechado. Use a edição do fechamento para corrigir o valor conferido.'
@@ -160,9 +166,9 @@ export const fechamentoService = {
     const calculo = await this.previa(dia);
     const conferido = saldoConferido == null ? null : centavos(Number(saldoConferido));
 
-    return prisma.fechamentoDiario.create({
+    const criado = await prisma.fechamentoDiario.create({
       data: {
-        data: dia,
+        data: colunaDoDia(dia),
         saldoInicial: calculo.saldoInicial,
         totalEntradas: calculo.totalEntradas,
         totalSaidas: calculo.totalSaidas,
@@ -173,6 +179,7 @@ export const fechamentoService = {
         usuarioId,
       },
     });
+    return comDia(criado);
   },
 
   /**
@@ -186,10 +193,10 @@ export const fechamentoService = {
     const fechamento = await prisma.fechamentoDiario.findUnique({ where: { id } });
     if (!fechamento) throw AppError.naoEncontrado('Fechamento não encontrado.');
 
-    const calculo = await this.previa(fechamento.data);
+    const calculo = await this.previa(diaDaColuna(fechamento.data));
     const conferido = saldoConferido == null ? null : centavos(Number(saldoConferido));
 
-    return prisma.fechamentoDiario.update({
+    const atualizado = await prisma.fechamentoDiario.update({
       where: { id },
       data: {
         saldoInicial: calculo.saldoInicial,
@@ -201,26 +208,35 @@ export const fechamentoService = {
         observacao: observacao === undefined ? fechamento.observacao : observacao || null,
       },
     });
+    return comDia(atualizado);
   },
 
+  /**
+   * `inicio` e `fim` chegam como instantes (o `fim` de um dia termina às
+   * 23:59 de Brasília, que em UTC já é o dia seguinte): viram o DIA da
+   * cliente antes de comparar com a coluna, ou o último dia pedido
+   * arrastaria o fechamento do dia seguinte junto.
+   */
   async listar({ inicio, fim } = {}) {
     const where = {};
     if (inicio || fim) {
       where.data = {};
-      if (inicio) where.data.gte = inicioDoDia(inicio);
-      if (fim) where.data.lte = inicioDoDia(fim);
+      if (inicio) where.data.gte = colunaDoDia(diaDoCliente(inicio));
+      if (fim) where.data.lte = colunaDoDia(diaDoCliente(fim));
     }
 
-    return prisma.fechamentoDiario.findMany({
+    const lista = await prisma.fechamentoDiario.findMany({
       where,
       orderBy: { data: 'desc' },
       take: 90,
       include: { usuario: { select: { nome: true } } },
     });
+    return lista.map(comDia);
   },
 
   async porData(data) {
-    return prisma.fechamentoDiario.findUnique({ where: { data: inicioDoDia(data) } });
+    const dia = diaDoCliente(data);
+    return comDia(await prisma.fechamentoDiario.findUnique({ where: { data: colunaDoDia(dia) } }));
   },
 
   async excluir(id) {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SO_DATA } from '../utils/periodo.js';
 
 /**
  * Schemas de entrada da API, reunidos aqui porque vários são compartilhados
@@ -111,9 +112,9 @@ export const vendaSchema = z
 export const despesaSchema = z.object({
   descricao: z.string().trim().min(2, 'Descreva a despesa.'),
   valor: numero(0.01, 'O valor precisa ser maior que zero.'),
-  // Opcional: a saída rápida da tela inicial não pergunta categoria, e
-  // quem chega sem uma vai para "Diversos" (ver despesaService.criar).
-  categoriaId: z.string().uuid('Selecione uma categoria.').optional(),
+  // Saída do negócio ou retirada pessoal. Categoria não existe para a
+  // tela: o servidor escolhe a interna (ver despesaService.criar).
+  retirada: z.boolean().optional(),
   formaPagamento: z.enum(FORMAS_PAGAMENTO).optional().nullable(),
   recorrente: z.boolean().default(false),
   fornecedor: z.string().trim().optional().nullable(),
@@ -145,7 +146,10 @@ export const producaoSchema = z.object({
  * em que ela levou todo o dinheiro para o banco.
  */
 export const fechamentoSchema = z.object({
-  data: dataOpcional,
+  // O DIA a fechar, como a tela manda ("2026-09-25"). Texto, e não data
+  // convertida: `z.coerce.date` faria dele meia-noite UTC — 21h da véspera
+  // em Brasília — e o fechamento iria para o dia anterior.
+  data: z.string().regex(SO_DATA, 'Data inválida.').optional(),
   saldoConferido: z.coerce
     .number()
     .min(0, 'O valor contado não pode ser negativo.')

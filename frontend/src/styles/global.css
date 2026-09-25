@@ -1467,6 +1467,12 @@ body {
   color: var(--texto);
 }
 
+/* Largura toda, dividida por igual — como escolha de formulário. */
+.seletor-periodo--cheio .seletor-periodo__item {
+  flex: 1 1 0;
+  text-align: center;
+}
+
 .seletor-periodo__item--ativo,
 .seletor-periodo__item--ativo:hover {
   background-color: var(--superficie);

@@ -97,7 +97,6 @@ router.patch('/vendas/:id/cancelar', vendaController.cancelar);
 router.patch('/vendas/:id/reabrir', vendaController.reabrir);
 
 // --------------------------------------------------------------- despesas
-router.get('/categorias-despesa', despesaController.categorias);
 
 router
   .route('/despesas')

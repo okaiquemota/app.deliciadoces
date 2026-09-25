@@ -65,7 +65,7 @@ Prioridade: **E** = essencial · **I** = importante · **D** = desejável
 | RF04 | O sistema deve registrar venda com os doces vendidos, calculando o total a partir do preço cadastrado    | E      |
 | RF05 | O sistema deve registrar entrada de dinheiro **sem identificar produto**, informando apenas o valor      | E      |
 | RF06 | O sistema deve avisar, ao registrar entrada sem produto, que aquele lançamento não baixa estoque         | E      |
-| RF07 | O sistema deve registrar saída de dinheiro (despesa), classificada por categoria                         | E      |
+| RF07 | O sistema deve registrar saída de dinheiro (despesa), com a descrição do que foi, sem pedir categoria    | E      |
 | RF08 | O sistema deve registrar retirada pessoal separadamente das despesas do negócio                          | E      |
 | RF09 | O sistema deve permitir editar uma venda já lançada, corrigindo o estoque de acordo                      | E      |
 | RF10 | O sistema deve permitir cancelar uma venda, devolvendo os produtos ao estoque, **sem apagar o registro** | E      |

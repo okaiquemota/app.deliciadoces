@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../utils/AppError.js';
+import { colunaDoDia, diaDaColuna, diaDoCliente } from '../utils/periodo.js';
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -269,10 +270,16 @@ export const estoqueService = {
     }
 
     // Intervalo digitado manda sobre o atalho, se vier junto.
+    //
+    // A validade é um DIA, digitado num campo de data e guardado como
+    // meia-noite UTC. O período chega em instantes de Brasília (00:00 é
+    // 03:00 UTC), então compara-se dia com dia: senão o lote que vence no
+    // primeiro dia pedido ficava de fora e o do dia seguinte ao último
+    // entrava.
     if (inicio || fim) {
       where.validade = {
-        ...(inicio ? { gte: inicio } : {}),
-        ...(fim ? { lte: fim } : {}),
+        ...(inicio ? { gte: colunaDoDia(diaDoCliente(inicio)) } : {}),
+        ...(fim ? { lte: new Date(colunaDoDia(diaDoCliente(fim)).getTime() + DIA - 1) } : {}),
       };
     }
 
@@ -298,7 +305,9 @@ export const estoqueService = {
         insumo: l.insumo,
         quantidadeEntrada: l.quantidade,
         data: l.data,
-        validade: l.validade,
+        // Texto ("2026-09-25"), o dia que ela digitou. Como `Date` de
+        // meia-noite UTC, o navegador em Brasília mostrava a véspera.
+        validade: diaDaColuna(l.validade),
         dias,
         vencido: dias < 0,
       };

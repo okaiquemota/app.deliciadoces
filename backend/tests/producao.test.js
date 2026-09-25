@@ -99,16 +99,6 @@ describe('dashboard', () => {
   it('separa lucro de saldo de caixa: retirada pessoal não é custo', async () => {
     // A regra que a cliente levantou sozinha. Errar isso faz o resultado
     // dela parecer pior do que é.
-    const custo = await prisma.categoriaDespesa.upsert({
-      where: { nome: 'Ingredientes' },
-      update: {},
-      create: { nome: 'Ingredientes', tipo: 'CUSTO_OPERACIONAL' },
-    });
-    const retirada = await prisma.categoriaDespesa.upsert({
-      where: { nome: 'Retirada pessoal' },
-      update: {},
-      create: { nome: 'Retirada pessoal', tipo: 'RETIRADA_PESSOAL' },
-    });
 
     const p = await criarProduto({ precoVenda: 100 });
     await prisma.$transaction((tx) =>
@@ -120,12 +110,9 @@ describe('dashboard', () => {
       null
     );
 
-    await prisma.despesa.create({
-      data: { descricao: 'compra', valor: 300, categoriaId: custo.id },
-    });
-    await prisma.despesa.create({
-      data: { descricao: 'mercado', valor: 200, categoriaId: retirada.id },
-    });
+    const { despesaService } = await import('../src/services/caixaService.js');
+    await despesaService.criar({ descricao: 'compra', valor: 300 }, null);
+    await despesaService.criar({ descricao: 'mercado', valor: 200, retirada: true }, null);
 
     const ontem = new Date(Date.now() - 86400000);
     const amanha = new Date(Date.now() + 86400000);

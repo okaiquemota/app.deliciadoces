@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { filtrosPeriodo, limiteDaListagem } from '../src/utils/periodo.js';
+import {
+  colunaDoDia,
+  diaDaColuna,
+  diaDoCliente,
+  filtrosPeriodo,
+  limiteDaListagem,
+} from '../src/utils/periodo.js';
 
 /**
  * O servidor roda em UTC (o da Vercel e o local), e a cliente vive em
@@ -55,5 +61,31 @@ describe('limiteDaListagem', () => {
     for (const limite of ['0', '-5', '2.5', 'tudo', '']) {
       expect(limiteDaListagem({ limite })).toBe(200);
     }
+  });
+});
+
+describe('diaDoCliente', () => {
+  it('às 21h30 de Brasília ainda é o mesmo dia, mesmo com o UTC no seguinte', () => {
+    expect(diaDoCliente(new Date('2026-09-25T21:30:00-03:00'))).toBe('2026-09-25');
+  });
+
+  it('à meia-noite de Brasília já é o dia seguinte', () => {
+    expect(diaDoCliente(new Date('2026-09-26T00:00:00-03:00'))).toBe('2026-09-26');
+    expect(diaDoCliente(new Date('2026-09-25T23:59:59.999-03:00'))).toBe('2026-09-25');
+  });
+
+  it('uma data sem hora já é um dia e passa como veio', () => {
+    expect(diaDoCliente('2026-09-25')).toBe('2026-09-25');
+  });
+
+  it('o que não é data vira null, para a rota responder 400', () => {
+    expect(diaDoCliente('ontem')).toBeNull();
+  });
+});
+
+describe('coluna de dia', () => {
+  it('ida e volta sem perder nem ganhar um dia', () => {
+    expect(colunaDoDia('2026-09-25').toISOString()).toBe('2026-09-25T00:00:00.000Z');
+    expect(diaDaColuna(colunaDoDia('2026-09-25'))).toBe('2026-09-25');
   });
 });

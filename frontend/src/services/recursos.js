@@ -41,7 +41,6 @@ export const vendas = {
 };
 
 export const despesas = {
-  categorias: () => dados(api.get('/categorias-despesa')),
   listar: (params) => dados(api.get('/despesas', { params })),
   criar: (corpo) => dados(api.post('/despesas', corpo)),
   atualizar: (id, corpo) => dados(api.put(`/despesas/${id}`, corpo)),

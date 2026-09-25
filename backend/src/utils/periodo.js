@@ -16,7 +16,10 @@
  */
 export const FUSO_CLIENTE = '-03:00';
 
-const SO_DATA = /^\d{4}-\d{2}-\d{2}$/;
+export const SO_DATA = /^\d{4}-\d{2}-\d{2}$/;
+
+const [, SINAL, HORAS, MINUTOS] = FUSO_CLIENTE.match(/^([+-])(\d{2}):(\d{2})$/);
+const DESLOCAMENTO_MS = (SINAL === '-' ? -1 : 1) * (Number(HORAS) * 60 + Number(MINUTOS)) * 60_000;
 
 function paraInstante(valor, hora) {
   const texto = String(valor);
@@ -35,3 +38,39 @@ export function limiteDaListagem(query, padrao = 200, maximo = 1000) {
   const pedido = Number(query.limite);
   return Number.isInteger(pedido) && pedido > 0 ? Math.min(pedido, maximo) : padrao;
 }
+
+/**
+ * O DIA de calendário da cliente ("2026-09-25") de um instante.
+ *
+ * É o dia que ela vê no relógio da parede. Às 21h30 de Brasília o UTC já
+ * virou o dia seguinte — e foi assim que o Fechar dia, aberto na hora de
+ * fechar o caixa, mostrava a gaveta de amanhã.
+ *
+ * Uma data sem hora já é um dia e passa como veio. Sem valor, é hoje.
+ * Valor que não é data devolve `null`, para quem chamou responder 400.
+ */
+export function diaDoCliente(valor = new Date()) {
+  if (typeof valor === 'string' && SO_DATA.test(valor)) return valor;
+  const instante = new Date(valor);
+  if (Number.isNaN(instante.getTime())) return null;
+  return new Date(instante.getTime() + DESLOCAMENTO_MS).toISOString().slice(0, 10);
+}
+
+/** De 00:00:00.000 a 23:59:59.999 do dia, no horário da cliente. */
+export function limitesDoDia(dia) {
+  return {
+    inicio: paraInstante(dia, '00:00:00.000'),
+    fim: paraInstante(dia, '23:59:59.999'),
+  };
+}
+
+/**
+ * Coluna de DIA no banco (`@db.Date`, ou a validade digitada num campo de
+ * data): o Prisma grava e lê como meia-noite UTC daquele dia. Estas duas
+ * funções são a ponte — e a volta devolve texto, não `Date`, porque um
+ * `Date` de meia-noite UTC, mostrado no navegador em Brasília, vira o dia
+ * ANTERIOR.
+ */
+export const colunaDoDia = (dia) => new Date(`${dia}T00:00:00.000Z`);
+
+export const diaDaColuna = (data) => new Date(data).toISOString().slice(0, 10);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { despesas, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { Modal } from './Modal.jsx';
@@ -14,12 +14,9 @@ const FORMAS = [
 /**
  * `exemplo` liga o campo "Com o quê" e dá o texto de exemplo dele.
  *
- * A saída NÃO pergunta categoria: quem diz o que foi é o "Com o quê", e o
- * servidor arquiva a despesa em "Diversos", que é custo do negócio — o
- * lucro continua certo. Se ela quiser classificar, edita pelo Caixa.
- *
- * A retirada é o único modo que ainda busca categoria, e sem perguntar:
- * só existe uma do tipo retirada pessoal.
+ * Nada de categoria: quem diz o que foi é o "Com o quê". A retirada só
+ * avisa o servidor que é retirada — é o que tira o valor do cálculo do
+ * lucro, porque o dinheiro saiu do caixa mas não é custo do negócio.
  */
 const MODOS = {
   entrada: {
@@ -38,7 +35,7 @@ const MODOS = {
     titulo: 'Retirada pessoal',
     rotuloValor: 'Quanto você tirou',
     botao: 'Registrar retirada',
-    precisaCategoria: 'RETIRADA_PESSOAL',
+    retirada: true,
   },
 };
 
@@ -50,8 +47,8 @@ const MODOS = {
  * lançamento vai:
  *
  *   entrada  -> venda SEM itens (não mexe em estoque, por não saber o quê)
- *   saida    -> despesa de custo operacional
- *   retirada -> despesa de categoria RETIRADA_PESSOAL
+ *   saida    -> despesa, custo do negócio
+ *   retirada -> despesa com `retirada: true`, fora do lucro
  *
  * A entrada avisa em tela que não baixou estoque. A cliente pediu o
  * caminho curto, mas ela precisa saber que ele tem esse custo — um
@@ -77,19 +74,9 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
   const [valor, setValor] = useState('');
   const [forma, setForma] = useState('DINHEIRO');
   const [descricao, setDescricao] = useState('');
-  const [categoriaId, setCategoriaId] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
   const campo = useRef(null);
-
-  const carregarCategorias = useCallback(async (tipo) => {
-    try {
-      const todas = await despesas.categorias();
-      setCategoriaId(todas.find((c) => c.tipo === tipo)?.id ?? '');
-    } catch (e) {
-      setErro(mensagemDeErro(e));
-    }
-  }, []);
 
   useEffect(() => {
     if (!modo) return;
@@ -97,7 +84,6 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
     setForma('DINHEIRO');
     setDescricao('');
     setErro('');
-    if (config?.precisaCategoria) carregarCategorias(config.precisaCategoria);
 
     /**
      * Foco no campo assim que o modal abre: no celular é o que faz o
@@ -107,7 +93,7 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
      */
     const t = setTimeout(() => campo.current?.focus(), 80);
     return () => clearTimeout(t);
-  }, [modo, config?.precisaCategoria, carregarCategorias]);
+  }, [modo]);
 
   /**
    * Filtra o que o teclado do aparelho manda.
@@ -148,17 +134,10 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
           observacao: descricao.trim() || undefined,
         });
       } else {
-        if (config.precisaCategoria && !categoriaId) {
-          setErro('Nenhuma categoria cadastrada para este tipo.');
-          setSalvando(false);
-          return;
-        }
         await despesas.criar({
           descricao: descricao.trim() || config.titulo,
           valor: numero,
-          // Só a retirada manda categoria; a saída deixa o servidor
-          // arquivar em "Diversos".
-          ...(config.precisaCategoria ? { categoriaId } : {}),
+          retirada: Boolean(config.retirada),
           formaPagamento: forma,
         });
       }
