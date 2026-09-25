@@ -31,6 +31,9 @@ const CATEGORIAS = [
   { nome: 'Ajudante', tipo: 'CUSTO_OPERACIONAL' },
   { nome: 'Aluguel', tipo: 'CUSTO_OPERACIONAL' },
   { nome: 'Internet', tipo: 'CUSTO_OPERACIONAL' },
+  // Destino da saída rápida, que não pergunta categoria. O servidor também
+  // a cria se faltar, então bancos anteriores a ela não quebram.
+  { nome: 'Diversos', tipo: 'CUSTO_OPERACIONAL' },
   { nome: 'Retirada pessoal', tipo: 'RETIRADA_PESSOAL' },
 ];
 

@@ -172,7 +172,9 @@ export const dashboardService = {
       entrada: entrada && {
         data: entrada.data,
         valor: Number(entrada.total),
-        descricao: FORMAS[entrada.formaPagamento] ?? 'Entrada avulsa',
+        // O que ela escreveu no "Com o quê" diz mais que a forma de
+        // pagamento; sem nada escrito, a forma é o melhor que há.
+        descricao: entrada.observacao || FORMAS[entrada.formaPagamento] || 'Entrada avulsa',
       },
       saida: saida && {
         data: saida.data,

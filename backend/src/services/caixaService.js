@@ -292,9 +292,27 @@ export const despesaService = {
     });
   },
 
+  /**
+   * Sem categoria, a despesa vai para "Diversos".
+   *
+   * A saída rápida da tela inicial deixou de perguntar categoria — a
+   * cliente pediu o caminho mais curto, e quem diz o que foi é o "Com o
+   * quê". O que NÃO podia acontecer era a despesa cair na primeira
+   * categoria da lista: em ordem alfabética é "Ajudante", e o gás de
+   * cozinha ficaria registrado como pagamento de ajudante.
+   *
+   * "Diversos" é honesto sobre não saber, e é custo do negócio — então o
+   * lucro continua certo, porque o cálculo depende do TIPO da categoria,
+   * não do nome. Se precisar classificar depois, a despesa se edita no
+   * Caixa, onde o seletor continua existindo.
+   *
+   * `upsert` e não só busca: a categoria nasce no seed, mas um banco que
+   * já existia antes dela não a tem, e a saída não pode falhar por isso.
+   */
   async criar(dados, usuarioId) {
+    const categoriaId = dados.categoriaId ?? (await categoriaDiversos()).id;
     return prisma.despesa.create({
-      data: { ...dados, usuarioId },
+      data: { ...dados, categoriaId, usuarioId },
       include: { categoria: true },
     });
   },
@@ -325,3 +343,13 @@ export const despesaService = {
     });
   },
 };
+
+export const CATEGORIA_DIVERSOS = 'Diversos';
+
+function categoriaDiversos() {
+  return prisma.categoriaDespesa.upsert({
+    where: { nome: CATEGORIA_DIVERSOS },
+    update: {},
+    create: { nome: CATEGORIA_DIVERSOS, tipo: 'CUSTO_OPERACIONAL' },
+  });
+}

@@ -135,10 +135,14 @@ function Vendas({ periodo }) {
           {
             chave: 'itens',
             titulo: 'Itens',
+            // Entrada avulsa não tem itens: a coluna ficava em branco e o
+            // "Com o quê" que ela digitou não aparecia em lugar nenhum.
             render: (v) =>
-              v.itens
-                .map((i) => `${quantidade(i.quantidade)}× ${i.produto?.nome ?? ''}`)
-                .join(', '),
+              v.itens.length
+                ? v.itens
+                    .map((i) => `${quantidade(i.quantidade)}× ${i.produto?.nome ?? ''}`)
+                    .join(', ')
+                : ['Entrada avulsa', v.observacao].filter(Boolean).join(' · '),
           },
           {
             chave: 'formaPagamento',

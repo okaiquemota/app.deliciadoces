@@ -50,6 +50,15 @@ describe('dashboardService.ultimos', () => {
     expect(u.entrada.descricao).toBe('Em dinheiro');
   });
 
+  it('mostra o "com o quê" da entrada avulsa no lugar da forma de pagamento', async () => {
+    await vendaService.criar(
+      { valor: 80, formaPagamento: 'PIX', observacao: 'Encomenda da Maria' },
+      null
+    );
+    const u = await dashboardService.ultimos();
+    expect(u.entrada.descricao).toBe('Encomenda da Maria');
+  });
+
   it('ignora venda cancelada', async () => {
     const p = await produtoComEstoque(100, 5);
     const primeira = await vendaService.criar(

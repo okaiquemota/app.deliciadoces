@@ -111,7 +111,9 @@ export const vendaSchema = z
 export const despesaSchema = z.object({
   descricao: z.string().trim().min(2, 'Descreva a despesa.'),
   valor: numero(0.01, 'O valor precisa ser maior que zero.'),
-  categoriaId: z.string().uuid('Selecione uma categoria.'),
+  // Opcional: a saída rápida da tela inicial não pergunta categoria, e
+  // quem chega sem uma vai para "Diversos" (ver despesaService.criar).
+  categoriaId: z.string().uuid('Selecione uma categoria.').optional(),
   formaPagamento: z.enum(FORMAS_PAGAMENTO).optional().nullable(),
   recorrente: z.boolean().default(false),
   fornecedor: z.string().trim().optional().nullable(),
