@@ -176,6 +176,42 @@ export const vendaService = {
       throw new AppError('Não é possível editar uma venda cancelada.', 409);
     }
 
+    /**
+     * Entrada avulsa continua avulsa, e venda com doces continua com
+     * doces. Converter pela edição criaria estados pela metade — uma venda
+     * "com doces" sem ter baixado estoque, ou o contrário —, e para a
+     * cliente o caminho é mais simples de explicar: excluir e lançar de
+     * novo pelo botão certo.
+     */
+    const eraAvulsa = existente.itens.length === 0;
+    const ficaAvulsa = dados.valor !== undefined;
+    if (eraAvulsa !== ficaAvulsa) {
+      throw new AppError(
+        eraAvulsa
+          ? 'Esta é uma entrada avulsa: edite o valor. Para registrar doces, exclua e lance pelo botão Venda.'
+          : 'Esta venda tem doces: edite os itens. Para virar entrada avulsa, exclua e lance de novo.',
+        422
+      );
+    }
+
+    // Avulsa: só valor, forma e o "com o quê". Não tem estoque para
+    // estornar nem para baixar.
+    if (eraAvulsa) {
+      const total = Number(dados.valor);
+      return prisma.venda.update({
+        where: { id },
+        data: {
+          subtotal: total.toFixed(2),
+          desconto: '0',
+          total: total.toFixed(2),
+          formaPagamento: dados.formaPagamento,
+          observacao: dados.observacao || null,
+          clienteNome: dados.clienteNome || null,
+        },
+        include: { itens: true },
+      });
+    }
+
     return prisma.$transaction(async (tx) => {
       await estoqueService.estornarPorOrigem(tx, { vendaId: id });
       await tx.itemVenda.deleteMany({ where: { vendaId: id } });
