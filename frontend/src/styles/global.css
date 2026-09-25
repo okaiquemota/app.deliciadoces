@@ -673,50 +673,32 @@ body {
 
 /* ---------- Minha conta, no desenho da página de perfil do Mercado Livre
 
-   A tela MOSTRA os dados; cada um se edita numa janela à parte. Coluna
-   centrada de 760px com cartões brancos: título do grupo em cima, uma
-   linha por dado com ícone, valor, legenda e seta.
+   A tela MOSTRA os dados; cada um se edita numa janela à parte. Uma linha
+   por dado com ícone, valor, legenda e seta.
 
-   O fio entre as linhas começa no ícone e termina antes da borda, como
-   na referência — de ponta a ponta é o que faz lista parecer tabela. */
+   Moldura igual à das outras telas: largura toda a partir da mesma
+   margem, cartão `.cartao` e título em versalete (`.cartao__subtitulo`).
+   O cartão perde o respiro interno só para as linhas irem de borda a
+   borda — senão o realce de passar o mouse pararia a 20px da borda. O
+   texto continua alinhado nos mesmos 20px dos outros cartões.
+
+   O fio entre as linhas começa e termina nesses 20px, como na
+   referência — de ponta a ponta é o que faz lista parecer tabela. */
 
 .perfil {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 760px;
-  margin: 0 auto;
+  gap: 14px;
 }
 
-.perfil__titulo {
-  margin: 0;
-  font-size: 1.625rem;
-  font-weight: 600;
-  letter-spacing: var(--tr-titulo);
-  line-height: 1.2;
-}
-
-.perfil__descricao {
-  margin: 6px 0 0;
-  color: var(--texto-suave);
-  font-size: 0.9375rem;
-}
-
-.perfil__grupo {
-  border: 1px solid var(--borda);
-  border-radius: var(--r-2);
-  background-color: var(--superficie);
-  box-shadow: var(--sombra-cartao);
+.cartao.perfil__grupo {
+  padding: 0;
   overflow: hidden;
 }
 
-.perfil__grupo-titulo {
+.perfil__grupo > .cartao__subtitulo {
   margin: 0;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--borda);
-  font-size: 1.0625rem;
-  font-weight: 600;
-  letter-spacing: var(--tr-titulo);
+  padding: 18px 20px 4px;
 }
 
 .perfil__item {
@@ -726,7 +708,7 @@ body {
   gap: 16px;
   width: 100%;
   min-height: 64px;
-  padding: 14px 24px;
+  padding: 14px 20px;
   border: none;
   background: none;
   color: var(--texto);
@@ -750,8 +732,8 @@ body {
   content: '';
   position: absolute;
   top: 0;
-  right: 24px;
-  left: 24px;
+  right: 20px;
+  left: 20px;
   height: 1px;
   background-color: var(--borda);
 }
@@ -2121,12 +2103,9 @@ body {
     display: none;
   }
 
-  .perfil__titulo {
-    font-size: 1.375rem;
-  }
-
-  .perfil__grupo-titulo {
-    padding: 16px;
+  /* No celular os cartões têm 16px de respiro; as linhas acompanham. */
+  .perfil__grupo > .cartao__subtitulo {
+    padding: 16px 16px 4px;
   }
 
   .perfil__item {

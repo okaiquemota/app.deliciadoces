@@ -13,6 +13,11 @@ import { mensagemDeErro } from '../services/api.js';
  * página de perfil do Mercado Livre. Uma lista com ícone, o valor, uma
  * legenda dizendo o que ele é, e a seta indicando que a linha abre.
  *
+ * O resto segue as outras telas: largura toda a partir da mesma margem,
+ * sem título visível no topo (o nome da seção está no menu e no `h1`
+ * do leitor de tela), e cartões com o título em versalete, como os do
+ * Resumo e do Fechamento.
+ *
  * Formulário aberto o tempo todo convida a mexer sem querer, e obriga a
  * ler seis campos para achar o nome. Aqui ela vê os três dados de relance
  * e só encontra campo quando decidiu mudar alguma coisa. Cada edição mora
@@ -37,11 +42,6 @@ export function MinhaConta() {
 
   return (
     <section className="perfil">
-      <header>
-        <h2 className="perfil__titulo">Informações da conta</h2>
-        <p className="perfil__descricao">Altere seu nome, o e-mail de acesso e a senha.</p>
-      </header>
-
       {/* A confirmação aparece na página, depois que a janela fecha: é
           aqui que ela vê o valor novo já no lugar. */}
       {aviso && (
@@ -75,8 +75,8 @@ export function MinhaConta() {
 
 function Grupo({ titulo, children }) {
   return (
-    <section className="perfil__grupo">
-      <h3 className="perfil__grupo-titulo">{titulo}</h3>
+    <section className="cartao perfil__grupo">
+      <h2 className="cartao__subtitulo">{titulo}</h2>
       {children}
     </section>
   );
