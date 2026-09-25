@@ -671,23 +671,125 @@ body {
   }
 }
 
-/* ---------- Minha conta ----------
+/* ---------- Minha conta: lista agrupada, no desenho dos Ajustes ----------
 
-   Dois cartões lado a lado no computador e empilhados no celular, cada um
-   com no máximo 460px. Formulário não ganha nada em ficar largo: um campo
-   de e-mail de mil pixels é mais difícil de ler, não mais fácil. */
-.conta-grade {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 460px));
-  gap: 14px;
-  align-items: start;
+   Uma coluna centrada de 640px, e não cartões soltos lado a lado. É o
+   arranjo dos Ajustes do iPhone e da página de conta da Apple: grupos de
+   linhas numa superfície branca de canto arredondado, rótulo à esquerda,
+   campo à direita, e um fio fino entre as linhas que começa depois da
+   margem — não de ponta a ponta, que é o que faz a lista parecer uma
+   tabela.
+
+   O campo não tem borda: a LINHA é o campo. Borda em volta de cada input
+   dentro de um grupo que já tem borda é caixa dentro de caixa. */
+
+.ajustes {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 640px;
+  margin: 0 auto;
 }
 
-.conta__titulo {
-  margin: 0 0 16px;
-  font-size: 1.0625rem;
+.ajustes__titulo {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: var(--tr-titulo);
+  letter-spacing: var(--tr-miudo);
+}
+
+.ajustes__grupo {
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background-color: var(--superficie);
+  box-shadow: var(--sombra-cartao);
+}
+
+.ajustes__linha {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 0 16px;
+}
+
+/* O fio entre linhas começa na margem do texto, como nas listas da Apple. */
+.ajustes__linha + .ajustes__linha::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 16px;
+  height: 1px;
+  background-color: var(--borda);
+}
+
+/* Foco na LINHA, já que o campo não tem borda. O anel acompanha o canto
+   arredondado do grupo na primeira e na última linha. */
+.ajustes__linha:first-child {
+  border-radius: var(--r-2) var(--r-2) 0 0;
+}
+
+.ajustes__linha:last-child {
+  border-radius: 0 0 var(--r-2) var(--r-2);
+}
+
+.ajustes__linha:only-child {
+  border-radius: var(--r-2);
+}
+
+/* Cinza e não preto: em preto o anel virava uma caixa desenhada por cima
+   da lista. O cinza dá 3,62 contra o branco, acima do 3:1 que a WCAG pede
+   para indicador de foco, e o fundo levemente mais claro reforça qual
+   linha está sendo editada sem gritar. */
+.ajustes__linha:focus-within {
+  background-color: #fbfbfd;
+  box-shadow: inset 0 0 0 2px var(--c-400);
+}
+
+.ajustes__rotulo {
+  flex: 0 0 132px;
+  color: var(--texto);
+  font-size: 0.9375rem;
+}
+
+.ajustes__campo {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 14px 0;
+  border: none;
+  background: none;
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.ajustes__campo::placeholder {
+  color: var(--texto-suave);
+}
+
+.ajustes__campo:focus {
+  outline: none;
+}
+
+/* O preenchimento automático do Chrome pinta o campo de amarelo-claro, o
+   que num campo sem borda vira uma mancha no meio da linha branca. */
+.ajustes__campo:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 100px var(--superficie) inset;
+  -webkit-text-fill-color: var(--texto);
+}
+
+.ajustes__aviso {
+  margin: 10px 0 0;
+}
+
+.ajustes__acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 /* =====================================================================
@@ -2015,6 +2117,14 @@ body {
     display: none;
   }
 
+  .ajustes {
+    gap: 24px;
+  }
+
+  .ajustes__rotulo {
+    flex-basis: 104px;
+  }
+
   /* Sem teto no celular: os botões vão até a barra de baixo.
 
      O teto de 460px existe por causa do monitor grande — sem ele, num de
@@ -2257,6 +2367,17 @@ body {
    --------------------------------------------------------------------- */
 
 @media (max-width: 400px) {
+  /* Em 320px a coluna do rótulo de 104 deixava 142px para o campo, e o
+     texto de exemplo mais longo pede 150: saía cortado. */
+  .ajustes__linha {
+    gap: 10px;
+    padding: 0 14px;
+  }
+
+  .ajustes__rotulo {
+    flex-basis: 90px;
+  }
+
   .abas {
     flex-wrap: wrap;
   }

@@ -1,29 +1,65 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { Texto } from '../components/Campo.jsx';
 import { authService } from '../services/authService.js';
 import { mensagemDeErro } from '../services/api.js';
 
 /**
  * Conta do usuário: nome, e-mail e senha.
  *
- * Dois cartões, dois formulários, dois botões — e não um formulário só
- * com tudo. Trocar o nome e trocar a senha são coisas que ela faz em
- * momentos diferentes, e num formulário único um erro na senha impediria
- * de salvar o nome (ou pior: salvaria metade e diria que deu erro).
+ * No desenho dos Ajustes do iPhone e da página de conta da Apple: uma
+ * coluna, grupos de linhas, rótulo à esquerda e campo à direita, um fio
+ * fino entre as linhas. Não há texto de apoio debaixo dos campos — o que
+ * era essencial virou o texto de exemplo dentro do próprio campo.
  *
- * No computador ficam lado a lado; no celular, um embaixo do outro.
+ * Continuam sendo dois formulários, um por grupo: trocar o nome e trocar
+ * a senha acontecem em momentos diferentes, e num formulário só um erro
+ * na senha impediria de salvar o nome.
  */
 export function MinhaConta() {
   return (
-    <section className="conta-grade">
-      <SeusDados />
+    <section className="ajustes">
+      <Perfil />
       <Senha />
     </section>
   );
 }
 
-function SeusDados() {
+/** Uma linha do grupo: rótulo à esquerda, campo sem borda à direita. */
+function Linha({ rotulo, ...props }) {
+  const id = useId();
+  return (
+    <div className="ajustes__linha">
+      <label className="ajustes__rotulo" htmlFor={id}>
+        {rotulo}
+      </label>
+      <input className="ajustes__campo" id={id} {...props} />
+    </div>
+  );
+}
+
+/**
+ * Erro e confirmação. `role` para que quem usa leitor de tela saiba o
+ * resultado depois de apertar o botão.
+ */
+function Aviso({ estado }) {
+  if (estado.erro) {
+    return (
+      <p className="alerta alerta--erro ajustes__aviso" role="alert">
+        {estado.erro}
+      </p>
+    );
+  }
+  if (estado.ok) {
+    return (
+      <p className="alerta alerta--ok ajustes__aviso" role="status">
+        {estado.ok}
+      </p>
+    );
+  }
+  return null;
+}
+
+function Perfil() {
   const { usuario, atualizarSessao } = useAuth();
   const [nome, setNome] = useState(usuario?.nome ?? '');
   const [email, setEmail] = useState(usuario?.email ?? '');
@@ -63,8 +99,8 @@ function SeusDados() {
       setEstado({
         erro: '',
         ok: mudouEmail
-          ? `Dados salvos. A partir de agora, entre com ${resposta.usuario.email}.`
-          : 'Nome salvo.',
+          ? `Salvo. A partir de agora, entre com ${resposta.usuario.email}.`
+          : 'Salvo.',
       });
     } catch (err) {
       setEstado({ erro: mensagemDeErro(err, 'Não foi possível salvar.'), ok: '' });
@@ -74,13 +110,13 @@ function SeusDados() {
   }
 
   return (
-    <article className="cartao" aria-labelledby="titulo-dados">
-      <h2 className="conta__titulo" id="titulo-dados">
-        Seus dados
+    <form className="ajustes__secao" onSubmit={salvar} aria-labelledby="ajustes-perfil">
+      <h2 className="ajustes__titulo" id="ajustes-perfil">
+        Perfil
       </h2>
 
-      <form onSubmit={salvar}>
-        <Texto
+      <div className="ajustes__grupo">
+        <Linha
           rotulo="Nome"
           value={nome}
           onChange={alterar(setNome)}
@@ -92,9 +128,8 @@ function SeusDados() {
         {/* `text` com teclado de e-mail, e não `type="email"`: a conta de
             apresentação entra como "admin", sem arroba, e com o tipo e-mail
             o navegador barraria o formulário inteiro — ela não conseguiria
-            trocar nem o nome. Quem valida o formato é o servidor, e só
-            quando o e-mail de fato muda. */}
-        <Texto
+            trocar nem o nome. */}
+        <Linha
           rotulo="E-mail"
           type="text"
           inputMode="email"
@@ -103,48 +138,36 @@ function SeusDados() {
           value={email}
           onChange={alterar(setEmail)}
           autoComplete="email"
-          dica="É com ele que você entra no sistema."
           required
         />
-
-        {/* A senha só aparece quando o e-mail MUDA. Mostrá-la sempre faria
-            ela achar que precisa da senha para corrigir uma letra do nome.
-            O e-mail é o login, e é só aí que a senha é cobrada — o servidor
-            cobra de qualquer jeito; isto aqui só avisa antes de ela clicar. */}
+        {/* A senha só aparece quando o e-mail MUDA: o e-mail é o login, e é
+            só aí que ela é cobrada. Mostrá-la sempre faria ela achar que
+            precisa da senha para corrigir uma letra do nome. */}
         {mudouEmail && (
-          <Texto
+          <Linha
             rotulo="Senha atual"
             type="password"
+            placeholder="Obrigatória"
             value={senhaAtual}
             onChange={alterar(setSenhaAtual)}
             autoComplete="current-password"
-            dica="Pedida só para trocar o e-mail, que é o seu login."
             required
           />
         )}
+      </div>
 
-        {/* `role` nas mensagens: sem isso, quem usa leitor de tela aperta
-            Salvar e não fica sabendo se deu certo. */}
-        {estado.erro && (
-          <p className="alerta alerta--erro" role="alert">
-            {estado.erro}
-          </p>
-        )}
-        {estado.ok && (
-          <p className="alerta alerta--ok" role="status">
-            {estado.ok}
-          </p>
-        )}
+      <Aviso estado={estado} />
 
+      <div className="ajustes__acoes">
         <button
           type="submit"
-          className="botao botao--primario"
+          className="botao botao--primario botao--auto"
           disabled={salvando || (!mudouNome && !mudouEmail)}
         >
-          {salvando ? 'Salvando...' : 'Salvar dados'}
+          {salvando ? 'Salvando...' : 'Salvar'}
         </button>
-      </form>
-    </article>
+      </div>
+    </form>
   );
 }
 
@@ -157,6 +180,8 @@ function Senha() {
     setForm((f) => ({ ...f, [nome]: e.target.value }));
     setEstado({ erro: '', ok: '' });
   };
+
+  const preenchido = form.senhaAtual && form.senhaNova && form.confirmacao;
 
   async function enviar(e) {
     e.preventDefault();
@@ -173,71 +198,65 @@ function Senha() {
     try {
       await authService.trocarSenha({ senhaAtual: form.senhaAtual, senhaNova: form.senhaNova });
       setForm({ senhaAtual: '', senhaNova: '', confirmacao: '' });
-      setEstado({ erro: '', ok: 'Senha trocada. Use a nova no próximo acesso.' });
+      setEstado({ erro: '', ok: 'Senha alterada. Use a nova no próximo acesso.' });
     } catch (err) {
-      setEstado({ erro: mensagemDeErro(err, 'Não foi possível trocar a senha.'), ok: '' });
+      setEstado({ erro: mensagemDeErro(err, 'Não foi possível alterar a senha.'), ok: '' });
     } finally {
       setSalvando(false);
     }
   }
 
   return (
-    <article className="cartao" aria-labelledby="titulo-senha">
-      <h2 className="conta__titulo" id="titulo-senha">
+    <form className="ajustes__secao" onSubmit={enviar} aria-labelledby="ajustes-senha">
+      <h2 className="ajustes__titulo" id="ajustes-senha">
         Senha
       </h2>
 
-      {/* Os três campos um embaixo do outro. Lado a lado, a dica "ao menos
-          6 caracteres" deixava a primeira coluna mais alta que a segunda,
-          e os dois campos de senha nova ficavam desalinhados. */}
-      <form onSubmit={enviar}>
-        <Texto
+      {/* A regra dos 6 caracteres mora no texto de exemplo do campo, não
+          numa frase embaixo dele. O navegador também a cobra (`minLength`)
+          antes de enviar. */}
+      <div className="ajustes__grupo">
+        <Linha
           rotulo="Senha atual"
           type="password"
+          placeholder="Obrigatória"
           value={form.senhaAtual}
           onChange={campo('senhaAtual')}
           autoComplete="current-password"
           required
         />
-        <Texto
+        <Linha
           rotulo="Nova senha"
           type="password"
+          placeholder="Mínimo 6 caracteres"
           value={form.senhaNova}
           onChange={campo('senhaNova')}
           autoComplete="new-password"
           minLength={6}
           required
-          dica="Ao menos 6 caracteres."
         />
-        <Texto
-          rotulo="Repita a nova senha"
+        <Linha
+          rotulo="Confirmar"
           type="password"
+          placeholder="Repita a nova senha"
           value={form.confirmacao}
           onChange={campo('confirmacao')}
           autoComplete="new-password"
           required
         />
+      </div>
 
-        {estado.erro && (
-          <p className="alerta alerta--erro" role="alert">
-            {estado.erro}
-          </p>
-        )}
-        {estado.ok && (
-          <p className="alerta alerta--ok" role="status">
-            {estado.ok}
-          </p>
-        )}
+      <Aviso estado={estado} />
 
-        <button type="submit" className="botao botao--primario" disabled={salvando}>
-          {salvando ? 'Trocando...' : 'Trocar senha'}
+      <div className="ajustes__acoes">
+        <button
+          type="submit"
+          className="botao botao--primario botao--auto"
+          disabled={salvando || !preenchido}
+        >
+          {salvando ? 'Alterando...' : 'Alterar senha'}
         </button>
-      </form>
-
-      <p className="cartao__aviso">
-        A senha atual é pedida mesmo você já estando dentro do sistema: assim, quem encontrar esta
-        tela aberta não consegue trocar a senha e tomar a conta.
-      </p>
-    </article>
+      </div>
+    </form>
   );
 }
