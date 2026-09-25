@@ -413,3 +413,47 @@ describe('despesa sem categoria', () => {
     expect(r.retiradas).toBe(0);
   });
 });
+
+/**
+ * Editar entrada avulsa. A rota aceitava `{ valor }` no formato, mas o
+ * serviço fazia `dados.itens.map` e quebrava com erro 500: uma entrada
+ * digitada errada não tinha conserto.
+ */
+describe('editar entrada avulsa', () => {
+  it('muda valor, forma de pagamento e o "com o quê"', async () => {
+    const e = await vendaService.criar({ valor: 25, formaPagamento: 'DINHEIRO' }, null);
+    const editada = await vendaService.atualizar(
+      e.id,
+      { valor: 30, formaPagamento: 'PIX', observacao: 'Encomenda da Maria' },
+      null
+    );
+    expect(Number(editada.total)).toBe(30);
+    expect(editada.formaPagamento).toBe('PIX');
+    expect(editada.observacao).toBe('Encomenda da Maria');
+  });
+
+  it('continua sem mexer em estoque', async () => {
+    const e = await vendaService.criar({ valor: 25, formaPagamento: 'DINHEIRO' }, null);
+    await vendaService.atualizar(e.id, { valor: 40, formaPagamento: 'DINHEIRO' }, null);
+    expect(await prisma.movimentacaoEstoque.count({ where: { vendaId: e.id } })).toBe(0);
+  });
+
+  it('não vira venda com doces pela edição, nem o contrário', async () => {
+    const p = await produtoComEstoque(10, 5);
+    const avulsa = await vendaService.criar({ valor: 25, formaPagamento: 'PIX' }, null);
+    const comDoce = await vendaService.criar(
+      { itens: [{ produtoId: p.id, quantidade: 1 }], formaPagamento: 'PIX' },
+      null
+    );
+    await expect(
+      vendaService.atualizar(
+        avulsa.id,
+        { itens: [{ produtoId: p.id, quantidade: 1 }], formaPagamento: 'PIX' },
+        null
+      )
+    ).rejects.toMatchObject({ statusCode: 422 });
+    await expect(
+      vendaService.atualizar(comDoce.id, { valor: 5, formaPagamento: 'PIX' }, null)
+    ).rejects.toMatchObject({ statusCode: 422 });
+  });
+});

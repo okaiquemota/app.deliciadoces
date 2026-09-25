@@ -25,12 +25,12 @@ Projeto acadêmico da disciplina de **Fábrica de Software**.
 
 ## Módulos do sistema
 
-| Módulo        | Descrição                                                                     |
-| ------------- | ----------------------------------------------------------------------------- |
-| **Caixa**     | Vendas (sempre à vista) e despesas, com edição e exclusão                     |
-| **Estoque**   | Ingredientes e doces prontos, movimentações, perdas e aviso de item acabando  |
-| **Produção**  | Lote produzido consome ingrediente e gera doce pronto; ficha técnica opcional |
-| **Dashboard** | Resultado por semana, que é como a cliente prefere olhar                      |
+| Módulo        | Descrição                                                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Caixa**     | Extrato do dinheiro dia a dia — vendas (sempre à vista), entradas, saídas e retiradas —, com filtro, busca, edição e exclusão |
+| **Estoque**   | Ingredientes e doces prontos, movimentações, perdas e aviso de item acabando                                                  |
+| **Produção**  | Lote produzido consome ingrediente e gera doce pronto; ficha técnica opcional                                                 |
+| **Dashboard** | Resultado por semana, que é como a cliente prefere olhar                                                                      |
 
 ## O que a cliente definiu
 

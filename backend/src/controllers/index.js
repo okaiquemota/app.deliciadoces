@@ -4,6 +4,7 @@ import { producaoService } from '../services/producaoService.js';
 import { dashboardService } from '../services/dashboardService.js';
 import { estoqueService } from '../services/estoqueService.js';
 import { fechamentoService } from '../services/fechamentoService.js';
+import { filtrosPeriodo, limiteDaListagem } from '../utils/periodo.js';
 
 /**
  * Controllers: traduzem HTTP <-> serviço. Nenhuma regra de negócio aqui.
@@ -11,28 +12,6 @@ import { fechamentoService } from '../services/fechamentoService.js';
  * São `async` e sem try/catch de propósito: o Express 5 encaminha Promise
  * rejeitada direto para o errorHandler.
  */
-
-/**
- * Converte os filtros de período vindos da query.
- *
- * Detalhe que já causou bug: uma data sem hora ("2026-09-14") vira
- * MEIA-NOITE. Usada como fim de período, ela excluiria tudo que aconteceu
- * durante o próprio dia — a tela mostrava "nenhuma venda" tendo vendas.
- * Por isso o fim sem hora é empurrado para 23:59:59.999.
- */
-const SO_DATA = /^\d{4}-\d{2}-\d{2}$/;
-
-const filtrosPeriodo = (query) => {
-  const inicio = query.inicio ? new Date(query.inicio) : undefined;
-  let fim;
-
-  if (query.fim) {
-    fim = new Date(query.fim);
-    if (SO_DATA.test(String(query.fim))) fim.setHours(23, 59, 59, 999);
-  }
-
-  return { inicio, fim };
-};
 
 export const insumoController = {
   async listar(req, res) {
@@ -115,6 +94,7 @@ export const vendaController = {
         ...filtrosPeriodo(req.query),
         formaPagamento: req.query.formaPagamento,
         incluirCanceladas: req.query.incluirCanceladas === 'true',
+        limite: limiteDaListagem(req.query),
       })
     );
   },
@@ -144,6 +124,7 @@ export const despesaController = {
       await despesaService.listar({
         ...filtrosPeriodo(req.query),
         categoriaId: req.query.categoriaId,
+        limite: limiteDaListagem(req.query),
       })
     );
   },

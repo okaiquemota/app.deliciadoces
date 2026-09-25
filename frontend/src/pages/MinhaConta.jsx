@@ -1,231 +1,310 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { Modal } from '../components/Modal.jsx';
+import { Texto } from '../components/Campo.jsx';
+import { IconeNome, IconeEmail, IconeSenha, IconeSeta } from '../components/Icones.jsx';
 import { authService } from '../services/authService.js';
 import { mensagemDeErro } from '../services/api.js';
 
 /**
- * Conta do usuário: nome, e-mail e senha.
+ * Conta do usuário: nome, e-mail de acesso e senha.
  *
- * No desenho dos Ajustes do iPhone e da página de conta da Apple: uma
- * coluna, grupos de linhas, rótulo à esquerda e campo à direita, um fio
- * fino entre as linhas. Não há texto de apoio debaixo dos campos — o que
- * era essencial virou o texto de exemplo dentro do próprio campo.
+ * A tela MOSTRA os dados, e cada um se edita à parte — o desenho da
+ * página de perfil do Mercado Livre. Uma lista com ícone, o valor, uma
+ * legenda dizendo o que ele é, e a seta indicando que a linha abre.
  *
- * Continuam sendo dois formulários, um por grupo: trocar o nome e trocar
- * a senha acontecem em momentos diferentes, e num formulário só um erro
- * na senha impediria de salvar o nome.
+ * O resto segue as outras telas: largura toda a partir da mesma margem,
+ * sem título visível no topo (o nome da seção está no menu e no `h1`
+ * do leitor de tela), e cartões com o título em versalete, como os do
+ * Resumo e do Fechamento.
+ *
+ * Formulário aberto o tempo todo convida a mexer sem querer, e obriga a
+ * ler seis campos para achar o nome. Aqui ela vê os três dados de relance
+ * e só encontra campo quando decidiu mudar alguma coisa. Cada edição mora
+ * numa janela própria, a mesma da Venda e da Entrada.
  */
 export function MinhaConta() {
+  const { usuario } = useAuth();
+  const [editando, setEditando] = useState(null);
+  const [aviso, setAviso] = useState('');
+
+  function abrir(item) {
+    setAviso('');
+    setEditando(item);
+  }
+
+  function concluir(mensagem) {
+    setEditando(null);
+    setAviso(mensagem);
+  }
+
+  const fechar = () => setEditando(null);
+
   return (
-    <section className="ajustes">
-      <Perfil />
-      <Senha />
+    <section className="perfil">
+      {/* A confirmação aparece na página, depois que a janela fecha: é
+          aqui que ela vê o valor novo já no lugar. */}
+      {aviso && (
+        <p className="alerta alerta--ok" role="status">
+          {aviso}
+        </p>
+      )}
+
+      <Grupo titulo="Informações pessoais">
+        <Item Icone={IconeNome} valor={usuario?.nome} rotulo="Nome" onClick={() => abrir('nome')} />
+        <Item
+          Icone={IconeEmail}
+          valor={usuario?.email}
+          rotulo="E-mail de acesso"
+          onClick={() => abrir('email')}
+        />
+      </Grupo>
+
+      <Grupo titulo="Segurança">
+        <Item Icone={IconeSenha} valor="••••••••" rotulo="Senha" onClick={() => abrir('senha')} />
+      </Grupo>
+
+      {/* Montadas só enquanto abertas: cada abertura começa com o
+          formulário limpo, sem resto da tentativa anterior. */}
+      {editando === 'nome' && <EditarNome aoFechar={fechar} aoConcluir={concluir} />}
+      {editando === 'email' && <EditarEmail aoFechar={fechar} aoConcluir={concluir} />}
+      {editando === 'senha' && <EditarSenha aoFechar={fechar} aoConcluir={concluir} />}
     </section>
   );
 }
 
-/** Uma linha do grupo: rótulo à esquerda, campo sem borda à direita. */
-function Linha({ rotulo, ...props }) {
-  const id = useId();
+function Grupo({ titulo, children }) {
   return (
-    <div className="ajustes__linha">
-      <label className="ajustes__rotulo" htmlFor={id}>
-        {rotulo}
-      </label>
-      <input className="ajustes__campo" id={id} {...props} />
-    </div>
+    <section className="cartao perfil__grupo">
+      <h2 className="cartao__subtitulo">{titulo}</h2>
+      {children}
+    </section>
   );
 }
 
 /**
- * Erro e confirmação. `role` para que quem usa leitor de tela saiba o
- * resultado depois de apertar o botão.
+ * Uma linha da lista. A linha inteira é o botão — o alvo é a largura toda,
+ * não a setinha.
  */
-function Aviso({ estado }) {
-  if (estado.erro) {
-    return (
-      <p className="alerta alerta--erro ajustes__aviso" role="alert">
-        {estado.erro}
-      </p>
-    );
-  }
-  if (estado.ok) {
-    return (
-      <p className="alerta alerta--ok ajustes__aviso" role="status">
-        {estado.ok}
-      </p>
-    );
-  }
-  return null;
+function Item({ Icone, valor, rotulo, onClick }) {
+  return (
+    <button type="button" className="perfil__item" onClick={onClick}>
+      <span className="perfil__icone">
+        <Icone tamanho={22} />
+      </span>
+      <span className="perfil__textos">
+        <span className="perfil__valor">{valor}</span>
+        <span className="perfil__rotulo">{rotulo}</span>
+      </span>
+      <span className="perfil__seta">
+        <IconeSeta tamanho={18} />
+      </span>
+      {/* Sem isto o leitor de tela leria "Admin, Nome" sem dizer que é
+          um botão para alterar. */}
+      <span className="so-leitor">, alterar</span>
+    </button>
+  );
 }
 
-function Perfil() {
+/** Erro dentro da janela: ela continua aberta para a correção. */
+function Erro({ texto }) {
+  if (!texto) return null;
+  return (
+    <p className="alerta alerta--erro" role="alert">
+      {texto}
+    </p>
+  );
+}
+
+function Acoes({ salvando, rotulo, desabilitado, aoFechar }) {
+  return (
+    <div className="modal__acoes">
+      <button type="button" className="botao botao--auto" onClick={aoFechar}>
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        className="botao botao--primario botao--auto"
+        disabled={salvando || desabilitado}
+      >
+        {salvando ? 'Salvando...' : rotulo}
+      </button>
+    </div>
+  );
+}
+
+function EditarNome({ aoFechar, aoConcluir }) {
   const { usuario, atualizarSessao } = useAuth();
   const [nome, setNome] = useState(usuario?.nome ?? '');
-  const [email, setEmail] = useState(usuario?.email ?? '');
-  const [senhaAtual, setSenhaAtual] = useState('');
-  const [estado, setEstado] = useState({ erro: '', ok: '' });
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
-  const emailNovo = email.trim().toLowerCase();
-  const mudouEmail = emailNovo !== (usuario?.email ?? '');
-  const mudouNome = nome.trim() !== (usuario?.nome ?? '');
-
-  const alterar = (setter) => (e) => {
-    setter(e.target.value);
-    setEstado({ erro: '', ok: '' });
-  };
+  const mudou = nome.trim() !== (usuario?.nome ?? '') && nome.trim().length >= 2;
 
   async function salvar(e) {
     e.preventDefault();
-    if (!mudouNome && !mudouEmail) return;
-
-    // Conferido aqui porque o servidor, num formato inválido, responde só
-    // "Dados inválidos." — sem dizer que o problema é o e-mail.
-    if (mudouEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNovo)) {
-      setEstado({ erro: 'Informe um e-mail válido, como nome@exemplo.com.', ok: '' });
-      return;
-    }
-
     setSalvando(true);
-    setEstado({ erro: '', ok: '' });
+    setErro('');
     try {
-      const resposta = await authService.atualizarPerfil({
-        ...(mudouNome ? { nome: nome.trim() } : {}),
-        ...(mudouEmail ? { email: emailNovo, senhaAtual } : {}),
-      });
-      atualizarSessao(resposta);
-      setSenhaAtual('');
-      setEstado({
-        erro: '',
-        ok: mudouEmail
-          ? `Salvo. A partir de agora, entre com ${resposta.usuario.email}.`
-          : 'Salvo.',
-      });
+      atualizarSessao(await authService.atualizarPerfil({ nome: nome.trim() }));
+      aoConcluir('Nome alterado.');
     } catch (err) {
-      setEstado({ erro: mensagemDeErro(err, 'Não foi possível salvar.'), ok: '' });
-    } finally {
+      setErro(mensagemDeErro(err, 'Não foi possível alterar o nome.'));
       setSalvando(false);
     }
   }
 
   return (
-    <form className="ajustes__secao" onSubmit={salvar} aria-labelledby="ajustes-perfil">
-      <h2 className="ajustes__titulo" id="ajustes-perfil">
-        Perfil
-      </h2>
-
-      <div className="ajustes__grupo">
-        <Linha
+    <Modal aberto aoFechar={aoFechar} titulo="Alterar nome" largura={440}>
+      <form onSubmit={salvar}>
+        <Texto
           rotulo="Nome"
           value={nome}
-          onChange={alterar(setNome)}
+          onChange={(e) => {
+            setNome(e.target.value);
+            setErro('');
+          }}
           autoComplete="name"
           required
           minLength={2}
           maxLength={80}
+          autoFocus
         />
-        {/* `text` com teclado de e-mail, e não `type="email"`: a conta de
-            apresentação entra como "admin", sem arroba, e com o tipo e-mail
-            o navegador barraria o formulário inteiro — ela não conseguiria
-            trocar nem o nome. */}
-        <Linha
-          rotulo="E-mail"
+        <Erro texto={erro} />
+        <Acoes salvando={salvando} rotulo="Salvar" desabilitado={!mudou} aoFechar={aoFechar} />
+      </form>
+    </Modal>
+  );
+}
+
+/**
+ * O e-mail pede a senha atual. Ele é o login: com a sessão aberta numa
+ * máquina esquecida, bastaria trocá-lo para trancar a dona fora da conta.
+ */
+function EditarEmail({ aoFechar, aoConcluir }) {
+  const { usuario, atualizarSessao } = useAuth();
+  const [email, setEmail] = useState('');
+  const [senhaAtual, setSenhaAtual] = useState('');
+  const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
+  const emailNovo = email.trim().toLowerCase();
+
+  async function salvar(e) {
+    e.preventDefault();
+
+    // Conferido aqui porque o servidor, num formato inválido, responde só
+    // "Dados inválidos." — sem dizer que o problema é o e-mail.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNovo)) {
+      setErro('Informe um e-mail válido, como nome@exemplo.com.');
+      return;
+    }
+    if (emailNovo === usuario?.email) {
+      setErro('Este já é o seu e-mail de acesso.');
+      return;
+    }
+
+    setSalvando(true);
+    setErro('');
+    try {
+      const resposta = await authService.atualizarPerfil({ email: emailNovo, senhaAtual });
+      atualizarSessao(resposta);
+      aoConcluir(`E-mail alterado. A partir de agora, entre com ${resposta.usuario.email}.`);
+    } catch (err) {
+      setErro(mensagemDeErro(err, 'Não foi possível alterar o e-mail.'));
+      setSalvando(false);
+    }
+  }
+
+  const limparErro = (setter) => (e) => {
+    setter(e.target.value);
+    setErro('');
+  };
+
+  return (
+    <Modal aberto aoFechar={aoFechar} titulo="Alterar e-mail" largura={440}>
+      <form onSubmit={salvar}>
+        {/* `text` com teclado de e-mail, e não `type="email"`: com o tipo
+            e-mail o navegador mostra o próprio balão de erro, com texto e
+            desenho que mudam de um navegador para outro, antes da nossa
+            mensagem — que é a que diz o que fazer. */}
+        <Texto
+          rotulo="Novo e-mail"
           type="text"
           inputMode="email"
           autoCapitalize="none"
           spellCheck={false}
+          placeholder="nome@exemplo.com"
           value={email}
-          onChange={alterar(setEmail)}
+          onChange={limparErro(setEmail)}
           autoComplete="email"
           required
+          autoFocus
         />
-        {/* A senha só aparece quando o e-mail MUDA: o e-mail é o login, e é
-            só aí que ela é cobrada. Mostrá-la sempre faria ela achar que
-            precisa da senha para corrigir uma letra do nome. */}
-        {mudouEmail && (
-          <Linha
-            rotulo="Senha atual"
-            type="password"
-            placeholder="Obrigatória"
-            value={senhaAtual}
-            onChange={alterar(setSenhaAtual)}
-            autoComplete="current-password"
-            required
-          />
-        )}
-      </div>
-
-      <Aviso estado={estado} />
-
-      <div className="ajustes__acoes">
-        <button
-          type="submit"
-          className="botao botao--primario botao--auto"
-          disabled={salvando || (!mudouNome && !mudouEmail)}
-        >
-          {salvando ? 'Salvando...' : 'Salvar'}
-        </button>
-      </div>
-    </form>
+        <Texto
+          rotulo="Senha atual"
+          type="password"
+          value={senhaAtual}
+          onChange={limparErro(setSenhaAtual)}
+          autoComplete="current-password"
+          required
+        />
+        <Erro texto={erro} />
+        <Acoes
+          salvando={salvando}
+          rotulo="Salvar"
+          desabilitado={!email.trim() || !senhaAtual}
+          aoFechar={aoFechar}
+        />
+      </form>
+    </Modal>
   );
 }
 
-function Senha() {
+function EditarSenha({ aoFechar, aoConcluir }) {
   const [form, setForm] = useState({ senhaAtual: '', senhaNova: '', confirmacao: '' });
-  const [estado, setEstado] = useState({ erro: '', ok: '' });
+  const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
 
   const campo = (nome) => (e) => {
     setForm((f) => ({ ...f, [nome]: e.target.value }));
-    setEstado({ erro: '', ok: '' });
+    setErro('');
   };
 
-  const preenchido = form.senhaAtual && form.senhaNova && form.confirmacao;
-
-  async function enviar(e) {
+  async function salvar(e) {
     e.preventDefault();
 
     // Conferência de digitação: o servidor não tem como saber que ela
     // errou ao repetir, porque só recebe uma das duas.
     if (form.senhaNova !== form.confirmacao) {
-      setEstado({ erro: 'A confirmação não bate com a nova senha.', ok: '' });
+      setErro('A confirmação não bate com a nova senha.');
       return;
     }
 
     setSalvando(true);
-    setEstado({ erro: '', ok: '' });
+    setErro('');
     try {
       await authService.trocarSenha({ senhaAtual: form.senhaAtual, senhaNova: form.senhaNova });
-      setForm({ senhaAtual: '', senhaNova: '', confirmacao: '' });
-      setEstado({ erro: '', ok: 'Senha alterada. Use a nova no próximo acesso.' });
+      aoConcluir('Senha alterada. Use a nova no próximo acesso.');
     } catch (err) {
-      setEstado({ erro: mensagemDeErro(err, 'Não foi possível alterar a senha.'), ok: '' });
-    } finally {
+      setErro(mensagemDeErro(err, 'Não foi possível alterar a senha.'));
       setSalvando(false);
     }
   }
 
   return (
-    <form className="ajustes__secao" onSubmit={enviar} aria-labelledby="ajustes-senha">
-      <h2 className="ajustes__titulo" id="ajustes-senha">
-        Senha
-      </h2>
-
-      {/* A regra dos 6 caracteres mora no texto de exemplo do campo, não
-          numa frase embaixo dele. O navegador também a cobra (`minLength`)
-          antes de enviar. */}
-      <div className="ajustes__grupo">
-        <Linha
+    <Modal aberto aoFechar={aoFechar} titulo="Alterar senha" largura={440}>
+      <form onSubmit={salvar}>
+        <Texto
           rotulo="Senha atual"
           type="password"
-          placeholder="Obrigatória"
           value={form.senhaAtual}
           onChange={campo('senhaAtual')}
           autoComplete="current-password"
           required
+          autoFocus
         />
-        <Linha
+        <Texto
           rotulo="Nova senha"
           type="password"
           placeholder="Mínimo 6 caracteres"
@@ -235,28 +314,22 @@ function Senha() {
           minLength={6}
           required
         />
-        <Linha
-          rotulo="Confirmar"
+        <Texto
+          rotulo="Confirmar nova senha"
           type="password"
-          placeholder="Repita a nova senha"
           value={form.confirmacao}
           onChange={campo('confirmacao')}
           autoComplete="new-password"
           required
         />
-      </div>
-
-      <Aviso estado={estado} />
-
-      <div className="ajustes__acoes">
-        <button
-          type="submit"
-          className="botao botao--primario botao--auto"
-          disabled={salvando || !preenchido}
-        >
-          {salvando ? 'Alterando...' : 'Alterar senha'}
-        </button>
-      </div>
-    </form>
+        <Erro texto={erro} />
+        <Acoes
+          salvando={salvando}
+          rotulo="Alterar senha"
+          desabilitado={!form.senhaAtual || !form.senhaNova || !form.confirmacao}
+          aoFechar={aoFechar}
+        />
+      </form>
+    </Modal>
   );
 }
