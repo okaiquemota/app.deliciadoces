@@ -2023,6 +2023,17 @@ body {
     display: none;
   }
 
+  /* Sem teto no celular: os botões vão até a barra de baixo.
+
+     O teto de 460px existe por causa do monitor grande — sem ele, num de
+     27 polegadas, o botão de Venda teria 700px de altura. No celular quem
+     limita é a própria tela, e o teto só deixava uma faixa vazia entre os
+     botões e a barra: 55px num iPhone 15 com o Safari aberto, 150 num Pro
+     Max. Espaço que o polegar alcança e que não fazia nada. */
+  .acoes {
+    max-height: none;
+  }
+
   /* Na barra de baixo o item é uma coluna estreita: o número não cabe ao
      lado do rótulo. Vira um ponto no canto superior do ícone, que é como
      o iOS marca um item de barra com pendência. */
