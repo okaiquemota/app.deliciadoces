@@ -128,16 +128,12 @@ export function Layout() {
   }, [pathname]);
 
   const primeiroNome = usuario?.nome?.split(' ')[0] ?? '';
-  const inicial = (usuario?.nome?.trim()?.[0] ?? '?').toUpperCase();
 
   const secao = SECOES.find((s) => s.para === pathname);
   const titulo = secao?.titulo ?? TITULOS_EXTRA[pathname] ?? `Olá, ${primeiroNome}`;
 
   const conta = (
     <NavLink to="/minha-conta" className="conta-link">
-      <span className="conta-link__inicial" aria-hidden="true">
-        {inicial}
-      </span>
       <span className="conta-link__nome">{usuario?.nome}</span>
     </NavLink>
   );

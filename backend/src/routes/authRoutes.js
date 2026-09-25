@@ -4,6 +4,7 @@ import {
   loginSchema,
   registrarSchema,
   trocarSenhaSchema,
+  atualizarPerfilSchema,
 } from '../controllers/authController.js';
 import { autenticar, autorizar } from '../middlewares/auth.js';
 import { validar } from '../middlewares/validate.js';
@@ -48,5 +49,13 @@ router.get('/eu', autenticar, authController.eu);
  * corpo da requisição. Assim ninguém troca a senha de outra pessoa.
  */
 router.patch('/senha', autenticar, validar(trocarSenhaSchema), authController.trocarSenha);
+
+/**
+ * PATCH /api/auth/perfil — o usuário muda o próprio nome e/ou e-mail.
+ *
+ * Mesma regra da senha: o id vem do token, nunca do corpo. Trocar o
+ * e-mail pede a senha atual (ver authService.atualizarPerfil).
+ */
+router.patch('/perfil', autenticar, validar(atualizarPerfilSchema), authController.atualizarPerfil);
 
 export default router;

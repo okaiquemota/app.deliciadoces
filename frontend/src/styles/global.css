@@ -349,38 +349,24 @@ body {
   gap: 4px;
 }
 
+/* Só o nome, sem a inicial num quadrado ao lado. O quadrado imitava uma
+   foto de perfil que o sistema não tem, e ocupava espaço para repetir a
+   primeira letra do nome que já estava escrito do lado. */
 .conta-link {
   display: flex;
   align-items: center;
-  gap: 9px;
   flex: 1 1 auto;
   min-width: 0;
   padding: 7px 8px;
   border-radius: var(--r-1);
   color: var(--texto);
   font-size: 0.875rem;
+  font-weight: 500;
   text-decoration: none;
 }
 
 .conta-link:hover {
   background-color: var(--c-100);
-}
-
-/* Inicial do nome num quadrado, no lugar de foto: não existe upload de
-   avatar no sistema e um ícone genérico de pessoa seria igual para todo
-   mundo. A inicial já distingue quem está logado. */
-.conta-link__inicial {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--r-1);
-  background-color: var(--c-800);
-  color: var(--c-0);
-  font-size: 0.75rem;
-  font-weight: 600;
 }
 
 .conta-link__nome {
@@ -615,10 +601,6 @@ body {
   box-shadow: var(--sombra-cartao);
 }
 
-.cartao--estreito {
-  max-width: 480px;
-}
-
 .cartao--alerta {
   border-color: var(--erro-borda);
   background-color: var(--erro-fundo);
@@ -687,6 +669,25 @@ body {
   .painel-duplo {
     grid-template-columns: 2fr 1fr;
   }
+}
+
+/* ---------- Minha conta ----------
+
+   Dois cartões lado a lado no computador e empilhados no celular, cada um
+   com no máximo 460px. Formulário não ganha nada em ficar largo: um campo
+   de e-mail de mil pixels é mais difícil de ler, não mais fácil. */
+.conta-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 460px));
+  gap: 14px;
+  align-items: start;
+}
+
+.conta__titulo {
+  margin: 0 0 16px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: var(--tr-titulo);
 }
 
 /* =====================================================================
@@ -1991,20 +1992,11 @@ body {
     padding: 0;
   }
 
-  /* O nome inteiro não cabe ao lado da marca em 390px — mas `display:
-     none` o tirava também do leitor de tela, e como a inicial ao lado é
-     decorativa (`aria-hidden`), o link ficava SEM NOME NENHUM: quem
-     navega por voz ouvia só "link". Aqui ele sai do desenho e continua
-     na árvore de acessibilidade. */
+  /* No celular o nome divide a barra com a marca e o sair. Um nome longo
+     vira reticências em vez de empurrar o botão de sair para fora da
+     tela; o nome inteiro está na tela Minha conta. */
   .conta-link__nome {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    clip-path: inset(50%);
+    max-width: 34vw;
   }
 
   .app__lado {

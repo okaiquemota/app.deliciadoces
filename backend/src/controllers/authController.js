@@ -42,6 +42,34 @@ export const trocarSenhaSchema = z
     path: ['senhaNova'],
   });
 
+/**
+ * Nome e e-mail da própria conta, em qualquer combinação.
+ *
+ * O e-mail aqui É validado como e-mail, ao contrário do login: é dado que
+ * fica gravado e passa a ser o identificador de acesso. É assim que a
+ * conta de apresentação ("admin", sem arroba) consegue virar um e-mail de
+ * verdade — mas não o contrário.
+ *
+ * `senhaAtual` é opcional no formato porque trocar só o NOME não pede
+ * senha. Quando o e-mail muda, quem cobra a senha é o serviço — a regra
+ * depende do e-mail atual, que só o banco sabe.
+ */
+export const atualizarPerfilSchema = z
+  .object({
+    nome: z
+      .string()
+      .trim()
+      .min(2, 'O nome precisa ter ao menos 2 letras.')
+      .max(80, 'O nome pode ter até 80 caracteres.')
+      .optional(),
+    email: z.email('E-mail inválido.').trim().toLowerCase().optional(),
+    senhaAtual: z.string().optional(),
+  })
+  .refine((d) => d.nome !== undefined || d.email !== undefined, {
+    message: 'Informe o nome ou o e-mail.',
+    path: ['nome'],
+  });
+
 export const authController = {
   async registrar(req, res) {
     const usuario = await authService.registrar(req.body);
@@ -55,6 +83,10 @@ export const authController = {
 
   async trocarSenha(req, res) {
     res.json(await authService.trocarSenha(req.usuario.id, req.body));
+  },
+
+  async atualizarPerfil(req, res) {
+    res.json(await authService.atualizarPerfil(req.usuario.id, req.body));
   },
 
   /** GET /auth/eu — devolve o usuário do token. */
