@@ -1,4 +1,5 @@
 import { useEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * Modal usado por todos os formulários de cadastro e lançamento.
@@ -23,7 +24,15 @@ export function Modal({ aberto, aoFechar, titulo, children, largura = 520 }) {
 
   if (!aberto) return null;
 
-  return (
+  /**
+   * Desenhada direto no `<body>`, e não onde foi declarada.
+   *
+   * Declarada dentro da tela, a janela nasce dentro do quadro que rola. No
+   * Safari do iPhone, um elemento fixo ali dentro é RECORTADO pelo quadro:
+   * a janela em tela cheia perdia o topo — título e o × de fechar ficavam
+   * escondidos atrás do cabeçalho do app, e não havia como voltar.
+   */
+  return createPortal(
     <div className="modal" onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}>
       <div
         className="modal__caixa"
@@ -32,16 +41,20 @@ export function Modal({ aberto, aoFechar, titulo, children, largura = 520 }) {
         aria-modal="true"
         aria-labelledby={idTitulo}
       >
-        <header className="modal__topo">
+        {/* `div`, não `header`: fora do `<main>`, um `header` vira o
+            cabeçalho do SITE para o leitor de tela — um segundo, repetindo
+            o do app. */}
+        <div className="modal__topo">
           <h2 className="modal__titulo" id={idTitulo}>
             {titulo}
           </h2>
           <button type="button" className="modal__fechar" onClick={aoFechar} aria-label="Fechar">
             ×
           </button>
-        </header>
+        </div>
         <div className="modal__corpo">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

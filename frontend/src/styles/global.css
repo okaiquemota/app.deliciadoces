@@ -221,7 +221,11 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  /* Última defesa: o conteúdo nunca rola para o lado. Um elemento largo
+     demais deslocava a tela inteira no iPhone — os filtros cortados na
+     esquerda e uma barra de rolagem horizontal no pé. A causa se corrige
+     onde nasce; isto garante que a próxima não vire tela torta. */
+  overflow-x: hidden;
   padding: var(--gutter);
 }
 
@@ -538,6 +542,28 @@ body {
   font-size: 0.9375rem;
 }
 
+/* Campo de data no Safari do iPhone.
+
+   Com a aparência nativa, o campo tem largura mínima própria — a do
+   texto "25 de set. de 2026" — e não encolhe com `width` nem com
+   `min-width: 0`. No Caixa, os dois campos de data lado a lado somavam
+   mais que a tela, e a tela inteira rolava para o lado. Sem a aparência
+   nativa ele obedece à largura; o toque continua abrindo o seletor de
+   data do aparelho. O texto vai para a esquerda, como nos outros campos
+   (o Safari centraliza), e a altura mínima segura o campo vazio, que sem
+   ela encolhe. */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+
+input[type='date']::-webkit-date-and-time-value {
+  min-height: 1.47em;
+  margin: 0;
+  text-align: left;
+}
+
 .campo__entrada::placeholder {
   color: var(--texto-suave);
 }
@@ -563,6 +589,16 @@ body {
 
 .campo--inline input {
   width: auto;
+}
+
+/* A caixinha padrão tem 13px: no dedo, um alvo que se erra. O alvo de
+   verdade é o rótulo inteiro (o `<label>` envolve a caixa). */
+.campo--inline input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--acao);
 }
 
 .form__linha {
@@ -932,7 +968,6 @@ body {
   flex: 1 1 auto;
   min-height: 160px;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--borda);
   border-radius: var(--r-2);
   background-color: var(--superficie);
@@ -1524,23 +1559,27 @@ body {
   letter-spacing: var(--tr-titulo);
 }
 
+/* O × num círculo cinza, como nas janelas do iPhone: sem o fundo, era
+   um sinal solto no canto, fácil de não ver — e é o único jeito de
+   voltar da janela em tela cheia do celular. */
 .modal__fechar {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   width: 30px;
   height: 30px;
   border: none;
-  border-radius: var(--r-1);
-  background: none;
-  color: var(--texto-suave);
-  font-size: 1.35rem;
+  border-radius: 50%;
+  background-color: var(--c-100);
+  color: var(--c-700);
+  font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .modal__fechar:hover {
-  background-color: var(--c-100);
+  background-color: var(--c-200);
   color: var(--texto);
 }
 
@@ -1996,7 +2035,11 @@ body {
 /* O total é um botão com cara de número: sem borda, sem fundo, alinhado
    à esquerda como estava. O alvo de toque é o próprio valor, que é
    grande — melhor que um lápis de vinte pixels ao lado dele. */
+/* O total que se toca para editar. O desenho é da altura do número (26px);
+   a moldura invisível estica o alvo para 44 sem mexer no alinhamento do
+   valor com o "editar". */
 .barra-confirmar__total {
+  position: relative;
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
@@ -2011,6 +2054,12 @@ body {
   line-height: 1.1;
   text-align: left;
   cursor: pointer;
+}
+
+.barra-confirmar__total::after {
+  content: '';
+  position: absolute;
+  inset: -9px -6px;
 }
 
 .barra-confirmar__total:disabled {
@@ -2618,23 +2667,27 @@ body {
     margin-left: 0;
   }
 
-  /* As datas vão para baixo do rótulo: lado a lado com "De" e "Até",
-     o campo de data do iPhone não cabe em 320px. */
+  /* Uma data por linha, com o rótulo à esquerda — como Início e Fim de
+     um evento no Calendário do iPhone. Lado a lado não cabiam: a data por
+     extenso do Safari ("25 de set. de 2026") pede quase metade da tela
+     cada uma, e em 320px nem com a fonte menor. */
   .extrato__datas {
-    flex-wrap: nowrap;
+    flex-direction: column;
     gap: 8px;
   }
 
   .extrato__data {
-    flex: 1 1 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 3px;
+    gap: 10px;
     min-width: 0;
   }
 
+  .extrato__data > span {
+    flex: 0 0 26px;
+  }
+
   .extrato__data .campo__entrada {
-    width: 100%;
+    flex: 1 1 auto;
+    width: auto;
     min-width: 0;
   }
 
@@ -2901,6 +2954,26 @@ body {
   .edicao-item__tirar {
     height: 44px;
   }
+
+  /* Os atalhos de valor (R$ 5, 10, 20, 50) são o toque mais repetido da
+     Entrada, da Saída e da Retirada. */
+  .atalho-valor {
+    min-height: 44px;
+  }
+
+  .campo--inline {
+    min-height: 44px;
+  }
+
+  /* 16px nos campos, no toque. Com menos, o Safari do iPhone dá ZOOM na
+     tela ao tocar no campo — e ela fica ampliada e cortada dos lados até
+     alguém descobrir o gesto de pinça. Os campos estavam com 14 e 15. */
+  .campo__entrada,
+  .extrato__busca,
+  .extrato__data .campo__entrada,
+  .filtro-periodo .campo__entrada {
+    font-size: 1rem;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -2940,9 +3013,20 @@ body {
   }
 }
 
+/* O filtro de situação da Validade fica solto na tela, sem cartão em
+   volta: precisa do próprio respiro antes da contagem de lotes. */
+.seletor-periodo--quebra {
+  margin-bottom: 14px;
+}
+
 @media (max-width: 400px) {
-  .abas {
+  .abas,
+  .seletor-periodo--quebra {
     flex-wrap: wrap;
+  }
+
+  .seletor-periodo--quebra .seletor-periodo__item {
+    flex: 1 1 44%;
   }
 
   .abas__item {

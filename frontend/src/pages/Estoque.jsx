@@ -551,11 +551,15 @@ function Validades() {
 
   return (
     <>
-      <nav className="seletor-periodo">
+      {/* Filtro, não navegação: um grupo de botões com o ligado anunciado,
+          como os controles do Caixa. Quebra em 2x2 abaixo de 400px — numa
+          fileira, "Vence em 30 dias" empurrava "Todos" para fora da tela. */}
+      <div className="seletor-periodo seletor-periodo--quebra" role="group" aria-label="Situação">
         {SITUACOES.map((s) => (
           <button
             key={s.id}
             type="button"
+            aria-pressed={situacao === s.id}
             className={
               situacao === s.id
                 ? 'seletor-periodo__item seletor-periodo__item--ativo'
@@ -566,7 +570,7 @@ function Validades() {
             {s.rotulo}
           </button>
         ))}
-      </nav>
+      </div>
 
       {erro && <p className="alerta alerta--erro">{erro}</p>}
 
