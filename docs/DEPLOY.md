@@ -124,10 +124,10 @@ Duas coisas para combinar com o grupo antes do uso real:
 
 **O banco de produção contém apenas dados reais**, e é assim que deve continuar:
 
-| O que tem                  | Por quê                                        |
-| -------------------------- | ---------------------------------------------- |
-| A conta da Dalila          | Acesso dela ao sistema                         |
-| As 8 categorias de despesa | Configuração levantada com ela no questionário |
+| O que tem                           | Por quê                                                                     |
+| ----------------------------------- | --------------------------------------------------------------------------- |
+| A conta da Dalila                   | Acesso dela ao sistema                                                      |
+| As 2 categorias internas de despesa | Engrenagem do lucro: separam saída de retirada pessoal. A cliente não as vê |
 
 Nenhuma venda, produto, insumo ou despesa fictícia. Os números que aparecerem na tela serão os que a cliente (ou vocês, testando) realmente lançarem.
 
@@ -143,7 +143,7 @@ Existe um gerador (`npm run db:seed:demo`) que cria uma semana de operação fic
 npm run db:seed:demo -- --limpar
 ```
 
-Remove tudo que ele criou, preservando usuária e categorias.
+Remove tudo que ele criou, preservando a usuária.
 
 ---
 

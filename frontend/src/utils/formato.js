@@ -50,8 +50,18 @@ export const ROTULO_MOVIMENTACAO = {
   AJUSTE: 'Ajuste',
 };
 
-export const data = (valor) =>
-  new Date(valor).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+/**
+ * "25/09". Aceita um instante ou um DIA ("2026-09-25").
+ *
+ * O dia é montado com os componentes LOCAIS. `new Date("2026-09-25")` é
+ * meia-noite UTC — 21h do dia 24 em Brasília —, e o histórico do
+ * fechamento, as barras do Resumo e a validade apareciam com a véspera.
+ */
+export const data = (valor) => {
+  const dia = typeof valor === 'string' && /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+  const d = dia ? new Date(Number(dia[1]), Number(dia[2]) - 1, Number(dia[3])) : new Date(valor);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+};
 
 export const dataHora = (valor) =>
   new Date(valor).toLocaleString('pt-BR', {

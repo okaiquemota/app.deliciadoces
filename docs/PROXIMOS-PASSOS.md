@@ -55,10 +55,10 @@ Cuidados:
 ### Despesa
 
 - [ ] CRUD completo em `/api/despesas`
-- [ ] Filtro por período e categoria
-- [ ] Quando a categoria for "Ingredientes", oferecer lançar a entrada de estoque junto (é o que o `despesaId` na `MovimentacaoEstoque` existe para rastrear)
+- [ ] Filtro por período
+- [ ] Sem categoria para a cliente: ela escolhe Saída ou Retirada pessoal (campo `retirada` da API) e o servidor usa uma das duas categorias internas
 
-> **A categoria `RETIRADA_PESSOAL` nunca entra no cálculo de lucro.** O dinheiro sai do caixa, mas não é custo do negócio. Errar isso faz o resultado dela aparecer pior do que é — e foi um ponto que ela levantou sozinha.
+> **A retirada pessoal nunca entra no cálculo de lucro.** O dinheiro sai do caixa, mas não é custo do negócio. Errar isso faz o resultado dela aparecer pior do que é — e foi um ponto que ela levantou sozinha.
 
 ### Fechamento diário
 

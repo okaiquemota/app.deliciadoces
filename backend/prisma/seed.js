@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../src/lib/prisma.js';
+import { CATEGORIAS_INTERNAS } from '../src/services/caixaService.js';
 
 /**
  * Seed — dados mínimos para o sistema ser utilizável logo após o clone.
@@ -16,26 +17,16 @@ const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'dalila@deliciadoces.com.br'
 const ADMIN_SENHA = process.env.SEED_ADMIN_SENHA ?? 'deliciadoces123';
 
 /**
- * Categorias de despesa levantadas com a cliente.
+ * As duas categorias INTERNAS de despesa.
  *
- * A distinção entre os dois tipos é o que faz o lucro não mentir:
- * RETIRADA_PESSOAL sai do caixa (o dinheiro realmente saiu) mas não conta
- * como custo do negócio. Ela mistura dinheiro pessoal e da confeitaria,
- * então sem isso o resultado apareceria pior do que é.
+ * A cliente não usa categoria — ela escolhe entre Saída e Retirada
+ * pessoal, e diz o que foi no "Com o quê". A tabela existe porque o
+ * schema a exige em toda despesa, e o TIPO dela é o que faz o lucro não
+ * mentir: retirada sai do caixa mas não é custo do negócio.
+ *
+ * O servidor cria as duas sozinho na primeira despesa; semear só adianta.
  */
-const CATEGORIAS = [
-  { nome: 'Ingredientes', tipo: 'CUSTO_OPERACIONAL' },
-  { nome: 'Embalagem', tipo: 'CUSTO_OPERACIONAL' },
-  { nome: 'Contas (gás/luz/água)', tipo: 'CUSTO_OPERACIONAL' },
-  { nome: 'Transporte e entrega', tipo: 'CUSTO_OPERACIONAL' },
-  { nome: 'Ajudante', tipo: 'CUSTO_OPERACIONAL' },
-  { nome: 'Aluguel', tipo: 'CUSTO_OPERACIONAL' },
-  { nome: 'Internet', tipo: 'CUSTO_OPERACIONAL' },
-  // Destino da saída rápida, que não pergunta categoria. O servidor também
-  // a cria se faltar, então bancos anteriores a ela não quebram.
-  { nome: 'Diversos', tipo: 'CUSTO_OPERACIONAL' },
-  { nome: 'Retirada pessoal', tipo: 'RETIRADA_PESSOAL' },
-];
+const CATEGORIAS = Object.values(CATEGORIAS_INTERNAS);
 
 async function main() {
   const senhaHash = await bcrypt.hash(ADMIN_SENHA, 10);
@@ -61,13 +52,7 @@ async function main() {
     });
   }
 
-  const operacionais = CATEGORIAS.filter((c) => c.tipo === 'CUSTO_OPERACIONAL').length;
-  const retiradas = CATEGORIAS.length - operacionais;
-
-  console.log(
-    `[seed] ${CATEGORIAS.length} categorias de despesa prontas ` +
-      `(${operacionais} de custo operacional, ${retiradas} de retirada pessoal).`
-  );
+  console.log('[seed] Categorias internas de despesa prontas (saída e retirada pessoal).');
 
   console.log('\n[seed] Concluído. Acesso local:');
   console.log(`       e-mail: ${ADMIN_EMAIL}`);

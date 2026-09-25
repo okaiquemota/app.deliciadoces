@@ -25,8 +25,8 @@ import { moeda, paraInput, quantidade, ROTULO_PAGAMENTO } from '../utils/formato
  * dia, com o total de cada dia, é a leitura que qualquer extrato ensinou.
  *
  * Os filtros são três, e de toque: período, tipo e uma busca. A busca
- * cobre doce, descrição, cliente, categoria e forma de pagamento — um
- * campo só em vez de quatro menus.
+ * cobre doce, descrição, cliente e forma de pagamento — um campo só em
+ * vez de três menus.
  */
 
 const TIPOS = {
@@ -128,7 +128,6 @@ function daVenda(v) {
       ? v.observacao || 'Entrada avulsa'
       : v.itens.map((i) => `${quantidade(i.quantidade)}× ${i.produto?.nome ?? ''}`).join(', '),
     forma: v.formaPagamento,
-    categoria: null,
     cancelada: v.cancelada,
   };
 }
@@ -137,23 +136,20 @@ function daDespesa(d) {
   return {
     chave: `d-${d.id}`,
     origem: 'despesa',
-    tipo: d.categoria.tipo === 'RETIRADA_PESSOAL' ? 'retirada' : 'saida',
+    tipo: d.retirada ? 'retirada' : 'saida',
     registro: d,
     data: new Date(d.data),
     valor: Number(d.valor),
     titulo: d.descricao,
     forma: d.formaPagamento,
-    categoria: d.categoria.nome,
     cancelada: false,
   };
 }
 
-/** "Saída · Diversos · Pix · 14:32" — a categoria some quando repete o tipo. */
+/** "Saída · Pix · 14:32" */
 function subtitulo(l) {
-  const tipo = TIPOS[l.tipo].rotulo;
   return [
-    l.cancelada ? 'Cancelada' : tipo,
-    l.categoria && l.categoria !== tipo ? l.categoria : null,
+    l.cancelada ? 'Cancelada' : TIPOS[l.tipo].rotulo,
     FORMA_CURTA[l.forma],
     HORA.format(l.data),
   ]
@@ -174,7 +170,6 @@ function textoDeBusca(l) {
     [
       l.titulo,
       TIPOS[l.tipo].rotulo,
-      l.categoria,
       FORMA_CURTA[l.forma],
       ROTULO_PAGAMENTO[l.forma],
       r.clienteNome,
@@ -288,7 +283,7 @@ export function Caixa() {
             type="search"
             className="campo__entrada extrato__busca"
             placeholder="Buscar"
-            aria-label="Buscar por doce, descrição, cliente, categoria ou forma de pagamento"
+            aria-label="Buscar por doce, descrição, cliente ou forma de pagamento"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
@@ -409,9 +404,13 @@ export function Caixa() {
  * leitor de tela qual opção está ligada — a pastilha branca só diz a quem
  * vê.
  */
-function Segmentado({ rotulo, opcoes, valor, aoTrocar }) {
+function Segmentado({ rotulo, opcoes, valor, aoTrocar, cheio = false }) {
   return (
-    <div className="seletor-periodo" role="group" aria-label={rotulo}>
+    <div
+      className={cheio ? 'seletor-periodo seletor-periodo--cheio' : 'seletor-periodo'}
+      role="group"
+      aria-label={rotulo}
+    >
       {opcoes.map((o) => (
         <button
           key={o.id}
@@ -589,12 +588,6 @@ function Detalhe({ l, aoFechar, aoMudar }) {
           <dt>Pagamento</dt>
           <dd>{ROTULO_PAGAMENTO[l.forma] ?? 'Não informado'}</dd>
         </div>
-        {l.categoria && (
-          <div>
-            <dt>Categoria</dt>
-            <dd>{l.categoria}</dd>
-          </div>
-        )}
         {comOQue && l.tipo !== 'venda' && (
           <div>
             <dt>Com o quê</dt>
@@ -882,27 +875,28 @@ function EditarAvulsa({ registro, aoVoltar, aoSalvar }) {
 
 // ------------------------------------------------- editar despesa
 
+const TIPOS_DESPESA = [
+  { id: 'saida', rotulo: 'Saída' },
+  { id: 'retirada', rotulo: 'Retirada pessoal' },
+];
+
 /**
- * É aqui que uma saída rápida, arquivada em "Diversos", ganha a categoria
- * certa — a tela inicial não pergunta, de propósito.
+ * Saída e retirada pessoal se editam aqui. Sem categoria: o que foi, diz
+ * o "Com o quê".
+ *
+ * O Tipo existe para consertar o botão errado da tela inicial. Não é
+ * detalhe: saída conta como custo no lucro, retirada não — uma feira de
+ * casa lançada como saída faria a confeitaria parecer dar menos lucro.
  */
 function EditarDespesa({ registro, aoVoltar, aoSalvar }) {
-  const [categorias, setCategorias] = useState([]);
   const [form, setForm] = useState({
     descricao: registro.descricao,
     valor: valorParaCampo(registro.valor),
-    categoriaId: registro.categoriaId,
+    tipo: registro.retirada ? 'retirada' : 'saida',
     formaPagamento: registro.formaPagamento ?? '',
   });
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
-
-  useEffect(() => {
-    despesas
-      .categorias()
-      .then(setCategorias)
-      .catch((e) => setErro(mensagemDeErro(e)));
-  }, []);
 
   const campo = (nome) => (e) => setForm((f) => ({ ...f, [nome]: e.target.value }));
 
@@ -919,7 +913,7 @@ function EditarDespesa({ registro, aoVoltar, aoSalvar }) {
       await despesas.atualizar(registro.id, {
         descricao: form.descricao.trim(),
         valor: numero,
-        categoriaId: form.categoriaId,
+        retirada: form.tipo === 'retirada',
         formaPagamento: form.formaPagamento || null,
       });
       aoSalvar('Lançamento alterado.');
@@ -955,15 +949,20 @@ function EditarDespesa({ registro, aoVoltar, aoSalvar }) {
           opcoes={[{ valor: '', rotulo: 'Não informado' }, ...FORMAS]}
         />
       </Linha>
-      <Selecao
-        rotulo="Categoria"
-        value={form.categoriaId}
-        onChange={campo('categoriaId')}
-        opcoes={categorias.map((c) => ({
-          valor: c.id,
-          rotulo: c.tipo === 'RETIRADA_PESSOAL' ? `${c.nome} (não é custo)` : c.nome,
-        }))}
-      />
+      <div className="campo">
+        {/* O nome acessível vem do próprio grupo; o rótulo à vista não é
+            repetido para quem usa leitor de tela. */}
+        <span className="campo__rotulo" aria-hidden="true">
+          Tipo
+        </span>
+        <Segmentado
+          rotulo="Tipo"
+          opcoes={TIPOS_DESPESA}
+          valor={form.tipo}
+          aoTrocar={(tipo) => setForm((f) => ({ ...f, tipo }))}
+          cheio
+        />
+      </div>
       <Erro texto={erro} />
       <Acoes salvando={salvando} aoVoltar={aoVoltar} />
     </form>

@@ -1,5 +1,6 @@
 import { prisma } from '../src/lib/prisma.js';
 import { estoqueService } from '../src/services/estoqueService.js';
+import { despesaService } from '../src/services/caixaService.js';
 
 /**
  * Dados de DEMONSTRAÇÃO — para apresentar o sistema com as telas cheias.
@@ -53,19 +54,13 @@ async function limpar() {
   await prisma.produto.deleteMany({});
   await prisma.insumo.deleteMany({});
   console.log('[demo] Dados de demonstração removidos.');
-  console.log('[demo] Usuária e categorias de despesa foram preservadas.');
+  console.log('[demo] A usuária foi preservada.');
 }
 
 async function main() {
   if (LIMPAR) return limpar();
 
   const dalila = await prisma.usuario.findFirst({ where: { papel: 'ADMIN' } });
-  const categorias = await prisma.categoriaDespesa.findMany();
-  const cat = (nome) => categorias.find((c) => c.nome === nome)?.id;
-
-  if (!categorias.length) {
-    throw new Error('Rode `npm run db:seed` antes: as categorias não existem.');
-  }
 
   // ---------------------------------------------------------- insumos
   const insumos = {};
@@ -248,33 +243,27 @@ async function main() {
 
   // --------------------------------------------------------- despesas
   const despesas = [
-    { descricao: 'Compra no atacado', valor: 612.8, categoria: 'Ingredientes', dia: 6 },
-    { descricao: 'Forminhas e embalagens', valor: 117.0, categoria: 'Embalagem', dia: 5 },
-    {
-      descricao: 'Conta de luz',
-      valor: 214.3,
-      categoria: 'Contas (gás/luz/água)',
-      dia: 4,
-      recorrente: true,
-    },
-    { descricao: 'Gás de cozinha', valor: 130.0, categoria: 'Contas (gás/luz/água)', dia: 3 },
-    { descricao: 'Entrega de encomenda', valor: 45.0, categoria: 'Transporte e entrega', dia: 2 },
-    { descricao: 'Diária da ajudante', valor: 120.0, categoria: 'Ajudante', dia: 2 },
-    { descricao: 'Internet', valor: 99.9, categoria: 'Internet', dia: 1, recorrente: true },
-    { descricao: 'Mercado de casa', valor: 320.0, categoria: 'Retirada pessoal', dia: 3 },
+    { descricao: 'Compra no atacado', valor: 612.8, dia: 6 },
+    { descricao: 'Forminhas e embalagens', valor: 117.0, dia: 5 },
+    { descricao: 'Conta de luz', valor: 214.3, dia: 4, recorrente: true },
+    { descricao: 'Gás de cozinha', valor: 130.0, dia: 3 },
+    { descricao: 'Entrega de encomenda', valor: 45.0, dia: 2 },
+    { descricao: 'Diária da ajudante', valor: 120.0, dia: 2 },
+    { descricao: 'Internet', valor: 99.9, dia: 1, recorrente: true },
+    { descricao: 'Mercado de casa', valor: 320.0, dia: 3, retirada: true },
   ];
 
   for (const d of despesas) {
-    await prisma.despesa.create({
-      data: {
+    await despesaService.criar(
+      {
         descricao: d.descricao,
         valor: d.valor,
-        categoriaId: cat(d.categoria),
+        retirada: Boolean(d.retirada),
         recorrente: Boolean(d.recorrente),
-        usuarioId: dalila?.id,
         data: diasAtras(d.dia, 11),
       },
-    });
+      dalila?.id ?? null
+    );
   }
   console.log(`[demo] ${despesas.length} despesas lançadas.`);
 

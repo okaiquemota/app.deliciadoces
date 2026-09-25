@@ -41,7 +41,8 @@ O levantamento com a Dalila fechou pontos que moldam o sistema inteiro:
 - **Controla os dois níveis:** ingredientes e doces prontos.
 - **Ficha técnica é opcional.** Ela sabe as quantidades de cabeça e só cadastraria "se for simples" — então o sistema tem que funcionar sem ficha nenhuma.
 - **Erra e corrige.** Editar e excluir lançamento é fluxo principal, não exceção.
-- **Mistura dinheiro pessoal e do negócio.** Daí a categoria "Retirada pessoal": sai do caixa, mas não conta como custo no lucro.
+- **Mistura dinheiro pessoal e do negócio.** Daí a "Retirada pessoal", com botão próprio: sai do caixa, mas não conta como custo no lucro.
+- **Não usa categoria de despesa.** Toda saída diz o que foi no "Com o quê", e basta.
 - **Confere o caixa todo dia, mas olha o resultado por semana.**
 - **Quer simplicidade.** Ela não tem tempo de ficar mexendo no sistema.
 

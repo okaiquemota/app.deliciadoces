@@ -307,61 +307,50 @@ export const vendaService = {
 };
 
 export const despesaService = {
-  async listarCategorias() {
-    return prisma.categoriaDespesa.findMany({
-      where: { ativo: true },
-      orderBy: [{ tipo: 'asc' }, { nome: 'asc' }],
-    });
-  },
-
-  async listar({ inicio, fim, categoriaId, limite = 200 }) {
-    return prisma.despesa.findMany({
-      where: {
-        ...(categoriaId ? { categoriaId } : {}),
-        ...(inicio || fim
+  async listar({ inicio, fim, limite = 200 }) {
+    const lista = await prisma.despesa.findMany({
+      where:
+        inicio || fim
           ? { data: { ...(inicio ? { gte: inicio } : {}), ...(fim ? { lte: fim } : {}) } }
-          : {}),
-      },
-      include: { categoria: true },
+          : {},
+      include: COM_TIPO,
       orderBy: { data: 'desc' },
       take: limite,
     });
+    return lista.map(paraResposta);
   },
 
   /**
-   * Sem categoria, a despesa vai para "Diversos".
+   * Saída ou retirada pessoal — é tudo o que a cliente escolhe.
    *
-   * A saída rápida da tela inicial deixou de perguntar categoria — a
-   * cliente pediu o caminho mais curto, e quem diz o que foi é o "Com o
-   * quê". O que NÃO podia acontecer era a despesa cair na primeira
-   * categoria da lista: em ordem alfabética é "Ajudante", e o gás de
-   * cozinha ficaria registrado como pagamento de ajudante.
-   *
-   * "Diversos" é honesto sobre não saber, e é custo do negócio — então o
-   * lucro continua certo, porque o cálculo depende do TIPO da categoria,
-   * não do nome. Se precisar classificar depois, a despesa se edita no
-   * Caixa, onde o seletor continua existindo.
-   *
-   * `upsert` e não só busca: a categoria nasce no seed, mas um banco que
-   * já existia antes dela não a tem, e a saída não pode falhar por isso.
+   * Ela não usa categoria de despesa: quem diz o que foi é o "Com o quê".
+   * A tabela de categorias continua no banco só porque o schema a exige
+   * em toda despesa, e porque é o TIPO dela que separa retirada pessoal
+   * (sai do caixa, mas não é custo) de saída do negócio no cálculo do
+   * lucro. Então o servidor escolhe sozinho uma das duas categorias
+   * internas, e nenhuma resposta fala em categoria.
    */
-  async criar(dados, usuarioId) {
-    const categoriaId = dados.categoriaId ?? (await categoriaDiversos()).id;
-    return prisma.despesa.create({
-      data: { ...dados, categoriaId, usuarioId },
-      include: { categoria: true },
+  async criar({ retirada, ...dados }, usuarioId) {
+    const categoria = await categoriaInterna(retirada);
+    const despesa = await prisma.despesa.create({
+      data: { ...dados, categoriaId: categoria.id, usuarioId },
+      include: COM_TIPO,
     });
+    return paraResposta(despesa);
   },
 
-  async atualizar(id, dados) {
+  /** `retirada` na edição conserta a saída lançada no botão errado. */
+  async atualizar(id, { retirada, ...dados }) {
     const existe = await prisma.despesa.findUnique({ where: { id } });
     if (!existe) throw AppError.naoEncontrado('Despesa não encontrada.');
 
-    return prisma.despesa.update({
+    const categoriaId = retirada === undefined ? undefined : (await categoriaInterna(retirada)).id;
+    const despesa = await prisma.despesa.update({
       where: { id },
-      data: dados,
-      include: { categoria: true },
+      data: { ...dados, ...(categoriaId ? { categoriaId } : {}) },
+      include: COM_TIPO,
     });
+    return paraResposta(despesa);
   },
 
   /**
@@ -380,12 +369,31 @@ export const despesaService = {
   },
 };
 
-export const CATEGORIA_DIVERSOS = 'Diversos';
+/**
+ * As duas únicas categorias que existem para o sistema.
+ *
+ * `upsert`: um banco que ainda não as tem ganha na primeira despesa, e a
+ * saída nunca falha por isso. E o tipo é reafirmado a cada uso — se
+ * alguém mexer nele direto no banco, a retirada não passa a contar como
+ * custo em silêncio.
+ */
+export const CATEGORIAS_INTERNAS = {
+  saida: { nome: 'Diversos', tipo: 'CUSTO_OPERACIONAL' },
+  retirada: { nome: 'Retirada pessoal', tipo: 'RETIRADA_PESSOAL' },
+};
 
-function categoriaDiversos() {
+function categoriaInterna(retirada) {
+  const categoria = retirada ? CATEGORIAS_INTERNAS.retirada : CATEGORIAS_INTERNAS.saida;
   return prisma.categoriaDespesa.upsert({
-    where: { nome: CATEGORIA_DIVERSOS },
-    update: {},
-    create: { nome: CATEGORIA_DIVERSOS, tipo: 'CUSTO_OPERACIONAL' },
+    where: { nome: categoria.nome },
+    update: { tipo: categoria.tipo, ativo: true },
+    create: categoria,
   });
+}
+
+const COM_TIPO = { categoria: { select: { tipo: true } } };
+
+/** A despesa como a tela a vê: `retirada` no lugar de categoria. */
+function paraResposta({ categoria, categoriaId: _categoriaId, ...despesa }) {
+  return { ...despesa, retirada: categoria.tipo === 'RETIRADA_PESSOAL' };
 }

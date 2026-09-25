@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { prisma } from '../src/lib/prisma.js';
 import { estoqueService } from '../src/services/estoqueService.js';
 import { limparTudo, criarInsumo } from './apoio.js';
+import { colunaDoDia, filtrosPeriodo } from '../src/utils/periodo.js';
 
 /**
  * Validade.
@@ -169,5 +170,32 @@ describe('alerta do painel', () => {
     await lote(i.id, emDias(-3));
 
     expect((await estoqueService.alertas()).validadeProxima).toHaveLength(1);
+  });
+});
+
+/**
+ * A validade é um DIA: ela digita "25/09" num campo de data, e o banco
+ * guarda meia-noite UTC. O período da tela chega em horário de Brasília,
+ * três horas depois — comparado direto, o lote do primeiro dia pedido
+ * ficava de fora e o do dia seguinte ao último entrava.
+ */
+describe('validade é um dia, não um instante', () => {
+  it('o filtro de um dia traz o lote daquele dia, e só ele', async () => {
+    const i = await criarInsumo({ controlaValidade: true });
+    await lote(i.id, colunaDoDia('2026-03-10'));
+    await lote(i.id, colunaDoDia('2026-03-11'));
+
+    const lista = await estoqueService.validades(
+      filtrosPeriodo({ inicio: '2026-03-10', fim: '2026-03-10' })
+    );
+    expect(lista.map((l) => l.validade)).toEqual(['2026-03-10']);
+  });
+
+  it('devolve o dia digitado como texto, para a tela não mostrar a véspera', async () => {
+    const i = await criarInsumo({ controlaValidade: true });
+    await lote(i.id, colunaDoDia('2026-03-10'));
+
+    const [l] = await estoqueService.validades({});
+    expect(l.validade).toBe('2026-03-10');
   });
 });
