@@ -150,15 +150,16 @@ export function Layout() {
 
   return (
     <div className="app">
-      {/* No computador este bloco é o topo da coluna da esquerda, em duas
-          linhas; no celular ele vira a barra do topo, em uma linha só. */}
-      <div className="app__topo">
+      {/* `header` e não `div`: é o marco de cabeçalho da página, e sem ele
+          a marca e a conta ficavam fora de qualquer marco — conteúdo que
+          um leitor de tela não alcança pela navegação por regiões. */}
+      <header className="app__topo">
         <Marca />
         <span className="app__conta">
           {conta}
           {botaoSair}
         </span>
-      </div>
+      </header>
 
       <div className="app__lado">
         <nav className="nav" aria-label="Seções do sistema">
@@ -197,12 +198,20 @@ export function Layout() {
           ))}
         </nav>
 
-        <span className="app__versao">Delícia Doces · v1.0</span>
+        {/* `footer` com papel explícito: aninhado num `div`, o elemento
+            sozinho não vira marco, e a linha da versão ficava como o único
+            pedaço da tela fora de qualquer região. */}
+        <footer className="app__versao" role="contentinfo">
+          Delícia Doces · v1.0
+        </footer>
       </div>
 
       <div className="app__principal">
-        <h1 className="so-leitor">{titulo}</h1>
         <main className="app__conteudo">
+          {/* O título fica DENTRO do `main`: fora dele era conteúdo sem
+              marco, e é justamente por ele que quem usa leitor de tela
+              percebe que a página mudou. */}
+          <h1 className="so-leitor">{titulo}</h1>
           <Outlet />
         </main>
       </div>

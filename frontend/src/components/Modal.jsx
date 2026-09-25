@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 
 /**
  * Modal usado por todos os formulários de cadastro e lançamento.
@@ -6,6 +6,14 @@ import { useEffect } from 'react';
  * caçar o botão de fechar é atrito bobo.
  */
 export function Modal({ aberto, aoFechar, titulo, children, largura = 520 }) {
+  /**
+   * O diálogo precisa de NOME. Com `role="dialog"` e nada mais, o leitor
+   * de tela anuncia só "diálogo" e quem não vê a tela não sabe se abriu a
+   * venda ou a retirada. O título já está escrito ali em cima; basta
+   * apontar para ele, em vez de repetir o texto num `aria-label`.
+   */
+  const idTitulo = useId();
+
   useEffect(() => {
     if (!aberto) return undefined;
     const aoTeclar = (e) => e.key === 'Escape' && aoFechar();
@@ -17,9 +25,17 @@ export function Modal({ aberto, aoFechar, titulo, children, largura = 520 }) {
 
   return (
     <div className="modal" onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}>
-      <div className="modal__caixa" style={{ maxWidth: largura }} role="dialog" aria-modal="true">
+      <div
+        className="modal__caixa"
+        style={{ maxWidth: largura }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={idTitulo}
+      >
         <header className="modal__topo">
-          <h2 className="modal__titulo">{titulo}</h2>
+          <h2 className="modal__titulo" id={idTitulo}>
+            {titulo}
+          </h2>
           <button type="button" className="modal__fechar" onClick={aoFechar} aria-label="Fechar">
             ×
           </button>
