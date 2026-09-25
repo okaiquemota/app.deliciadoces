@@ -123,6 +123,53 @@ export const authService = {
     return { trocada: true };
   },
 
+  /**
+   * Muda o nome e/ou o e-mail da própria conta.
+   *
+   * O NOME muda sem senha: é só como o sistema a chama.
+   *
+   * O E-MAIL pede a senha atual. Ele é o login, e com a sessão aberta
+   * numa máquina esquecida bastaria trocá-lo para trancar a dona fora da
+   * conta — ela tentaria entrar com o e-mail dela e não existiria mais.
+   * É a mesma razão pela qual a troca de senha pede a senha atual.
+   *
+   * Reenvia o token porque ele carrega nome e e-mail. O servidor hoje só
+   * lê o id dele, mas um token dizendo um e-mail que a conta não tem mais
+   * é o tipo de coisa que vira defeito quando alguém passar a confiar nele.
+   */
+  async atualizarPerfil(usuarioId, { nome, email, senhaAtual }) {
+    const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } });
+
+    if (!usuario) {
+      throw AppError.naoEncontrado('Usuário não encontrado.');
+    }
+
+    const dados = {};
+    if (nome !== undefined) dados.nome = nome;
+
+    if (email !== undefined && email !== usuario.email) {
+      // 422 e não 401, pelo mesmo motivo da troca de senha: a sessão é
+      // válida, o que falhou foi o dado — 401 faria o frontend deslogá-la.
+      if (!senhaAtual) {
+        throw new AppError('Para trocar o e-mail, confirme com a sua senha atual.', 422);
+      }
+      if (!(await bcrypt.compare(senhaAtual, usuario.senhaHash))) {
+        throw new AppError('Senha atual incorreta.', 422);
+      }
+      const dono = await prisma.usuario.findUnique({ where: { email } });
+      if (dono) {
+        throw AppError.conflito('Já existe um usuário com este e-mail.');
+      }
+      dados.email = email;
+    }
+
+    const atualizado = Object.keys(dados).length
+      ? await prisma.usuario.update({ where: { id: usuarioId }, data: dados })
+      : usuario;
+
+    return { usuario: semSenha(atualizado), token: gerarToken(atualizado) };
+  },
+
   /** Dados do usuário logado — usado pelo frontend para restaurar a sessão. */
   async perfil(usuarioId) {
     const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } });

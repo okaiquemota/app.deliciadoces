@@ -2,17 +2,20 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../src/lib/prisma.js';
 import { authService } from '../src/services/authService.js';
+import { atualizarPerfilSchema } from '../src/controllers/authController.js';
 
 const EMAIL = 'teste-senha@deliciadoces.local';
+const OUTRO = 'teste-outro@deliciadoces.local';
+const NOVO = 'teste-novo@deliciadoces.local';
 
 beforeEach(async () => {
-  await prisma.usuario.deleteMany({ where: { email: EMAIL } });
+  await prisma.usuario.deleteMany({ where: { email: { in: [EMAIL, OUTRO, NOVO] } } });
   await prisma.usuario.create({
     data: { nome: 'Teste', email: EMAIL, senhaHash: await bcrypt.hash('senha-antiga', 10) },
   });
 });
 afterAll(async () => {
-  await prisma.usuario.deleteMany({ where: { email: EMAIL } });
+  await prisma.usuario.deleteMany({ where: { email: { in: [EMAIL, OUTRO, NOVO] } } });
   await prisma.$disconnect();
 });
 
@@ -82,5 +85,74 @@ describe('código de status', () => {
     } catch (erro) {
       expect(erro.statusCode).toBe(422);
     }
+  });
+});
+
+/**
+ * Nome e e-mail da própria conta.
+ *
+ * O que estes testes travam é a assimetria: o nome muda sem senha, o
+ * e-mail não. O e-mail é o login — trocá-lo numa sessão esquecida aberta
+ * trancaria a dona fora da própria conta.
+ */
+describe('atualizar perfil', () => {
+  it('troca o nome sem pedir senha', async () => {
+    const u = await buscar();
+    const r = await authService.atualizarPerfil(u.id, { nome: 'Dalila' });
+    expect(r.usuario.nome).toBe('Dalila');
+    expect((await buscar()).nome).toBe('Dalila');
+  });
+
+  it('recusa trocar o e-mail sem a senha atual, e não mexe em nada', async () => {
+    const u = await buscar();
+    await expect(authService.atualizarPerfil(u.id, { email: NOVO })).rejects.toThrow(/senha/i);
+    expect(await buscar()).not.toBeNull();
+  });
+
+  it('recusa trocar o e-mail com a senha errada', async () => {
+    const u = await buscar();
+    await expect(
+      authService.atualizarPerfil(u.id, { email: NOVO, senhaAtual: 'chute' })
+    ).rejects.toMatchObject({ statusCode: 422 });
+    expect(await prisma.usuario.findUnique({ where: { email: NOVO } })).toBeNull();
+  });
+
+  it('troca o e-mail quando a senha confere, e o login passa a ser o novo', async () => {
+    const u = await buscar();
+    await authService.atualizarPerfil(u.id, { email: NOVO, senhaAtual: 'senha-antiga' });
+
+    await expect(authService.login({ email: NOVO, senha: 'senha-antiga' })).resolves.toHaveProperty(
+      'token'
+    );
+    await expect(authService.login({ email: EMAIL, senha: 'senha-antiga' })).rejects.toThrow();
+  });
+
+  it('recusa um e-mail que já é de outra pessoa', async () => {
+    await prisma.usuario.create({ data: { nome: 'Outra', email: OUTRO, senhaHash: 'x' } });
+    const u = await buscar();
+    await expect(
+      authService.atualizarPerfil(u.id, { email: OUTRO, senhaAtual: 'senha-antiga' })
+    ).rejects.toMatchObject({ statusCode: 409 });
+  });
+
+  it('repetir o próprio e-mail não pede senha: não é troca', async () => {
+    const u = await buscar();
+    const r = await authService.atualizarPerfil(u.id, { nome: 'Dalila', email: EMAIL });
+    expect(r.usuario.email).toBe(EMAIL);
+  });
+
+  it('devolve um token novo com o nome atualizado', async () => {
+    const u = await buscar();
+    const { token } = await authService.atualizarPerfil(u.id, { nome: 'Dalila' });
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    expect(payload.nome).toBe('Dalila');
+  });
+
+  it('o formato exige e-mail de verdade e grava em minúsculas', () => {
+    expect(atualizarPerfilSchema.safeParse({ email: 'admin' }).success).toBe(false);
+    expect(atualizarPerfilSchema.parse({ email: 'Dalila@Exemplo.com' }).email).toBe(
+      'dalila@exemplo.com'
+    );
+    expect(atualizarPerfilSchema.safeParse({}).success).toBe(false);
   });
 });

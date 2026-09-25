@@ -11,18 +11,28 @@ const FORMAS = [
   ['CARTAO_CREDITO', 'Crédito'],
 ];
 
+/**
+ * `exemplo` liga o campo "Com o quê" e dá o texto de exemplo dele.
+ *
+ * A saída NÃO pergunta categoria: quem diz o que foi é o "Com o quê", e o
+ * servidor arquiva a despesa em "Diversos", que é custo do negócio — o
+ * lucro continua certo. Se ela quiser classificar, edita pelo Caixa.
+ *
+ * A retirada é o único modo que ainda busca categoria, e sem perguntar:
+ * só existe uma do tipo retirada pessoal.
+ */
 const MODOS = {
   entrada: {
     titulo: 'Entrada avulsa',
     rotuloValor: 'Quanto entrou',
     botao: 'Registrar entrada',
+    exemplo: 'Ex.: encomenda, bolo de aniversário',
   },
   saida: {
     titulo: 'Saída',
     rotuloValor: 'Quanto saiu',
     botao: 'Registrar saída',
-    precisaCategoria: 'CUSTO_OPERACIONAL',
-    precisaDescricao: true,
+    exemplo: 'Ex.: gás, farinha, luz',
   },
   retirada: {
     titulo: 'Retirada pessoal',
@@ -67,7 +77,6 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
   const [valor, setValor] = useState('');
   const [forma, setForma] = useState('DINHEIRO');
   const [descricao, setDescricao] = useState('');
-  const [categorias, setCategorias] = useState([]);
   const [categoriaId, setCategoriaId] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
@@ -76,9 +85,7 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
   const carregarCategorias = useCallback(async (tipo) => {
     try {
       const todas = await despesas.categorias();
-      const doTipo = todas.filter((c) => c.tipo === tipo);
-      setCategorias(doTipo);
-      setCategoriaId(doTipo[0]?.id ?? '');
+      setCategoriaId(todas.find((c) => c.tipo === tipo)?.id ?? '');
     } catch (e) {
       setErro(mensagemDeErro(e));
     }
@@ -133,9 +140,15 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
     setErro('');
     try {
       if (modo === 'entrada') {
-        await vendas.criar({ valor: numero, formaPagamento: forma });
+        // Venda sem itens não tem campo de descrição; o "Com o quê" vai na
+        // observação, que é o que o Caixa e o mini-histórico mostram.
+        await vendas.criar({
+          valor: numero,
+          formaPagamento: forma,
+          observacao: descricao.trim() || undefined,
+        });
       } else {
-        if (!categoriaId) {
+        if (config.precisaCategoria && !categoriaId) {
           setErro('Nenhuma categoria cadastrada para este tipo.');
           setSalvando(false);
           return;
@@ -143,7 +156,9 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
         await despesas.criar({
           descricao: descricao.trim() || config.titulo,
           valor: numero,
-          categoriaId,
+          // Só a retirada manda categoria; a saída deixa o servidor
+          // arquivar em "Diversos".
+          ...(config.precisaCategoria ? { categoriaId } : {}),
           formaPagamento: forma,
         });
       }
@@ -208,33 +223,16 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
           ))}
         </div>
 
-        {config.precisaDescricao && (
+        {config.exemplo && (
           <label className="campo">
             <span className="campo__rotulo">Com o quê</span>
             <input
               className="campo__entrada"
               type="text"
-              placeholder="Ex.: gás, farinha, luz"
+              placeholder={config.exemplo}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
             />
-          </label>
-        )}
-
-        {config.precisaCategoria && categorias.length > 1 && (
-          <label className="campo">
-            <span className="campo__rotulo">Categoria</span>
-            <select
-              className="campo__entrada"
-              value={categoriaId}
-              onChange={(e) => setCategoriaId(e.target.value)}
-            >
-              {categorias.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
           </label>
         )}
 

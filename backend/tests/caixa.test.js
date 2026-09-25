@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { prisma } from '../src/lib/prisma.js';
-import { vendaService } from '../src/services/caixaService.js';
+import { vendaService, despesaService, CATEGORIA_DIVERSOS } from '../src/services/caixaService.js';
+import { dashboardService } from '../src/services/dashboardService.js';
 import { estoqueService } from '../src/services/estoqueService.js';
-import { limparTudo, criarProduto, saldoProduto, razaoDe } from './apoio.js';
+import { limparTudo, criarProduto, saldoProduto, razaoDe, criarCategoria } from './apoio.js';
 
 /**
  * Editar e excluir venda é FLUXO PRINCIPAL para a cliente, não exceção —
@@ -363,5 +364,52 @@ describe('o painel separa a entrada avulsa', () => {
     const r = await dashboardService.resumo({});
     expect(r.vendasAvulsas).toBe(0);
     expect(r.quantidadeAvulsas).toBe(0);
+  });
+});
+
+/**
+ * A saída rápida da tela inicial não pergunta categoria.
+ *
+ * O risco que estes testes travam: sem categoria, cair na PRIMEIRA da
+ * lista. Em ordem alfabética é "Ajudante" — o gás de cozinha viraria
+ * pagamento de ajudante, e ninguém perceberia até olhar o relatório.
+ */
+describe('despesa sem categoria', () => {
+  it('vai para Diversos, criada na hora se o banco ainda não tem', async () => {
+    // Simula um banco anterior à categoria: ela não pode ser pré-requisito.
+    await prisma.categoriaDespesa.deleteMany({ where: { nome: CATEGORIA_DIVERSOS } });
+    await criarCategoria('CUSTO_OPERACIONAL', 'Ajudante-teste-' + Date.now());
+
+    const d = await despesaService.criar({ descricao: 'Gás de cozinha', valor: 140 }, null);
+
+    expect(d.categoria.nome).toBe(CATEGORIA_DIVERSOS);
+    expect(d.categoria.tipo).toBe('CUSTO_OPERACIONAL');
+  });
+
+  it('reaproveita a mesma Diversos em vez de criar outra a cada saída', async () => {
+    const a = await despesaService.criar({ descricao: 'Gás', valor: 10 }, null);
+    const b = await despesaService.criar({ descricao: 'Luz', valor: 20 }, null);
+
+    expect(a.categoriaId).toBe(b.categoriaId);
+    expect(await prisma.categoriaDespesa.count({ where: { nome: CATEGORIA_DIVERSOS } })).toBe(1);
+  });
+
+  it('respeita a categoria quando ela é informada', async () => {
+    const aluguel = await criarCategoria('CUSTO_OPERACIONAL');
+    const d = await despesaService.criar(
+      { descricao: 'Aluguel de setembro', valor: 800, categoriaId: aluguel.id },
+      null
+    );
+    expect(d.categoriaId).toBe(aluguel.id);
+  });
+
+  it('entra no lucro como custo do negócio, não como retirada', async () => {
+    await despesaService.criar({ descricao: 'Farinha', valor: 50 }, null);
+    const r = await dashboardService.resumo({
+      inicio: new Date(Date.now() - 86400000),
+      fim: new Date(Date.now() + 86400000),
+    });
+    expect(r.custos).toBe(50);
+    expect(r.retiradas).toBe(0);
   });
 });

@@ -17,4 +17,15 @@ export const authService = {
     const { data } = await api.get('/auth/eu');
     return data;
   },
+
+  /** Nome e/ou e-mail. Devolve { usuario, token } — o token é reemitido. */
+  async atualizarPerfil(dados) {
+    const { data } = await api.patch('/auth/perfil', dados);
+    return data;
+  },
+
+  async trocarSenha(dados) {
+    const { data } = await api.patch('/auth/senha', dados);
+    return data;
+  },
 };

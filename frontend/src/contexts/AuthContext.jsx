@@ -49,6 +49,21 @@ export function AuthProvider({ children }) {
     return usuarioLogado;
   }, []);
 
+  /**
+   * Troca o usuário e o token da sessão sem passar pelo login.
+   *
+   * Usado quando ela muda o próprio nome ou e-mail: a barra lateral
+   * precisa mostrar o nome novo na hora, e o token antigo carregaria os
+   * dados velhos.
+   */
+  const atualizarSessao = useCallback(({ usuario: novo, token }) => {
+    if (token) {
+      localStorage.setItem(CHAVE_TOKEN, token);
+      api.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+    setUsuario(novo);
+  }, []);
+
   const sair = useCallback(() => {
     localStorage.removeItem(CHAVE_TOKEN);
     delete api.defaults.headers.Authorization;
@@ -56,8 +71,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const valor = useMemo(
-    () => ({ usuario, autenticado: Boolean(usuario), carregando, entrar, sair }),
-    [usuario, carregando, entrar, sair]
+    () => ({ usuario, autenticado: Boolean(usuario), carregando, entrar, sair, atualizarSessao }),
+    [usuario, carregando, entrar, sair, atualizarSessao]
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
