@@ -64,15 +64,9 @@ export const estoqueController = {
         insumoId: req.query.insumoId,
         produtoId: req.query.produtoId,
         tipo: req.query.tipo,
-        de: req.query.de,
-      })
-    );
-  },
-  async validades(req, res) {
-    res.json(
-      await estoqueService.validades({
-        ...filtrosPeriodo(req.query),
-        situacao: req.query.situacao,
+        // Teto mais alto que o das outras listas: cada doce vendido é uma
+        // linha, e um mês de Kardex passa fácil de mil.
+        limite: limiteDaListagem(req.query, 200, 3000),
       })
     );
   },

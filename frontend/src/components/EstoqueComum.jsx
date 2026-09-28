@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Modal } from './Modal.jsx';
 import { Texto } from './Campo.jsx';
-import { Tabela } from './Tabela.jsx';
 import { Segmentado } from './Segmentado.jsx';
 import { estoque } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { dataHora, quantidade, ROTULO_MOVIMENTACAO, UNIDADE_CURTA } from '../utils/formato.js';
+import { quantidade, UNIDADE_CURTA } from '../utils/formato.js';
 
 /**
  * Peças comuns ao Estoque (o material) e à Produção (os doces): o saldo
- * com aviso de "acabando", o histórico de movimentações e a janela de
- * Ajustar. As duas telas tratam de estoque, cada uma do seu lado, e uma
- * perda de farinha se registra do mesmo jeito que uma de brigadeiro.
+ * com aviso de "acabando" e a janela de Ajustar. As duas telas tratam de
+ * estoque, cada uma do seu lado, e uma perda de farinha se registra do
+ * mesmo jeito que uma de brigadeiro. O histórico dos dois lados mora no
+ * Kardex.
  */
 
 /**
@@ -55,57 +55,6 @@ export const quantosAcabando = (lista) =>
   lista.filter(
     (i) => Number(i.estoqueMinimo) > 0 && Number(i.quantidadeAtual) <= Number(i.estoqueMinimo)
   ).length;
-
-/**
- * Histórico de entradas e saídas de um lado do estoque: `de="insumos"`
- * no Estoque, `de="doces"` na Produção. O filtro é do servidor: as
- * vendas geram uma saída de doce cada, e misturadas elas tomariam a
- * lista inteira.
- */
-export function HistoricoMovimentos({ de, rotuloItem, vazio }) {
-  const [lista, setLista] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState('');
-
-  useEffect(() => {
-    estoque
-      .movimentacoes({ de })
-      .then(setLista)
-      .catch((e) => setErro(mensagemDeErro(e)))
-      .finally(() => setCarregando(false));
-  }, [de]);
-
-  return (
-    <>
-      {erro && <p className="alerta alerta--erro">{erro}</p>}
-      <Tabela
-        carregando={carregando}
-        dados={lista}
-        vazio={vazio}
-        colunas={[
-          { chave: 'data', titulo: 'Quando', render: (m) => dataHora(m.data) },
-          {
-            chave: 'item',
-            titulo: rotuloItem,
-            render: (m) => m.insumo?.nome ?? m.produto?.nome ?? '—',
-          },
-          {
-            chave: 'tipo',
-            titulo: 'O que foi',
-            render: (m) => <span className="etiqueta">{ROTULO_MOVIMENTACAO[m.tipo]}</span>,
-          },
-          {
-            chave: 'quantidade',
-            titulo: 'Qtd.',
-            alinhar: 'right',
-            render: (m) => quantidade(m.quantidade, m.insumo?.unidade ?? m.produto?.unidade ?? ''),
-          },
-          { chave: 'motivo', titulo: 'Motivo', render: (m) => m.motivo ?? '' },
-        ]}
-      />
-    </>
-  );
-}
 
 const MODOS_AJUSTE = [
   { id: 'perda', rotulo: 'Perdi' },

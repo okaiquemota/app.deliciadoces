@@ -110,6 +110,34 @@ export const IconeFiltros = (p) => (
   </Base>
 );
 
+/** Carrinho: a compra de ingrediente, que ENTRA no estoque. */
+export const IconeCompra = (p) => (
+  <Base {...p}>
+    <path d="M3 4.5h2.5l2.1 10.5h10.2l2-7.5H6.4" />
+    <circle cx="9" cy="19" r="1.4" />
+    <circle cx="16.5" cy="19" r="1.4" />
+  </Base>
+);
+
+/** Lixeira: o que estragou, caiu, venceu. */
+export const IconePerda = (p) => (
+  <Base {...p}>
+    <path d="M4.5 7h15" />
+    <path d="M9.5 7V4.5h5V7" />
+    <path d="m6.5 7 1 13h9l1-13" />
+    <path d="M10.5 11v5.5M13.5 11v5.5" />
+  </Base>
+);
+
+/** Mais sobre menos: a contagem que corrigiu o saldo, para cima ou para baixo. */
+export const IconeAjuste = (p) => (
+  <Base {...p}>
+    <path d="M12 4v8" />
+    <path d="M8 8h8" />
+    <path d="M8 18h8" />
+  </Base>
+);
+
 /** Visto: a opção escolhida numa lista. */
 export const IconeVisto = (p) => (
   <Base {...p}>
@@ -120,7 +148,7 @@ export const IconeVisto = (p) => (
 /* ---------------------------------------------------------------------
    Ícones de navegação.
 
-   Entram com a barra lateral/inferior: numa barra de quatro itens colados
+   Entram com a barra lateral/inferior: numa barra de cinco itens colados
    no rodapé, o rótulo sozinho é pequeno demais para mirar de relance — o
    desenho é o que ela reconhece antes de ler.
    --------------------------------------------------------------------- */
@@ -159,6 +187,16 @@ export const IconeEstoque = (p) => (
     <path d="M3.5 7.5 12 3.5l8.5 4L12 11.5Z" />
     <path d="M3.5 7.5v9L12 20.5l8.5-4v-9" />
     <path d="M12 11.5v9" />
+  </Base>
+);
+
+/** Setas subindo e descendo: o que entra e o que sai do estoque. */
+export const IconeKardex = (p) => (
+  <Base {...p}>
+    <path d="M8 19.5V4.5" />
+    <path d="m4.5 8 3.5-3.5L11.5 8" />
+    <path d="M16 4.5v15" />
+    <path d="m12.5 16 3.5 3.5 3.5-3.5" />
   </Base>
 );
 

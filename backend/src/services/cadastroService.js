@@ -16,14 +16,24 @@ function naoEncontrado(oQue) {
 }
 
 export const insumoService = {
+  /**
+   * Cada ingrediente vem com a `validade` do que está na prateleira — a
+   * data mais próxima, estimada pelo "mais antigo sai primeiro" (ver
+   * `estoqueService.validadesNaPrateleira`). `null` quando não tem data:
+   * não controla validade, ou o que sobrou veio de compra sem data.
+   */
   async listar({ busca, apenasAtivos = true } = {}) {
-    return prisma.insumo.findMany({
-      where: {
-        ...(apenasAtivos ? { ativo: true } : {}),
-        ...(busca ? { nome: { contains: busca, mode: 'insensitive' } } : {}),
-      },
-      orderBy: { nome: 'asc' },
-    });
+    const [lista, validades] = await Promise.all([
+      prisma.insumo.findMany({
+        where: {
+          ...(apenasAtivos ? { ativo: true } : {}),
+          ...(busca ? { nome: { contains: busca, mode: 'insensitive' } } : {}),
+        },
+        orderBy: { nome: 'asc' },
+      }),
+      estoqueService.validadesNaPrateleira(),
+    ]);
+    return lista.map((i) => ({ ...i, validade: validades.get(i.id) ?? null }));
   },
 
   async porId(id) {

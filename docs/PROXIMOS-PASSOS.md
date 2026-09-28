@@ -29,7 +29,7 @@ await prisma.$transaction(async (tx) => {
 });
 ```
 
-> A quantidade na `MovimentacaoEstoque` é **sempre positiva**. Quem diz a direção é o `tipo`.
+> A quantidade na `MovimentacaoEstoque` é **positiva**, e quem diz a direção é o `tipo` — menos no `AJUSTE`, o único tipo sem direção fixa, que guarda o próprio sinal (`-2` quando a contagem achou dois a menos). Gravado sem o sinal, o histórico mostrava entrada onde houve saída.
 
 ---
 
@@ -73,8 +73,10 @@ Cuidados:
 - [ ] `POST /api/estoque/movimentacoes` — compra, perda e ajuste
 - [ ] `motivo` é **obrigatório na aplicação** quando o tipo for `PERDA` ou `AJUSTE` (o schema deixa nulo de propósito, a trava é nossa)
 - [ ] Validade vai na **entrada**, não no insumo: cada compra tem a sua
+- [ ] A validade que a tela mostra é a do que **está na prateleira**, estimada pela regra "o mais antigo sai primeiro" (ver `estoqueService.validadesNaPrateleira`)
 - [ ] Recalcular o **custo médio** do insumo a cada compra
-- [ ] `GET /api/estoque/alertas` — itens abaixo do mínimo e validade próxima
+- [ ] `GET /api/estoque/alertas` — itens abaixo do mínimo e validade próxima (um aviso por ingrediente)
+- [ ] `GET /api/estoque/movimentacoes` — o Kardex; pedido para um item, cada linha traz `saldoDepois`
 
 Ela já ficou sem ingrediente várias vezes e joga coisa fora às vezes. O alerta é o que ela pediu, não enfeite.
 

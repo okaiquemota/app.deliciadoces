@@ -1021,8 +1021,11 @@ input[type='date']::-webkit-date-and-time-value {
   outline-offset: 1px;
 }
 
-/* Chip ligado: preenchido com a cor de ação, como um botão apertado. */
-.chip[aria-pressed='true'] {
+/* Chip ligado: preenchido com a cor de ação, como um botão apertado. O
+   `--ligado` é o chip que abre uma escolha (o item do Kardex): acende
+   igual quando há algo escolhido, sem ser um botão de liga-desliga. */
+.chip[aria-pressed='true'],
+.chip--ligado {
   border-color: var(--acao);
   background-color: var(--acao);
   color: var(--c-0);
@@ -1033,7 +1036,8 @@ input[type='date']::-webkit-date-and-time-value {
     border-color: var(--c-400);
   }
 
-  .chip[aria-pressed='true']:hover {
+  .chip[aria-pressed='true']:hover,
+  .chip--ligado:hover {
     border-color: var(--acao-hover);
     background-color: var(--acao-hover);
   }
@@ -1069,6 +1073,39 @@ input[type='date']::-webkit-date-and-time-value {
 
 .opcao[aria-pressed='true'] {
   font-weight: 600;
+}
+
+/* A escolha do item do Kardex: a busca no alto e a lista em dois grupos,
+   Doces e Ingredientes, com o cabeçalho pequeno de seção dos Ajustes do
+   iPhone. Cada opção diz quanto tem — é o que ela confere ao escolher. */
+.opcoes__busca {
+  margin-bottom: 6px;
+}
+
+.opcoes__bloco {
+  margin-top: 16px;
+}
+
+.opcoes__grupo {
+  margin: 0 0 2px;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.opcao__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.opcao__nota {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  font-weight: 400;
 }
 
 /* Uma data por linha, com o rótulo à esquerda — como Início e Fim de um
@@ -1639,53 +1676,11 @@ input[type='date']::-webkit-date-and-time-value {
 /* Controle segmentado no desenho da Apple: trilho cinza de canto 9,
    pastilha branca de canto 7 por dentro, e 2px de folga entre os dois. A
    diferença de dois pixels entre os cantos é o que faz a pastilha parecer
-   encaixada no trilho em vez de sobreposta. */
-.abas {
-  display: flex;
-  gap: 2px;
-  margin: 0 0 16px;
-  padding: 2px;
-  border: none;
-  border-radius: 9px;
-  background-color: rgb(118 118 128 / 0.12);
-}
+   encaixada no trilho em vez de sobreposta.
 
-/* O item apagado usa --c-700 e não o cinza secundário: o trilho é uma
+   O item apagado usa --c-700 e não o cinza secundário: o trilho é uma
    mancha translúcida, e sobre ela o secundário cai para 4,07 — abaixo do
-   mínimo. O que separa aceso de apagado continua sendo a pastilha branca
-   e o peso, não a cor do texto. */
-.abas__item {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 7px;
-  background: none;
-  color: var(--c-700);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: center;
-  cursor: pointer;
-}
-
-.abas__item:hover {
-  color: var(--texto);
-}
-
-/* O ativo é uma pastilha branca sobre o trilho cinza. Sublinhado vira um
-   traço solto quando a aba quebra em duas linhas no celular; a pastilha
-   acompanha o formato do item, qualquer que seja a altura dele. */
-.abas__item--ativo,
-.abas__item--ativo:hover {
-  background-color: var(--superficie);
-  color: var(--texto);
-  font-weight: 600;
-  box-shadow:
-    0 3px 8px rgb(0 0 0 / 0.12),
-    0 3px 1px rgb(0 0 0 / 0.04);
-}
-
+   mínimo. O que separa aceso de apagado é a pastilha branca e o peso. */
 .seletor-periodo {
   display: flex;
   gap: 2px;
@@ -2537,6 +2532,20 @@ input[type='date']::-webkit-date-and-time-value {
   font-weight: 600;
 }
 
+/* Validade na tabela do Estoque: a situação em cima e, quando só parte
+   do que tem vence naquela data, quanto — menor, embaixo. */
+.validade {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.validade__parte,
+.validade__nada {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
 .fechamento__falta {
   color: var(--erro);
   font-weight: 600;
@@ -2788,9 +2797,10 @@ input[type='date']::-webkit-date-and-time-value {
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Fechar dia e Resumo saem da barra: com seis itens cada alvo cairia
-     para 65px com rótulo de duas linhas. Os dois continuam a um toque,
-     como botões na tela inicial. */
+  /* Fechar dia e Resumo saem da barra: com sete itens cada alvo cairia
+     para 45px num iPhone SE, e "Produção" não caberia numa linha. Com
+     cinco, cada um tem 64. Os dois continuam a um toque, como botões na
+     tela inicial. */
   .nav__item--so-desktop,
   .app__versao {
     display: none;
@@ -2930,7 +2940,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   /* Ícone em cima, palavra embaixo, e o item inteiro é o alvo: a fileira
-     divide a largura por igual, então o dedo acerta um quarto da tela.
+     divide a largura por igual, então o dedo acerta um quinto da tela.
      Ícone e rótulo no tamanho dos apps de banco — 26px e 12px —, e não os
      11px de antes, que se liam com esforço. */
   .nav__item {
@@ -2959,7 +2969,7 @@ input[type='date']::-webkit-date-and-time-value {
 
   /* O ativo: ícone e rótulo na cor do texto e um traço arredondado colado
      na borda de cima da barra, sobre o item — o desenho da referência.
-     Sem pastilha de fundo: numa barra de quatro itens colados, o bloco
+     Sem pastilha de fundo: numa barra de cinco itens colados, o bloco
      cinza vira uma mancha. */
   .nav__item--ativo,
   .nav__item--ativo:hover {
@@ -3017,13 +3027,6 @@ input[type='date']::-webkit-date-and-time-value {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
-  }
-
-  .abas__item {
-    padding: 7px 4px;
-    font-size: 0.8125rem;
-    white-space: normal;
-    line-height: 1.2;
   }
 
   .painel-duplo {
@@ -3113,7 +3116,6 @@ input[type='date']::-webkit-date-and-time-value {
   .campo__entrada,
   .botao,
   .forma,
-  .abas__item,
   .seletor-periodo__item,
   /* Os três abaixo escaparam da regra por não usarem a classe `.botao`.
      Todos são de uso constante: o item de menu na barra lateral de um
@@ -3163,19 +3165,6 @@ input[type='date']::-webkit-date-and-time-value {
   }
 }
 
-/* ---------------------------------------------------------------------
-   Telas ESTREITAS — abaixo de 400px, o filtro de situação da Validade
-   quebra em duas fileiras de dois.
-
-   Em 320px as quatro opções dividem 288: "Vence em 30 dias" não cabe em
-   71 e empurrava "Todos" para fora da tela. Em 2x2 cada uma fica com
-   143px, e as quatro continuam à vista de uma vez.
-
-   As abas (Estoque e Produção) já não quebram: são três em cada tela, e
-   três cabem numa fileira até em 320px — "Ingredientes", a mais longa,
-   pede 92 dos 96 que sobram.
-   --------------------------------------------------------------------- */
-
 /* Resumo do extrato em tela estreita: três colunas de 90px não seguram
    o total de um mês ("R$ 12.345,67" pede 110). Vira recibo — Entrou e
    Saiu lado a lado, e o Saldo, que é a conta dos dois, numa linha
@@ -3193,22 +3182,6 @@ input[type='date']::-webkit-date-and-time-value {
     gap: 12px;
     padding-top: 10px;
     border-top: 1px solid var(--c-200);
-  }
-}
-
-/* O filtro de situação da Validade fica solto na tela, sem cartão em
-   volta: precisa do próprio respiro antes da contagem de lotes. */
-.seletor-periodo--quebra {
-  margin-bottom: 14px;
-}
-
-@media (max-width: 400px) {
-  .seletor-periodo--quebra {
-    flex-wrap: wrap;
-  }
-
-  .seletor-periodo--quebra .seletor-periodo__item {
-    flex: 1 1 44%;
   }
 }
 
@@ -3445,7 +3418,6 @@ input[type='date']::-webkit-date-and-time-value {
 .doce__toque,
 .doce__passo,
 .seletor-periodo__item,
-.abas__item,
 .nav__item,
 .extrato__item,
 .opcao,
@@ -3466,8 +3438,7 @@ input[type='date']::-webkit-date-and-time-value {
     .atalho-valor,
     .doce__toque,
     .doce__passo,
-    .seletor-periodo__item,
-    .abas__item
+    .seletor-periodo__item
   ):active:not(:disabled) {
   transform: scale(0.96);
   transition-duration: 80ms;

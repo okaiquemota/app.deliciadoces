@@ -190,7 +190,7 @@ erDiagram
         enum tipo
         uuid insumoId FK "arco exclusivo com produtoId"
         uuid produtoId FK "arco exclusivo com insumoId"
-        decimal quantidade "sempre positiva"
+        decimal quantidade "positiva; AJUSTE guarda o sinal"
         decimal custoUnitario
         datetime validade "so em entrada de compra"
         string motivo "obrigatorio em PERDA e AJUSTE"
@@ -275,7 +275,11 @@ Cache exige um único escritor: o `estoqueService` é o **único** lugar autoriz
 
 Cada compra tem a sua validade, então o campo mora em `movimentacoes_estoque`, não em `insumos`. O mesmo creme de leite pode ter três lotes com três datas.
 
-**Limite conhecido:** o sistema não sabe quanto **resta** de cada lote, porque as saídas não apontam para qual entrada baixaram. A tela de validade mostra a quantidade que **entrou** e diz isso explicitamente. Rastrear saldo por lote exigiria amarrar cada saída a uma entrada — mudança que altera como a venda dá baixa.
+**Limite conhecido:** o sistema não sabe **exatamente** quanto resta de cada lote, porque as saídas não apontam para qual entrada baixaram. A validade que a tela mostra é **estimada** pela regra da confeitaria — o mais antigo sai primeiro: o que sobrou no estoque são as compras mais recentes, até somar o saldo, e a data mostrada é a mais próxima entre elas. O aviso de validade do menu usa a mesma conta, um por ingrediente. Rastrear saldo exato por lote exigiria amarrar cada saída a uma entrada — mudança que altera como a venda dá baixa.
+
+### 4.2.1 O ajuste guarda o sinal
+
+`quantidade` é positiva e o `tipo` diz a direção — com uma exceção: `AJUSTE` não tem direção fixa (a contagem pode achar mais ou menos), então ele grava a quantidade **com o sinal**. O comentário "sempre positiva" do `schema.prisma` descreve os outros tipos; o modelo não muda, só a leitura do campo no ajuste.
 
 ### 4.3 Venda se cancela, não se apaga
 

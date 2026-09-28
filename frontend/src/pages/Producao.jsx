@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Abas } from '../components/Abas.jsx';
 import { Tabela } from '../components/Tabela.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Linha, Selecao, Texto } from '../components/Campo.jsx';
 import {
   AjusteEstoque,
-  HistoricoMovimentos,
   SaldoComAlerta,
   avisarEstoqueMudou,
   lerNumero,
@@ -14,7 +12,7 @@ import {
 } from '../components/EstoqueComum.jsx';
 import { insumos, producoes, produtos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { dataHora, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
+import { moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
 
 /**
  * Produção: os DOCES. A pergunta desta tela é "o que eu tenho para
@@ -24,15 +22,13 @@ import { dataHora, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js'
  * O material (ingredientes e embalagens) fica no Estoque. Antes o doce
  * ficava espalhado: o saldo e o cadastro lá, o lote aqui.
  *
- * Três abas:
- *   Doces     o catálogo com o que tem pronto, e na própria linha o que se
- *             faz com cada doce: produzir, ajustar (perdeu, contagem) e
- *             editar — com a receita dentro;
- *   Lotes     o que foi produzido, para conferir ou desfazer um lançamento;
- *   Histórico tudo o que entrou e saiu de doce: lotes, vendas, perdas.
+ * Uma lista só: o catálogo com o que tem pronto, e na própria linha o que
+ * se faz com cada doce — produzir, ajustar (perdeu, contagem) e editar,
+ * com a receita dentro. O que JÁ aconteceu (os lotes feitos, as vendas,
+ * as perdas) mora no Kardex, junto com o material: é lá que se confere e
+ * se desfaz um lote.
  */
 export function Producao() {
-  const [aba, setAba] = useState('doces');
   const [catalogo, setCatalogo] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -41,9 +37,6 @@ export function Producao() {
   const [produzindo, setProduzindo] = useState(null);
   const [editando, setEditando] = useState(null);
   const [ajustando, setAjustando] = useState(null);
-  // Muda a cada lançamento: as abas Lotes e Histórico usam na `key` e
-  // buscam de novo, em vez de mostrarem a lista de antes do lançamento.
-  const [versao, setVersao] = useState(0);
 
   const carregar = useCallback(async () => {
     try {
@@ -64,26 +57,12 @@ export function Producao() {
   const concluir = (fechar, mensagem) => () => {
     fechar(null);
     setAviso(mensagem);
-    setVersao((v) => v + 1);
     carregar();
     avisarEstoqueMudou();
   };
 
   return (
     <section>
-      <Abas
-        ativa={aba}
-        aoTrocar={(id) => {
-          setAba(id);
-          setAviso('');
-        }}
-        abas={[
-          { id: 'doces', rotulo: 'Doces' },
-          { id: 'lotes', rotulo: 'Lotes' },
-          { id: 'historico', rotulo: 'Histórico' },
-        ]}
-      />
-
       {erro && <p className="alerta alerta--erro">{erro}</p>}
       {aviso && (
         <p className="alerta alerta--ok" role="status">
@@ -91,35 +70,13 @@ export function Producao() {
         </p>
       )}
 
-      {aba === 'doces' && (
-        <ListaDoces
-          catalogo={catalogo}
-          carregando={carregando}
-          aoProduzir={(doce) => setProduzindo({ produtoId: doce?.id })}
-          aoAjustar={setAjustando}
-          aoEditar={setEditando}
-        />
-      )}
-      {aba === 'lotes' && (
-        <ListaLotes
-          key={versao}
-          aoRegistrar={() => setProduzindo({})}
-          aoExcluir={() => {
-            setAviso('Lote excluído.');
-            setVersao((v) => v + 1);
-            carregar();
-            avisarEstoqueMudou();
-          }}
-        />
-      )}
-      {aba === 'historico' && (
-        <HistoricoMovimentos
-          key={versao}
-          de="doces"
-          rotuloItem="Doce"
-          vazio="Nenhuma entrada ou saída de doce ainda."
-        />
-      )}
+      <ListaDoces
+        catalogo={catalogo}
+        carregando={carregando}
+        aoProduzir={(doce) => setProduzindo({ produtoId: doce?.id })}
+        aoAjustar={setAjustando}
+        aoEditar={setEditando}
+      />
 
       {produzindo && (
         <FormularioLote
@@ -632,146 +589,6 @@ function FormularioLote({ catalogo, produtoInicial, aoFechar, aoSalvar }) {
           </button>
         </div>
       </form>
-    </Modal>
-  );
-}
-
-/** Lotes produzidos, para conferir o que entrou ou desfazer um lançamento. */
-function ListaLotes({ aoRegistrar, aoExcluir }) {
-  const [lista, setLista] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState('');
-  const [excluindo, setExcluindo] = useState(null);
-
-  useEffect(() => {
-    producoes
-      .listar({})
-      .then(setLista)
-      .catch((e) => setErro(mensagemDeErro(e)))
-      .finally(() => setCarregando(false));
-  }, []);
-
-  return (
-    <>
-      <div className="barra-acoes">
-        <span className="barra-acoes__resumo">{lista.length} lote(s)</span>
-        <button className="botao botao--primario botao--auto" onClick={aoRegistrar}>
-          Registrar lote
-        </button>
-      </div>
-
-      {erro && <p className="alerta alerta--erro">{erro}</p>}
-
-      <Tabela
-        carregando={carregando}
-        dados={lista}
-        vazio="Nenhum lote produzido ainda."
-        colunas={[
-          { chave: 'data', titulo: 'Quando', render: (p) => dataHora(p.data) },
-          { chave: 'produto', titulo: 'Doce', render: (p) => p.produto?.nome },
-          {
-            chave: 'quantidade',
-            titulo: 'Fez',
-            render: (p) => quantidade(p.quantidade, p.produto?.unidade),
-          },
-          {
-            chave: 'ingredientes',
-            titulo: 'Usou',
-            render: (p) =>
-              p.movimentacoes?.filter((m) => m.insumoId).length
-                ? p.movimentacoes
-                    .filter((m) => m.insumoId)
-                    .map((m) => `${quantidade(m.quantidade, m.insumo?.unidade)} ${m.insumo?.nome}`)
-                    .join(', ')
-                : '—',
-          },
-          {
-            chave: 'custoEstimado',
-            titulo: 'Custo',
-            alinhar: 'right',
-            render: (p) => (p.custoEstimado ? moeda(p.custoEstimado) : '—'),
-          },
-          {
-            chave: 'acoes',
-            titulo: '',
-            alinhar: 'right',
-            render: (p) => (
-              <button className="botao botao--texto botao--perigo" onClick={() => setExcluindo(p)}>
-                Excluir
-              </button>
-            ),
-          },
-        ]}
-      />
-
-      {excluindo && (
-        <ExcluirLote
-          lote={excluindo}
-          aoFechar={() => setExcluindo(null)}
-          aoExcluir={() => {
-            setExcluindo(null);
-            aoExcluir();
-          }}
-        />
-      )}
-    </>
-  );
-}
-
-/**
- * Confirmação dentro da janela, como no Caixa — e não o alerta do
- * navegador, uma caixa de sistema diferente em cada aparelho. Diz o que
- * acontece com o estoque, que é o que ela precisa pesar antes.
- */
-function ExcluirLote({ lote, aoFechar, aoExcluir }) {
-  const [erro, setErro] = useState('');
-  const [ocupado, setOcupado] = useState(false);
-  const usouIngrediente = lote.movimentacoes?.some((m) => m.insumoId);
-
-  async function excluir() {
-    setOcupado(true);
-    setErro('');
-    try {
-      await producoes.excluir(lote.id);
-      aoExcluir();
-    } catch (e) {
-      setErro(mensagemDeErro(e));
-      setOcupado(false);
-    }
-  }
-
-  return (
-    <Modal aberto aoFechar={aoFechar} titulo="Excluir este lote?" largura={440}>
-      <div className="lancamento__alvo">
-        <span className="lancamento__alvo-textos">
-          <span className="lancamento__alvo-titulo">
-            {quantidade(lote.quantidade, lote.produto?.unidade)} de {lote.produto?.nome}
-          </span>
-          <span className="lancamento__alvo-quando">{dataHora(lote.data)}</span>
-        </span>
-      </div>
-      <p className="lancamento__pergunta">
-        Os doces saem do estoque de prontos
-        {usouIngrediente ? ' e os ingredientes usados voltam para o Estoque.' : '.'}
-      </p>
-      {erro && (
-        <p className="alerta alerta--erro" role="alert">
-          {erro}
-        </p>
-      )}
-      <div className="modal__acoes">
-        <button type="button" className="botao botao--auto" onClick={aoFechar}>
-          Voltar
-        </button>
-        <button
-          type="button"
-          className="botao botao--auto botao--perigo"
-          disabled={ocupado}
-          onClick={excluir}
-        >
-          {ocupado ? 'Excluindo...' : 'Excluir'}
-        </button>
-      </div>
     </Modal>
   );
 }

@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Abas } from '../components/Abas.jsx';
 import { Tabela } from '../components/Tabela.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Linha, Selecao, Texto } from '../components/Campo.jsx';
 import {
   AjusteEstoque,
-  HistoricoMovimentos,
   SaldoComAlerta,
   avisarEstoqueMudou,
   lerNumero,
@@ -20,50 +18,26 @@ const UNIDADES = Object.entries(UNIDADE_CURTA).map(([valor, rotulo]) => ({
   rotulo: `${rotulo} (${valor.toLowerCase()})`,
 }));
 
+/** Dias até o vencimento que já pedem atenção — os mesmos 15 do menu. */
+const AVISO_VALIDADE = 15;
+
 /**
  * Estoque: o MATERIAL — ingredientes e embalagens. A pergunta desta tela
  * é "o que eu tenho para fazer os doces?".
  *
  * Os doces prontos moram na Produção, que responde "o que eu tenho para
- * vender?". Antes os dois dividiam esta tela, e o doce ficava espalhado:
- * o saldo aqui, o lote feito lá.
+ * vender?". O que já entrou e saiu, dos dois lados, mora no Kardex.
+ *
+ * Uma tabela só, com a VALIDADE como coluna. Antes ela tinha aba própria,
+ * que listava compra por compra — inclusive as que já tinham sido usadas.
+ * Aqui é uma data por ingrediente: a mais próxima do que está na
+ * prateleira, contando que o mais antigo sai primeiro.
+ *
+ * As duas coisas que acontecem com um ingrediente estão na própria linha:
+ * **Comprei** (o gesto de toda semana) e **Ajustar** (perdeu, ou a
+ * contagem não bate).
  */
 export function Estoque() {
-  const [aba, setAba] = useState('insumos');
-
-  return (
-    <section>
-      <Abas
-        ativa={aba}
-        aoTrocar={setAba}
-        abas={[
-          { id: 'insumos', rotulo: 'Ingredientes' },
-          { id: 'validade', rotulo: 'Validade' },
-          { id: 'historico', rotulo: 'Histórico' },
-        ]}
-      />
-
-      {aba === 'insumos' && <ListaInsumos />}
-      {aba === 'validade' && <Validades />}
-      {aba === 'historico' && (
-        <HistoricoMovimentos
-          de="insumos"
-          rotuloItem="Ingrediente"
-          vazio="Nenhuma entrada ou saída de material ainda."
-        />
-      )}
-    </section>
-  );
-}
-
-/**
- * A lista de ingredientes, com as duas coisas que acontecem com eles
- * direto na linha: **Comprei** (o gesto de toda semana) e **Ajustar**
- * (perdeu, ou a contagem não bate). Antes as duas passavam por um
- * "Movimentar" com um menu dentro — um toque e uma escolha a mais para
- * registrar a compra, que é quase sempre o que ela quer.
- */
-function ListaInsumos() {
   const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -88,6 +62,12 @@ function ListaInsumos() {
   }, [carregar]);
 
   const acabando = quantosAcabando(lista);
+  // Mesma régua do número no menu: vencido, ou vencendo em até 15 dias.
+  const vencidos = lista.filter((i) => i.validade?.vencido).length;
+  const vencendo = lista.filter(
+    (i) => i.validade && !i.validade.vencido && i.validade.dias <= AVISO_VALIDADE
+  ).length;
+
   const depoisDeSalvar = (fechar) => () => {
     fechar(null);
     carregar();
@@ -95,11 +75,18 @@ function ListaInsumos() {
   };
 
   return (
-    <>
+    <section>
       <div className="barra-acoes">
         <span className="barra-acoes__resumo">
           {lista.length} ingrediente(s)
           {acabando > 0 && <span className="fechamento__falta"> · {acabando} acabando</span>}
+          {vencidos > 0 && (
+            <span className="fechamento__falta">
+              {' '}
+              · {vencidos} {vencidos === 1 ? 'vencido' : 'vencidos'}
+            </span>
+          )}
+          {vencendo > 0 && <span className="fechamento__sobra"> · {vencendo} vencendo</span>}
         </span>
         <button className="botao botao--primario botao--auto" onClick={() => setEditando({})}>
           + Novo ingrediente
@@ -118,6 +105,11 @@ function ListaInsumos() {
             chave: 'quantidadeAtual',
             titulo: 'Em estoque',
             render: (i) => <SaldoComAlerta item={i} />,
+          },
+          {
+            chave: 'validade',
+            titulo: 'Validade',
+            render: (i) => <Validade insumo={i} />,
           },
           {
             chave: 'estoqueMinimo',
@@ -173,7 +165,51 @@ function ListaInsumos() {
           aoSalvar={depoisDeSalvar(setAjustando)}
         />
       )}
-    </>
+    </section>
+  );
+}
+
+/**
+ * A validade em palavras: "vencido há 3 dias" diz o que fazer; "-3" não.
+ *
+ * Vencido e vencendo têm cores diferentes porque a ação é oposta: um vai
+ * pro lixo, o outro se usa primeiro. Longe do vencimento, a data basta.
+ *
+ * Quando só PARTE do que tem vence naquela data, a segunda linha diz
+ * quanto — "vence em 5 dias" com 4 latas no estoque é outra urgência se
+ * for uma lata só.
+ */
+function Validade({ insumo }) {
+  const v = insumo.validade;
+  if (!v) return <span className="validade__nada">—</span>;
+
+  const d = Math.abs(v.dias);
+  let texto;
+  let classe;
+  if (v.vencido) {
+    texto = `vencido há ${d === 1 ? '1 dia' : `${d} dias`}`;
+    classe = 'fechamento__falta';
+  } else if (v.dias === 0) {
+    texto = 'vence hoje';
+    classe = 'fechamento__sobra';
+  } else if (v.dias === 1) {
+    texto = 'vence amanhã';
+    classe = 'fechamento__sobra';
+  } else if (v.dias <= 30) {
+    texto = `vence em ${v.dias} dias`;
+    classe = v.dias <= AVISO_VALIDADE ? 'fechamento__sobra' : undefined;
+  } else {
+    texto = `vence ${formatarData(v.validade)}`;
+  }
+
+  const parte = Number(v.quantidade) < Number(insumo.quantidadeAtual);
+  return (
+    <span className="validade">
+      <span className={classe}>{texto}</span>
+      {parte && (
+        <span className="validade__parte">só {quantidade(v.quantidade, insumo.unidade)}</span>
+      )}
+    </span>
   );
 }
 
@@ -358,120 +394,4 @@ function FormularioCompra({ insumo, aoFechar, aoSalvar }) {
       </form>
     </Modal>
   );
-}
-
-/**
- * Lotes com validade.
- *
- * A unidade é o LOTE e não o ingrediente: a validade está na entrada de
- * compra, então o mesmo creme de leite pode ter três caixas com três
- * datas. Agrupar por ingrediente esconderia justamente o que ela precisa
- * saber — qual usar primeiro.
- *
- * Vencido e vencendo ficam visualmente separados porque a ação é oposta:
- * um se joga fora, o outro se usa antes. O filtro abre em "30 dias", que
- * é a pergunta do dia a dia; "vencidos" é conferência de descarte.
- */
-const SITUACOES = [
-  { id: '30', rotulo: 'Vence em 30 dias' },
-  { id: '7', rotulo: 'Vence em 7 dias' },
-  { id: 'vencidos', rotulo: 'Vencidos' },
-  { id: 'todos', rotulo: 'Todos' },
-];
-
-function Validades() {
-  const [situacao, setSituacao] = useState('30');
-  const [lista, setLista] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState('');
-
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      setLista(await estoque.validades(situacao === 'todos' ? {} : { situacao }));
-      setErro('');
-    } catch (e) {
-      setErro(mensagemDeErro(e));
-    } finally {
-      setCarregando(false);
-    }
-  }, [situacao]);
-
-  useEffect(() => {
-    carregar();
-  }, [carregar]);
-
-  const vencidos = lista.filter((l) => l.vencido).length;
-
-  return (
-    <>
-      {/* Filtro, não navegação: um grupo de botões com o ligado anunciado,
-          como os controles do Caixa. Quebra em 2x2 abaixo de 400px — numa
-          fileira, "Vence em 30 dias" empurrava "Todos" para fora da tela. */}
-      <div className="seletor-periodo seletor-periodo--quebra" role="group" aria-label="Situação">
-        {SITUACOES.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            aria-pressed={situacao === s.id}
-            className={
-              situacao === s.id
-                ? 'seletor-periodo__item seletor-periodo__item--ativo'
-                : 'seletor-periodo__item'
-            }
-            onClick={() => setSituacao(s.id)}
-          >
-            {s.rotulo}
-          </button>
-        ))}
-      </div>
-
-      {erro && <p className="alerta alerta--erro">{erro}</p>}
-
-      <div className="barra-acoes">
-        <span className="barra-acoes__resumo">
-          {lista.length} lote(s)
-          {vencidos > 0 && <span className="fechamento__falta"> · {vencidos} vencido(s)</span>}
-        </span>
-      </div>
-
-      {/* O sistema não sabe quanto RESTA de cada lote: as saídas não
-          apontam para qual entrada baixaram. Dizer isso é melhor que
-          deixar ela achar que a coluna é saldo atual. */}
-      <p className="cartao__aviso">
-        A quantidade é a que entrou na compra. O sistema ainda não acompanha quanto sobrou de cada
-        lote separadamente.
-      </p>
-
-      <Tabela
-        carregando={carregando}
-        dados={lista}
-        vazio="Nenhum lote com validade neste filtro."
-        colunas={[
-          { chave: 'insumo', titulo: 'Ingrediente', render: (l) => l.insumo?.nome ?? '—' },
-          {
-            chave: 'quantidadeEntrada',
-            titulo: 'Entrou',
-            render: (l) => quantidade(l.quantidadeEntrada, l.insumo?.unidade),
-          },
-          { chave: 'data', titulo: 'Comprado em', render: (l) => formatarData(l.data) },
-          { chave: 'validade', titulo: 'Vence em', render: (l) => formatarData(l.validade) },
-          { chave: 'dias', titulo: 'Situação', render: (l) => <Prazo lote={l} /> },
-        ]}
-      />
-    </>
-  );
-}
-
-/** O prazo em palavras: "vencido há 3 dias" diz o que fazer; "-3" não. */
-function Prazo({ lote }) {
-  if (lote.vencido) {
-    const d = Math.abs(lote.dias);
-    return <span className="fechamento__falta">vencido há {d === 1 ? '1 dia' : `${d} dias`}</span>;
-  }
-  if (lote.dias === 0) {
-    return <span className="fechamento__sobra">vence hoje</span>;
-  }
-  const classe = lote.dias <= 7 ? 'fechamento__sobra' : undefined;
-  return <span className={classe}>em {lote.dias === 1 ? '1 dia' : `${lote.dias} dias`}</span>;
 }

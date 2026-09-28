@@ -9,6 +9,7 @@ import {
   IconeCaixa,
   IconeProducao,
   IconeEstoque,
+  IconeKardex,
   IconeFechamento,
   IconeResumo,
   IconeSair,
@@ -35,9 +36,9 @@ import {
  * mão só no balcão e não registrar.
  *
  * Fechamento e Resumo aparecem só no computador. No celular a barra tem
- * quatro itens: com seis, cada alvo cairia para 65px de largura com
- * rótulo de duas linhas. Eles continuam a um toque, como botões na tela
- * inicial — que é onde ela cai ao abrir o sistema.
+ * cinco itens — o máximo que cabe no iPhone SE com rótulo de uma linha;
+ * com sete, cada alvo cairia para 45px. Os dois continuam a um toque,
+ * como botões na tela inicial — que é onde ela cai ao abrir o sistema.
  *
  * O título da seção existe como `h1` invisível. Na tela ele é redundante
  * (o item aceso do menu já diz onde ela está) e ocupava uma faixa inteira
@@ -51,9 +52,9 @@ import {
  * ela abre quando senta para fechar a conta, e sem essa divisão os seis
  * itens viram uma lista sem ordem aparente.
  *
- * `soDesktop` não aparece na barra do celular. Com seis itens ali cada
- * alvo cairia para 65px de largura com rótulo de duas linhas; os dois
- * continuam a um toque, como botões na tela inicial.
+ * `soDesktop` não aparece na barra do celular: ali cabem cinco itens com
+ * rótulo de uma linha, e os dois continuam a um toque, como botões na
+ * tela inicial.
  */
 const GRUPOS = [
   {
@@ -75,6 +76,7 @@ const GRUPOS = [
         Icone: IconeEstoque,
         contador: 'material',
       },
+      { para: '/kardex', rotulo: 'Kardex', titulo: 'Kardex', Icone: IconeKardex },
     ],
   },
   {
@@ -127,7 +129,11 @@ export function Layout() {
           if (!vivo) return;
           setAlertas({
             doces: a.produtosBaixos?.length ?? 0,
-            material: (a.insumosBaixos?.length ?? 0) + (a.validadeProxima?.length ?? 0),
+            // Ingredientes DIFERENTES: o creme de leite que está acabando
+            // e vencendo é um item pedindo atenção, não dois.
+            material: new Set(
+              [...(a.insumosBaixos ?? []), ...(a.validadeProxima ?? [])].map((i) => i.id)
+            ).size,
           });
         })
         // Um contador que não carregou não é motivo para quebrar a casca do

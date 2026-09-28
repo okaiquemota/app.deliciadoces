@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { prisma } from '../src/lib/prisma.js';
 import { estoqueService } from '../src/services/estoqueService.js';
 import { movimentacaoService } from '../src/services/cadastroService.js';
+import { producaoService } from '../src/services/producaoService.js';
 import { limparTudo, criarInsumo, criarProduto, saldoInsumo, razaoDe } from './apoio.js';
 
 /**
@@ -88,6 +89,31 @@ describe('direção das movimentações', () => {
       })
     );
     expect(await saldoInsumo(insumo.id)).toBe(13);
+  });
+
+  it('ajuste para baixo fica gravado COM o sinal: o histórico diz o que aconteceu', async () => {
+    // Gravado sem sinal, "a contagem achou 2 a menos" virava +2 no
+    // histórico — e recalcular o saldo pelo histórico dava 12 em vez de 8.
+    const insumo = await criarInsumo();
+    await prisma.$transaction(async (tx) => {
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: insumo.id,
+        quantidade: 10,
+      });
+      await estoqueService.movimentar(tx, {
+        tipo: 'AJUSTE',
+        insumoId: insumo.id,
+        quantidade: -2,
+        motivo: 'contagem',
+      });
+    });
+
+    const [ajuste] = await prisma.movimentacaoEstoque.findMany({ where: { tipo: 'AJUSTE' } });
+    expect(Number(ajuste.quantidade)).toBe(-2);
+    expect(await razaoDe({ insumoId: insumo.id })).toBe(8);
+    await estoqueService.recalcularSaldo({ insumoId: insumo.id });
+    expect(await saldoInsumo(insumo.id)).toBe(8);
   });
 });
 
@@ -243,39 +269,97 @@ describe('alertas de estoque', () => {
  * separadas. Filtradas só na tela, as vendas — uma saída de doce cada —
  * tomariam o limite da listagem e esconderiam as compras de ingrediente.
  */
-describe('histórico separado entre material e doces', () => {
-  async function umDeCada() {
+/**
+ * O Kardex: a lista de tudo o que entrou e saiu, e — pedido um item — o
+ * saldo logo depois de cada linha.
+ */
+describe('Kardex', () => {
+  const DIA = 24 * 60 * 60 * 1000;
+  const mover = (dados) => prisma.$transaction((tx) => estoqueService.movimentar(tx, dados));
+
+  it('pedido um item, cada linha diz quanto ficou depois dela', async () => {
+    const insumo = await criarInsumo();
+    await mover({ tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 10 });
+    await mover({ tipo: 'PERDA', insumoId: insumo.id, quantidade: 3, motivo: 'caiu' });
+    await mover({ tipo: 'AJUSTE', insumoId: insumo.id, quantidade: 1, motivo: 'contagem' });
+    await mover({ tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 5 });
+
+    const lista = await estoqueService.listarMovimentacoes({ insumoId: insumo.id });
+    // Da mais nova para a mais velha: 13 hoje, 8 antes da última compra...
+    expect(lista.map((m) => m.saldoDepois)).toEqual([13, 8, 7, 10]);
+  });
+
+  it('o saldo conta o que ficou fora do período pedido', async () => {
+    // Senão a linha da semana passada mostraria o saldo de hoje.
+    const insumo = await criarInsumo();
+    const semanaPassada = new Date(Date.now() - 7 * DIA);
+    await mover({
+      tipo: 'ENTRADA_COMPRA',
+      insumoId: insumo.id,
+      quantidade: 10,
+      data: semanaPassada,
+    });
+    await mover({ tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 5 });
+
+    const lista = await estoqueService.listarMovimentacoes({
+      insumoId: insumo.id,
+      fim: new Date(Date.now() - 2 * DIA),
+    });
+    expect(lista.map((m) => m.saldoDepois)).toEqual([10]);
+  });
+
+  it('segue a ordem da DATA do lançamento, não a de quando foi digitado', async () => {
+    // Lote registrado hoje com a data de ontem entra antes da venda de hoje.
+    const produto = await criarProduto();
+    await mover({ tipo: 'ENTRADA_PRODUCAO', produtoId: produto.id, quantidade: 20 });
+    await mover({ tipo: 'SAIDA_VENDA', produtoId: produto.id, quantidade: 2 });
+    await mover({
+      tipo: 'ENTRADA_PRODUCAO',
+      produtoId: produto.id,
+      quantidade: 30,
+      data: new Date(Date.now() - DIA),
+    });
+
+    const lista = await estoqueService.listarMovimentacoes({ produtoId: produto.id });
+    expect(lista.map((m) => [Number(m.quantidade), m.saldoDepois])).toEqual([
+      [2, 48],
+      [20, 50],
+      [30, 30],
+    ]);
+  });
+
+  it('sem item pedido, traz os dois lados e nenhum saldo', async () => {
+    // Um saldo de "tudo" misturaria latas com brigadeiros.
     const insumo = await criarInsumo();
     const produto = await criarProduto();
-    await prisma.$transaction(async (tx) => {
-      await estoqueService.movimentar(tx, {
-        tipo: 'ENTRADA_COMPRA',
-        insumoId: insumo.id,
-        quantidade: 5,
-      });
-      await estoqueService.movimentar(tx, {
-        tipo: 'ENTRADA_PRODUCAO',
-        produtoId: produto.id,
-        quantidade: 20,
-      });
-    });
-    return { insumo, produto };
-  }
+    await mover({ tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 5 });
+    await mover({ tipo: 'ENTRADA_PRODUCAO', produtoId: produto.id, quantidade: 20 });
 
-  it('"insumos" traz só o material', async () => {
-    const { insumo } = await umDeCada();
-    const lista = await estoqueService.listarMovimentacoes({ de: 'insumos' });
-    expect(lista.map((m) => m.insumoId)).toEqual([insumo.id]);
+    const lista = await estoqueService.listarMovimentacoes({});
+    expect(lista).toHaveLength(2);
+    expect(lista.every((m) => m.saldoDepois === undefined)).toBe(true);
   });
 
-  it('"doces" traz só os doces', async () => {
-    const { produto } = await umDeCada();
-    const lista = await estoqueService.listarMovimentacoes({ de: 'doces' });
-    expect(lista.map((m) => m.produtoId)).toEqual([produto.id]);
+  it('o lote vem junto, para a tela juntar o doce e os ingredientes', async () => {
+    const insumo = await criarInsumo();
+    const produto = await criarProduto();
+    await mover({ tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 10 });
+    const lote = await producaoService.registrar(
+      { produtoId: produto.id, quantidade: 30, insumos: [{ insumoId: insumo.id, quantidade: 2 }] },
+      null
+    );
+
+    const doLote = (await estoqueService.listarMovimentacoes({})).filter((m) => m.producaoId);
+    expect(doLote).toHaveLength(2);
+    expect(doLote.every((m) => m.producao.id === lote.id)).toBe(true);
+    expect(Number(doLote[0].producao.quantidade)).toBe(30);
   });
 
-  it('sem filtro, traz os dois', async () => {
-    await umDeCada();
-    expect(await estoqueService.listarMovimentacoes({})).toHaveLength(2);
+  it('respeita o limite pedido', async () => {
+    const insumo = await criarInsumo();
+    for (let n = 0; n < 3; n++) {
+      await mover({ tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 1 });
+    }
+    expect(await estoqueService.listarMovimentacoes({ limite: 2 })).toHaveLength(2);
   });
 });
