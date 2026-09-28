@@ -12,9 +12,11 @@
       cartõezinhos empilhados. Aqui só o modal tem sombra, porque ele
       realmente flutua sobre o resto.
 
-   2. COR SÓ COM SIGNIFICADO. Nada é colorido por enfeite. Se está
-      vermelho, é problema; verde, é dinheiro entrando; âmbar, é prazo.
-      O resto vive na escala de cinza.
+   2. COR SÓ COM SIGNIFICADO. Se está vermelho, é problema; verde, é
+      dinheiro entrando; âmbar, é prazo. A paleta da marca (creme e rosa,
+      ver `--marca-*`) entra em doses contadas e também quer dizer uma
+      coisa: "você está aqui" ou "isto é da casa". O resto vive na escala
+      de cinza.
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
@@ -69,6 +71,37 @@
   --acao: var(--c-900);
   --acao-hover: #000000;
 
+  /* ----- Marca: a paleta da Delícia Doces --------------------------
+     Creme, rosa-claro, rosa e preto. Entram DEVAGAR, de propósito — por
+     enquanto só onde dizem "você está aqui" (o item do menu), "isto é da
+     casa" (o cartão de Venda, o login, a seleção de texto) e nos blocos
+     de resumo, em degradê bem diluído. Verde, vermelho e âmbar continuam
+     com o significado de sempre, e os botões principais seguem pretos.
+
+     É AQUI que se regula a intensidade: nenhum outro lugar da folha
+     escreve estas cores. Os degradês já vêm diluídos no branco, na
+     proporção anotada ao lado — para mais cor, aumente a proporção. */
+  --marca-rosa: #ff0164; /* ícone, traço, borda: 3,9:1 no branco. NUNCA texto pequeno */
+  --marca-rosa-texto: #d40055; /* o rosa quando for texto: 5,3:1 no branco */
+  --marca-rosa-claro: #ffc1ea;
+  --marca-creme: #fef4d1;
+  --marca-preto: #010200;
+
+  /* Blocos de resumo, login, cartão de Venda: creme 45% → rosa-claro
+     22%. O cinza secundário fica com 4,6:1 ou mais em qualquer ponto —
+     mais do que tinha no cinza de antes. */
+  --degrade-suave: linear-gradient(135deg, #fffaea 0%, #fff1fa 100%);
+  /* O mesmo, um tom acima, para o passar do mouse (creme 65% → rosa 28%). */
+  --degrade-suave-forte: linear-gradient(135deg, #fef8e1 0%, #ffedf9 100%);
+  /* A pastilha do item ativo no menu (rosa 38% → creme 60%): o ícone rosa
+     por cima tem 3,3:1. */
+  --degrade-ativo: linear-gradient(90deg, #ffe7f7 0%, #fef8e3 100%);
+  /* O selo do cartão de Venda (creme 70% → rosa 45%). */
+  --degrade-selo: linear-gradient(135deg, #fef7df 0%, #ffe3f6 100%);
+  /* Traço fino (o marcador da barra do celular): as duas pontas com 3:1
+     ou mais no branco. */
+  --degrade-traco: linear-gradient(90deg, var(--marca-rosa) 0%, #ff4d94 100%);
+
   --erro: #b3261e;
   --erro-fundo: #fdecec;
   --erro-borda: #f5cfcc;
@@ -119,6 +152,13 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Texto selecionado no rosa-claro da marca, com a letra no preto de
+   sempre. */
+::selection {
+  background-color: var(--marca-rosa-claro);
+  color: var(--texto);
 }
 
 html,
@@ -334,7 +374,8 @@ body {
 }
 
 /* O marcador, com a posição e o tamanho medidos no item ativo (ver
-   Layout.jsx). No computador é a pastilha cinza atrás do item. */
+   Layout.jsx). No computador é a pastilha atrás do item — no degradê
+   rosa → creme da marca. */
 .nav__marca {
   position: absolute;
   top: 0;
@@ -343,7 +384,7 @@ body {
   width: var(--marca-w);
   height: var(--marca-h);
   border-radius: var(--r-1);
-  background-color: var(--c-100);
+  background: var(--degrade-ativo);
   transform: translate(var(--marca-x), var(--marca-y));
   pointer-events: none;
 }
@@ -363,7 +404,7 @@ body {
 }
 
 .nav__item--ativo .icone {
-  color: var(--texto);
+  color: var(--marca-rosa);
 }
 
 .nav__rotulo {
@@ -1177,6 +1218,11 @@ input[type='date']::-webkit-date-and-time-value {
   font-weight: 600;
 }
 
+/* O visto da opção escolhida, no rosa da marca (é ícone: 3,9:1). */
+.opcao .icone {
+  color: var(--marca-rosa);
+}
+
 /* A escolha do item do Kardex: a busca no alto e a lista em dois grupos,
    Doces e Ingredientes, com o cabeçalho pequeno de seção dos Ajustes do
    iPhone. Cada opção diz quanto tem — é o que ela confere ao escolher. */
@@ -1252,7 +1298,7 @@ input[type='date']::-webkit-date-and-time-value {
   gap: 12px;
   padding: 14px 18px;
   border-radius: var(--r-2);
-  background-color: var(--c-50);
+  background: var(--degrade-suave);
 }
 
 .extrato__total {
@@ -2067,6 +2113,10 @@ input[type='date']::-webkit-date-and-time-value {
   .cartao-acao:hover {
     background-color: var(--c-100);
   }
+
+  .cartao-acao--grande:hover {
+    background: var(--degrade-suave-forte);
+  }
 }
 
 .cartao-acao__selo {
@@ -2094,10 +2144,18 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 /* Venda ocupa a linha: é o que ela repete dez vezes por dia, e o tamanho
-   é a hierarquia inteira — nenhum botão é preenchido de cor. */
+   é a hierarquia inteira — nenhum botão é preenchido de cor. O único
+   com a cor da casa, num degradê que só se nota perto dos cinzas. */
 .cartao-acao--grande {
   grid-column: span 6;
   --altura: 120px;
+  background: var(--degrade-suave);
+}
+
+.cartao-acao--grande .cartao-acao__selo {
+  border-color: var(--marca-rosa-claro);
+  background: var(--degrade-selo);
+  color: var(--marca-rosa);
 }
 
 .cartao-acao--grande .cartao-acao__valor {
@@ -2819,7 +2877,7 @@ input[type='date']::-webkit-date-and-time-value {
 .fechar__conta {
   padding: 18px 20px 8px;
   border-radius: var(--r-2);
-  background-color: var(--c-50);
+  background: var(--degrade-suave);
 }
 
 .fechar__rotulo {
@@ -3326,7 +3384,7 @@ input[type='date']::-webkit-date-and-time-value {
   min-height: 100vh;
   min-height: 100dvh;
   padding: 24px;
-  background-color: var(--fundo);
+  background: var(--degrade-suave);
 }
 
 .login__caixa {
@@ -3662,13 +3720,18 @@ input[type='date']::-webkit-date-and-time-value {
     font-weight: 700;
   }
 
+  /* O ícone ativo em rosa; o rótulo continua no preto do texto. */
+  .nav__item--ativo .icone {
+    color: var(--marca-rosa);
+  }
+
   /* No celular o marcador é o traço colado na borda de cima da barra,
      centrado no item ativo — e desliza de um item para o outro. */
   .nav__marca {
     width: 36px;
     height: 4px;
     border-radius: 0 0 4px 4px;
-    background-color: var(--acao);
+    background: var(--degrade-traco);
     transform: translateX(calc(var(--marca-x) + var(--marca-w) / 2 - 18px));
   }
 
