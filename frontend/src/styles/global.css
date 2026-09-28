@@ -72,14 +72,16 @@
   --acao-hover: #000000;
 
   /* ----- Marca: a paleta da Delícia Doces --------------------------
-     Creme, rosa-claro, rosa e preto. Entram DEVAGAR, de propósito — por
-     enquanto só onde dizem "você está aqui" (o item do menu), "isto é da
-     casa" (o cartão de Venda, o login, a seleção de texto) e nos blocos
-     de resumo, em degradê bem diluído. Verde, vermelho e âmbar continuam
-     com o significado de sempre, e os botões principais seguem pretos.
+     Creme, rosa-claro, rosa e preto, cada um com um papel:
+       - rosa é AÇÃO e LUGAR: o botão principal, o "+ Novo", o "+" das
+         linhas, o item ativo do menu, o anel do teclado, os links;
+       - preto é ESCOLHA: chips, filtros, a forma de pagamento ligada;
+       - creme → rosa-claro, bem diluído, é a SUPERFÍCIE da casa: os
+         blocos de resumo e o cartão de Venda.
+     Verde, vermelho e âmbar continuam com o significado de sempre.
 
      É AQUI que se regula a intensidade: nenhum outro lugar da folha
-     escreve estas cores. Os degradês já vêm diluídos no branco, na
+     escreve estas cores. Os degradês claros já vêm diluídos no branco, na
      proporção anotada ao lado — para mais cor, aumente a proporção. */
   --marca-rosa: #ff0164; /* ícone, traço, borda: 3,9:1 no branco. NUNCA texto pequeno */
   --marca-rosa-texto: #d40055; /* o rosa quando for texto: 5,3:1 no branco */
@@ -101,6 +103,13 @@
   /* Traço fino (o marcador da barra do celular): as duas pontas com 3:1
      ou mais no branco. */
   --degrade-traco: linear-gradient(90deg, var(--marca-rosa) 0%, #ff4d94 100%);
+  /* A AÇÃO principal (Entrar, Confirmar venda, Salvar...): rosa escuro o
+     bastante para a letra branca — 5,9:1 numa ponta, 4,9:1 na outra. O
+     "forte" é o passar do mouse. Escolher (chips, filtros) continua preto:
+     rosa é fazer, preto é escolher. */
+  --degrade-acao: linear-gradient(135deg, #c8004f 0%, #e0005a 100%);
+  --degrade-acao-forte: linear-gradient(135deg, #b8004a 0%, #d40055 100%);
+  --sombra-acao: 0 6px 16px -8px rgb(212 0 85 / 0.55);
 
   --erro: #b3261e;
   --erro-fundo: #fdecec;
@@ -195,7 +204,8 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid rgb(0 0 0 / 0.45);
+  /* O anel de quem usa teclado, no rosa da marca: 3,9:1 no branco. */
+  outline: 2.5px solid var(--marca-rosa);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -703,15 +713,20 @@ body {
 
 .botao--primario {
   width: 100%;
-  border-color: var(--acao);
-  background-color: var(--acao);
+  border-color: transparent;
+  background: var(--degrade-acao);
+  box-shadow: var(--sombra-acao);
   color: var(--c-0);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .botao--primario:hover:not(:disabled) {
-  background-color: var(--acao-hover);
-  border-color: var(--acao-hover);
+  border-color: transparent;
+  background: var(--degrade-acao-forte);
+}
+
+.botao--primario:disabled {
+  box-shadow: none;
 }
 
 .botao--auto {
@@ -1050,6 +1065,22 @@ input[type='date']::-webkit-date-and-time-value {
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.15;
+}
+
+/* O nome dela na saudação do Início, num degradê de rosa. Título grande:
+   o mínimo é 3:1, e as duas pontas passam (5,3 e 3,9). */
+.cabeca__nome {
+  background: linear-gradient(90deg, var(--marca-rosa-texto), var(--marca-rosa));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (forced-colors: active) {
+  .cabeca__nome {
+    background: none;
+    color: CanvasText;
+  }
 }
 
 .cabeca__sub {
@@ -1519,7 +1550,8 @@ input[type='date']::-webkit-date-and-time-value {
   padding: 0 16px 0 12px;
   border: none;
   border-radius: 999px;
-  background-color: var(--acao);
+  background: var(--degrade-acao);
+  box-shadow: var(--sombra-acao);
   color: var(--c-0);
   font-family: inherit;
   font-size: 0.9375rem;
@@ -1536,7 +1568,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 @media (hover: hover) {
   .cabeca__novo:hover {
-    background-color: var(--acao-hover);
+    background: var(--degrade-acao-forte);
   }
 }
 
@@ -1583,9 +1615,14 @@ input[type='date']::-webkit-date-and-time-value {
   inset: -4px;
 }
 
+/* O "+" no rosa da marca: é o gesto de pôr mais no estoque. */
+.item-linha__acao .icone {
+  color: var(--marca-rosa);
+}
+
 @media (hover: hover) {
   .item-linha__acao:hover {
-    border-color: var(--c-400);
+    border-color: var(--marca-rosa);
   }
 }
 
@@ -1633,7 +1670,7 @@ input[type='date']::-webkit-date-and-time-value {
   gap: 4px;
   min-height: 44px;
   margin-top: 6px;
-  color: var(--texto);
+  color: var(--marca-rosa-texto);
   font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
@@ -1737,7 +1774,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .interruptor input:checked {
-  background-color: var(--acao);
+  background-color: var(--marca-rosa);
   box-shadow: none;
 }
 
@@ -2282,14 +2319,13 @@ input[type='date']::-webkit-date-and-time-value {
 
 .recentes__ver {
   position: relative;
-  color: var(--texto-suave);
+  color: var(--marca-rosa-texto);
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
 }
 
 .recentes__ver:hover {
-  color: var(--texto);
   text-decoration: underline;
 }
 
@@ -3377,37 +3413,201 @@ input[type='date']::-webkit-date-and-time-value {
    LOGIN E ESTADOS DE PÁGINA INTEIRA
    ===================================================================== */
 
+/* Login: a FOTO de um lado, o formulário do outro. No celular a foto vira
+   o topo, e o formulário sobe por cima dela como uma folha, com a medalha
+   no meio da borda.
+
+   A FOTO: salve o arquivo em `frontend/public/` (por exemplo
+   `login.jpg`, uns 1600px de largura e menos de 400 KB) e troque o
+   `none` de `--login-foto` por `url('/login.jpg')`. Sem foto, o painel
+   fica no creme da marca. */
 .login {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  --login-foto: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 24px;
-  background: var(--degrade-suave);
-}
-
-.login__caixa {
-  width: 100%;
-  max-width: 352px;
-  padding: 28px;
-  border: 1px solid var(--borda);
-  border-radius: var(--r-3);
   background-color: var(--superficie);
 }
 
-.login__marca {
-  margin: 0;
-  font-size: 1.25rem;
-  text-align: center;
-  letter-spacing: var(--tr-titulo);
+.login__foto {
+  background-color: var(--marca-creme);
+  background-image: var(--login-foto);
+  background-position: center;
+  background-size: cover;
 }
 
-.login__subtitulo {
-  margin: 6px 0 22px;
-  color: var(--texto-suave);
-  font-size: 0.875rem;
+.login__lado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 48px 32px 24px;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 360px;
+}
+
+.login__form > .campo {
+  margin-bottom: 14px;
+}
+
+/* A medalha num círculo branco, com a sombra rosa da marca. */
+.login__medalha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background-color: var(--c-0);
+  box-shadow:
+    0 0 0 6px rgb(255 193 234 / 0.35),
+    0 14px 30px -14px rgb(212 0 85 / 0.5);
+}
+
+.login__medalha img {
+  width: 76px;
+  height: auto;
+}
+
+.login__nome {
+  margin: 0 0 2px;
+  color: var(--marca-rosa-texto);
+  font-size: 0.9375rem;
+  font-weight: 700;
   text-align: center;
+}
+
+.login__titulo {
+  margin: 0;
+  color: var(--texto);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.login__sub {
+  margin: 6px 0 24px;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+/* O "Mostrar" mora dentro do campo da senha, à direita. */
+.login__senha {
+  position: relative;
+  display: block;
+}
+
+.login__senha .campo__entrada {
+  padding-right: 92px;
+}
+
+.login__ver-senha {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  min-width: 84px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: none;
+  color: var(--marca-rosa-texto);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* "Esqueci minha senha", colado embaixo da senha, à direita. */
+.login__form > .login__campo-senha {
+  margin-bottom: 2px;
+}
+
+.login__esqueci-linha {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.login__esqueci {
+  min-height: 44px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--marca-rosa-texto);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Só onde existe mouse: no toque, o sublinhado ficava preso. */
+@media (hover: hover) {
+  .login__ver-senha:hover,
+  .login__esqueci:hover {
+    text-decoration: underline;
+  }
+}
+
+.login__entrar {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.login__ajuda {
+  margin: 0 0 10px;
+  color: var(--c-700);
+  font-size: 0.9375rem;
+}
+
+.login__rodape {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .login {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .login__foto {
+    height: min(34vh, 260px);
+  }
+
+  /* A folha: sobe 28px por cima da foto, com os cantos de cima
+     arredondados, como as janelas do celular. */
+  .login__lado {
+    position: relative;
+    z-index: 1;
+    justify-content: flex-start;
+    margin-top: -28px;
+    padding: 0 20px 20px;
+    border-radius: 24px 24px 0 0;
+    background-color: var(--superficie);
+  }
+
+  /* A medalha no meio da borda da folha, metade sobre a foto. */
+  .login__medalha {
+    margin-top: -48px;
+  }
+
+  .login__rodape {
+    margin-top: auto;
+  }
 }
 
 .carregando,
