@@ -3417,12 +3417,12 @@ input[type='date']::-webkit-date-and-time-value {
    o topo, e o formulário sobe por cima dela como uma folha, com a medalha
    no meio da borda.
 
-   A FOTO: salve o arquivo em `frontend/public/` (por exemplo
-   `login.jpg`, uns 1600px de largura e menos de 400 KB) e troque o
-   `none` de `--login-foto` por `url('/login.jpg')`. Sem foto, o painel
-   fica no creme da marca. */
+   A FOTO é `frontend/public/login.jpg`: 1000px de largura e ~350 KB,
+   sem metadados (foto de celular pode levar a localização junto, e o
+   repositório é público). Para trocar, substitua o arquivo com o mesmo
+   nome; com `none` em `--login-foto`, o painel fica no creme da marca. */
 .login {
-  --login-foto: none;
+  --login-foto: url('/login.jpg');
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   min-height: 100vh;
@@ -3433,7 +3433,9 @@ input[type='date']::-webkit-date-and-time-value {
 .login__foto {
   background-color: var(--marca-creme);
   background-image: var(--login-foto);
-  background-position: center;
+  /* 25% e não o meio: no celular a faixa é baixa, e no meio da foto só
+     cabe brigadeiro — um pouco acima entram os três doces. */
+  background-position: center 25%;
   background-size: cover;
 }
 
