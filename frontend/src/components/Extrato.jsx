@@ -38,11 +38,15 @@ function daChave(chave) {
   return new Date(a, m - 1, d);
 }
 
-function diasAtras(n) {
+/** O dia de `n` dias atrás, como texto: "2026-09-24". */
+export function diasAtras(n) {
   const d = new Date();
   d.setDate(d.getDate() - n);
   return paraInput(d);
 }
+
+/** "Quinta-feira, 25 de setembro", de um dia em texto. */
+export const diaPorExtenso = (chave) => maiuscula(DIA_LONGO.format(daChave(chave)));
 
 /** "Hoje", "Ontem", ou "24 de setembro" (+ ano, se outro). */
 export function rotuloDoDia(chave) {
@@ -85,7 +89,7 @@ export function porDia(lista) {
  * Um número do bloco de resumo cinza, com o rótulo pequeno em cima.
  * `tom`: 'entrada' (verde, o que entra) ou 'alerta' (vermelho, problema).
  */
-export function Total({ rotulo, valor, tom }) {
+export function Total({ rotulo, valor, tom, nota }) {
   return (
     <div className="extrato__total">
       <span className="extrato__total-rotulo">{rotulo}</span>
@@ -96,6 +100,7 @@ export function Total({ rotulo, valor, tom }) {
       >
         {valor}
       </span>
+      {nota && <span className="extrato__total-nota">{nota}</span>}
     </div>
   );
 }
