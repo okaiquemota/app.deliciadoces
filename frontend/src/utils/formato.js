@@ -41,15 +41,6 @@ export const ROTULO_PAGAMENTO = {
   CARTAO_CREDITO: 'Cartão de crédito',
 };
 
-export const ROTULO_MOVIMENTACAO = {
-  ENTRADA_COMPRA: 'Compra',
-  ENTRADA_PRODUCAO: 'Produção',
-  SAIDA_PRODUCAO: 'Usado na produção',
-  SAIDA_VENDA: 'Venda',
-  PERDA: 'Perda',
-  AJUSTE: 'Ajuste',
-};
-
 /**
  * "25/09". Aceita um instante ou um DIA ("2026-09-25").
  *
@@ -62,14 +53,6 @@ export const data = (valor) => {
   const d = dia ? new Date(Number(dia[1]), Number(dia[2]) - 1, Number(dia[3])) : new Date(valor);
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 };
-
-export const dataHora = (valor) =>
-  new Date(valor).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 
 /**
  * Data no formato que o <input type="date"> espera.

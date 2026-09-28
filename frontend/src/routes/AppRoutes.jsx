@@ -8,6 +8,7 @@ import { Estoque } from '../pages/Estoque.jsx';
 import { Caixa } from '../pages/Caixa.jsx';
 import { Fechamento } from '../pages/Fechamento.jsx';
 import { Producao } from '../pages/Producao.jsx';
+import { Kardex } from '../pages/Kardex.jsx';
 import { MinhaConta } from '../pages/MinhaConta.jsx';
 import { NaoEncontrada } from '../pages/NaoEncontrada.jsx';
 
@@ -33,6 +34,7 @@ export function AppRoutes() {
             <Route path="/caixa" element={<Caixa />} />
             <Route path="/fechamento" element={<Fechamento />} />
             <Route path="/producao" element={<Producao />} />
+            <Route path="/kardex" element={<Kardex />} />
             <Route path="/minha-conta" element={<MinhaConta />} />
           </Route>
         </Route>

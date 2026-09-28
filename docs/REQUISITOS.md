@@ -33,7 +33,7 @@ Controle de caixa (entradas e saídas), controle de estoque em dois níveis (ing
 | Emissão de nota fiscal                | Não solicitado; exigiria integração com SEFAZ                                                                 |
 | Cadastro de clientes                  | Ela não costuma anotar quem comprou                                                                           |
 | Multiusuário com permissões distintas | Só ela opera hoje. O campo `papel` existe no modelo, preparado, mas a regra de restrição não foi implementada |
-| Saldo por lote de validade            | Exigiria amarrar cada saída a uma entrada específica; ver §6.2                                                |
+| Saldo exato por lote de validade      | Exigiria amarrar cada saída a uma entrada específica; o sistema estima — ver §6.2                             |
 
 ---
 
@@ -82,10 +82,11 @@ Prioridade: **E** = essencial · **I** = importante · **D** = desejável
 | RF16 | O sistema deve registrar perda, exigindo motivo                                               | I      |
 | RF17 | O sistema deve registrar ajuste manual de saldo, exigindo motivo                              | I      |
 | RF18 | O sistema deve baixar o doce do estoque automaticamente quando ele é vendido                  | E      |
-| RF19 | O sistema deve manter histórico de toda entrada e saída, com a origem do lançamento           | E      |
+| RF19 | O sistema deve manter histórico de toda entrada e saída, com a origem do lançamento (kardex)  | E      |
 | RF20 | O sistema deve avisar quando um item estiver no estoque mínimo ou abaixo                      | E      |
-| RF21 | O sistema deve listar os lotes com validade, filtrando por vencidos, 7 dias, 30 dias ou todos | I      |
-| RF22 | O sistema deve distinguir visualmente lote **vencido** de lote **a vencer**                   | I      |
+| RF21 | O sistema deve mostrar, por ingrediente, a validade mais próxima do que ainda está no estoque | I      |
+| RF22 | O sistema deve distinguir visualmente ingrediente **vencido** de ingrediente **a vencer**     | I      |
+| RF37 | O sistema deve mostrar o saldo de um item depois de cada entrada e saída                      | I      |
 | RF23 | O sistema deve recalcular o saldo a partir do histórico, para corrigir divergência            | D      |
 
 ### 4.4 Produção
@@ -154,6 +155,8 @@ Prioridade: **E** = essencial · **I** = importante · **D** = desejável
 | RN13 | Não é permitido informar produtos e valor avulso na mesma venda                                                                |
 | RN14 | Ingrediente e produto têm nome único: cadastro duplicado racharia o saldo em dois                                              |
 | RN15 | Cadastro não é excluído, é inativado, para não quebrar o histórico                                                             |
+| RN16 | O ingrediente mais antigo é usado primeiro: é por essa regra que o sistema estima a validade do que sobrou no estoque          |
+| RN17 | O ajuste de contagem guarda o sinal: a contagem que achou menos aparece como saída no histórico, não como entrada              |
 
 ### 6.1 Sobre RN09 — por que só dinheiro vivo
 
@@ -161,9 +164,11 @@ Se o saldo esperado somasse todas as vendas, a diferença daria errada todo dia,
 
 ### 6.2 Limite conhecido — saldo por lote
 
-O sistema registra a validade na entrada de compra, mas **não sabe quanto resta de cada lote**, porque as saídas não apontam para qual entrada baixaram. A tela de validade mostra a quantidade que **entrou** e declara isso explicitamente.
+O sistema registra a validade na entrada de compra, mas **não sabe exatamente quanto resta de cada lote**, porque as saídas não apontam para qual entrada baixaram.
 
-Rastrear saldo por lote exigiria amarrar cada saída a uma entrada, alterando como a venda dá baixa. Foi avaliado e adiado: mostrar o número certo com o rótulo certo é mais honesto do que apresentar um saldo por lote que o dado não sustenta.
+A validade exibida é **estimada** pela RN16: se ela usa o mais antigo primeiro, o que sobrou são as compras mais recentes, até somar o saldo atual. Com 3 latas compradas em setembro, 5 em outubro e 4 no estoque, as 4 são de outubro — e a data que importa é a de outubro, não a de setembro, que já acabou. A coluna mostra a data mais próxima entre as compras que sobraram e, quando só parte do estoque vence nela, quanto.
+
+Rastrear saldo exato por lote exigiria amarrar cada saída a uma entrada, alterando como a venda dá baixa. Foi avaliado e adiado. Antes da estimativa, a tela listava compra por compra — inclusive as já usadas, que seguiam "vencendo" para sempre.
 
 ### 6.3 Limite conhecido — estoque negativo
 
@@ -175,33 +180,35 @@ Uma venda pode levar o estoque a negativo, porque a produção nem sempre é lan
 
 Cada requisito, onde ele vive no código.
 
-| Requisito  | Rota da API                                                  | Tela                                             | Teste                                            |
-| ---------- | ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------ |
-| RF01, RF03 | `POST /api/auth/login`                                       | Login                                            | —                                                |
-| RF02       | `PATCH /api/auth/senha`                                      | Minha conta                                      | `tests/senha.test.js`                            |
-| RF04, RF09 | `POST` e `PUT /api/vendas`                                   | Início → Venda; Caixa                            | `tests/caixa.test.js`                            |
-| RF05, RF06 | `POST /api/vendas` (campo `valor`)                           | Início → Entrada avulsa                          | `tests/caixa.test.js`                            |
-| RF07, RF08 | `POST /api/despesas`                                         | Início → Saída / Retirada pessoal                | `tests/caixa.test.js`, `tests/dashboard.test.js` |
-| RF10, RF11 | `PATCH /api/vendas/:id/cancelar` e `/reabrir`                | Caixa                                            | `tests/caixa.test.js`                            |
-| RF12       | `GET /api/vendas`, `GET /api/despesas`                       | Caixa (extrato)                                  | `tests/periodo.test.js`                          |
-| RF13, RF14 | `/api/insumos`, `/api/produtos`                              | Estoque (ingredientes); Produção (doces)         | —                                                |
-| RF15–RF17  | `POST /api/estoque/movimentacoes`                            | Estoque → Comprei / Ajustar; Produção → Ajustar  | `tests/estoque.test.js`                          |
-| RF18       | (efeito de `POST /api/vendas`)                               | —                                                | `tests/caixa.test.js`                            |
-| RF19       | `GET /api/estoque/movimentacoes` (`de`)                      | Estoque → Histórico; Produção → Histórico        | `tests/estoque.test.js`                          |
-| RF20       | `GET /api/estoque/alertas`                                   | Contadores de Estoque e Produção no menu         | `tests/validade.test.js`                         |
-| RF21, RF22 | `GET /api/estoque/validades`                                 | Estoque → Validade                               | `tests/validade.test.js`                         |
-| RF23       | `POST /api/estoque/recalcular`                               | —                                                | `tests/estoque.test.js`                          |
-| RF24–RF26  | `POST /api/producoes`, `PUT /api/produtos/:id/ficha-tecnica` | Produção → Registrar lote; Editar doce (receita) | `tests/producao.test.js`                         |
-| RF27       | `GET /api/producoes/previsao`                                | Produção                                         | `tests/producao.test.js`                         |
-| RF28–RF32  | `/api/fechamentos`                                           | Fechamento                                       | `tests/fechamento.test.js`                       |
-| RF33–RF36  | `GET /api/dashboard`                                         | Resumo                                           | —                                                |
+| Requisito       | Rota da API                                                  | Tela                                             | Teste                                            |
+| --------------- | ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------ |
+| RF01, RF03      | `POST /api/auth/login`                                       | Login                                            | —                                                |
+| RF02            | `PATCH /api/auth/senha`                                      | Minha conta                                      | `tests/senha.test.js`                            |
+| RF04, RF09      | `POST` e `PUT /api/vendas`                                   | Início → Venda; Caixa                            | `tests/caixa.test.js`                            |
+| RF05, RF06      | `POST /api/vendas` (campo `valor`)                           | Início → Entrada avulsa                          | `tests/caixa.test.js`                            |
+| RF07, RF08      | `POST /api/despesas`                                         | Início → Saída / Retirada pessoal                | `tests/caixa.test.js`, `tests/dashboard.test.js` |
+| RF10, RF11      | `PATCH /api/vendas/:id/cancelar` e `/reabrir`                | Caixa                                            | `tests/caixa.test.js`                            |
+| RF12            | `GET /api/vendas`, `GET /api/despesas`                       | Caixa (extrato)                                  | `tests/periodo.test.js`                          |
+| RF13, RF14      | `/api/insumos`, `/api/produtos`                              | Estoque (ingredientes); Produção (doces)         | —                                                |
+| RF15–RF17       | `POST /api/estoque/movimentacoes`                            | Estoque → Comprei / Ajustar; Produção → Ajustar  | `tests/estoque.test.js`                          |
+| RF18            | (efeito de `POST /api/vendas`)                               | —                                                | `tests/caixa.test.js`                            |
+| RF19            | `GET /api/estoque/movimentacoes`                             | Kardex                                           | `tests/estoque.test.js`                          |
+| RF37            | `GET /api/estoque/movimentacoes` (`insumoId`/`produtoId`)    | Kardex → escolher um item                        | `tests/estoque.test.js`                          |
+| RF20            | `GET /api/estoque/alertas`                                   | Contadores de Estoque e Produção no menu         | `tests/validade.test.js`                         |
+| RF21, RF22      | `GET /api/insumos` (campo `validade`)                        | Estoque → coluna Validade                        | `tests/validade.test.js`                         |
+| RF23            | `POST /api/estoque/recalcular`                               | —                                                | `tests/estoque.test.js`                          |
+| RF24–RF26       | `POST /api/producoes`, `PUT /api/produtos/:id/ficha-tecnica` | Produção → Registrar lote; Editar doce (receita) | `tests/producao.test.js`                         |
+| (desfazer lote) | `DELETE /api/producoes/:id`                                  | Kardex → lote → Excluir lote                     | `tests/producao.test.js`                         |
+| RF27            | `GET /api/producoes/previsao`                                | Produção                                         | `tests/producao.test.js`                         |
+| RF28–RF32       | `/api/fechamentos`                                           | Fechamento                                       | `tests/fechamento.test.js`                       |
+| RF33–RF36       | `GET /api/dashboard`                                         | Resumo                                           | —                                                |
 
 ---
 
 ## 8. Validação dos requisitos
 
-A suíte automatizada tem **79 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade.
+A suíte automatizada tem **140 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade.
 
-Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, e tratar lote que vence hoje como já vencido. Todas foram detectadas.
+Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro e calcular o saldo do kardex ignorando o que ficou fora do período. Todas foram detectadas.
 
 Os requisitos não funcionais de interface (RNF01 a RNF04) foram verificados por medição em navegador nas resoluções 360×800, 390×844 e 1280×800.

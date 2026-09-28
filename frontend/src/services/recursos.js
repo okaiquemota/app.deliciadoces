@@ -29,7 +29,6 @@ export const estoque = {
   movimentacoes: (params) => dados(api.get('/estoque/movimentacoes', { params })),
   movimentar: (corpo) => dados(api.post('/estoque/movimentacoes', corpo)),
   alertas: () => dados(api.get('/estoque/alertas')),
-  validades: (params) => dados(api.get('/estoque/validades', { params })),
 };
 
 export const vendas = {

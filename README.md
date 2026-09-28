@@ -28,8 +28,9 @@ Projeto acadêmico da disciplina de **Fábrica de Software**.
 | Módulo        | Descrição                                                                                                                     |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | **Caixa**     | Extrato do dinheiro dia a dia — vendas (sempre à vista), entradas, saídas e retiradas —, com filtro, busca, edição e exclusão |
-| **Estoque**   | O material: ingredientes e embalagens — compra, perda, contagem, validade e aviso de item acabando                            |
+| **Estoque**   | O material: ingredientes e embalagens — compra, perda, contagem, validade do que está na prateleira e aviso de item acabando  |
 | **Produção**  | Os doces: quantos estão prontos, lote produzido (consome ingrediente e gera doce), perda, e a receita opcional de cada doce   |
+| **Kardex**    | Extrato do estoque — tudo o que entrou e saiu, dos doces e do material; escolhido um item, o saldo depois de cada movimento   |
 | **Dashboard** | Resultado por semana, que é como a cliente prefere olhar                                                                      |
 
 ## O que a cliente definiu
@@ -345,8 +346,8 @@ O `schema.prisma` reflete as respostas da cliente. As entidades:
 
 ### Escolhas que valem explicar
 
-- **`MovimentacaoEstoque` é o razão de tudo.** Insumo e produto passam pela mesma tabela: `insumoId` e `produtoId` são opcionais e exatamente um é preenchido (validado na aplicação). O campo `tipo` diz a direção — a quantidade é sempre positiva.
-- **Validade fica na entrada de estoque, não no insumo.** Cada compra tem uma validade diferente.
+- **`MovimentacaoEstoque` é o razão de tudo.** Insumo e produto passam pela mesma tabela: `insumoId` e `produtoId` são opcionais e exatamente um é preenchido (validado na aplicação). O campo `tipo` diz a direção — a quantidade é positiva, menos no `AJUSTE`, que não tem direção fixa e guarda o próprio sinal.
+- **Validade fica na entrada de estoque, não no insumo.** Cada compra tem uma validade diferente. A tela mostra a do que está na prateleira, contando que o mais antigo sai primeiro.
 - **`custoUnitario` do insumo é custo médio**, recalculado a cada compra.
 - **Precisão monetária.** Dinheiro em `Decimal(10,2)`, quantidade em `Decimal(12,3)`, custo unitário em `Decimal(12,4)` — `Float` causaria divergência de centavos.
 - **`RETIRADA_PESSOAL` não polui o lucro.** O dinheiro sai do caixa, mas não entra na conta de custo do negócio.
