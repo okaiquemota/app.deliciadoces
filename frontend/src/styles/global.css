@@ -77,7 +77,7 @@
          linhas, o item ativo do menu, o anel do teclado, os links;
        - preto é ESCOLHA: chips, filtros, a forma de pagamento ligada;
        - creme → rosa-claro, bem diluído, é a SUPERFÍCIE da casa: os
-         blocos de resumo, o cartão de Venda, o login.
+         blocos de resumo e o cartão de Venda.
      Verde, vermelho e âmbar continuam com o significado de sempre.
 
      É AQUI que se regula a intensidade: nenhum outro lugar da folha
@@ -110,8 +110,6 @@
   --degrade-acao: linear-gradient(135deg, #c8004f 0%, #e0005a 100%);
   --degrade-acao-forte: linear-gradient(135deg, #b8004a 0%, #d40055 100%);
   --sombra-acao: 0 6px 16px -8px rgb(212 0 85 / 0.55);
-  /* O painel do login, a única tela que é só da marca. */
-  --degrade-painel: linear-gradient(160deg, #fef4d1 0%, #ffc1ea 55%, #ff8cc3 100%);
 
   --erro: #b3261e;
   --erro-fundo: #fdecec;
@@ -3415,11 +3413,16 @@ input[type='date']::-webkit-date-and-time-value {
    LOGIN E ESTADOS DE PÁGINA INTEIRA
    ===================================================================== */
 
-/* O login é a única tela que é só da marca: um painel com a paleta
-   inteira — o degradê de creme a rosa e as bolinhas brancas — e o
-   formulário ao lado, sóbrio como o resto do sistema. No celular o painel
-   vira o topo, e o formulário sobe por cima dele como uma folha. */
+/* Login: a FOTO de um lado, o formulário do outro. No celular a foto vira
+   o topo, e o formulário sobe por cima dela como uma folha, com a medalha
+   no meio da borda.
+
+   A FOTO: salve o arquivo em `frontend/public/` (por exemplo
+   `login.jpg`, uns 1600px de largura e menos de 400 KB) e troque o
+   `none` de `--login-foto` por `url('/login.jpg')`. Sem foto, o painel
+   fica no creme da marca. */
 .login {
+  --login-foto: none;
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   min-height: 100vh;
@@ -3427,86 +3430,11 @@ input[type='date']::-webkit-date-and-time-value {
   background-color: var(--superficie);
 }
 
-.login__painel {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 32px;
-  overflow: hidden;
-  background: var(--degrade-painel);
-}
-
-/* As bolinhas: brancas, mais fortes embaixo, onde o rosa é mais forte, e
-   sumindo no creme de cima. Um brilho creme no canto de cima dá luz. */
-.login__painel::before,
-.login__painel::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.login__painel::before {
-  background: radial-gradient(circle, rgb(255 255 255 / 0.6) 0 3px, transparent 3.5px) 0 0 / 26px
-    26px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 20%, #000 95%);
-  mask-image: linear-gradient(to bottom, transparent 20%, #000 95%);
-}
-
-.login__painel::after {
-  background:
-    radial-gradient(circle at 18% 12%, rgb(254 244 209 / 0.9), transparent 45%),
-    radial-gradient(circle at 90% 95%, rgb(255 1 100 / 0.35), transparent 50%);
-}
-
-.login__vitrine {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  max-width: 380px;
-  text-align: center;
-}
-
-/* A medalha num círculo branco, flutuando sobre o rosa. */
-.login__medalha {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 168px;
-  height: 168px;
-  margin-bottom: 10px;
-  border-radius: 50%;
-  background-color: var(--c-0);
-  box-shadow:
-    0 0 0 8px rgb(255 255 255 / 0.45),
-    0 22px 44px -18px rgb(212 0 85 / 0.55);
-}
-
-.login__medalha img {
-  width: 132px;
-  height: auto;
-}
-
-.login__nome {
-  margin: 0;
-  color: var(--marca-preto);
-  font-size: 2.5rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
-
-.login__frase {
-  max-width: 300px;
-  margin: 0;
-  color: var(--c-700);
-  font-size: 1rem;
-  line-height: 1.45;
-  text-wrap: balance;
+.login__foto {
+  background-color: var(--marca-creme);
+  background-image: var(--login-foto);
+  background-position: center;
+  background-size: cover;
 }
 
 .login__lado {
@@ -3519,15 +3447,43 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .login__form {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 360px;
 }
 
-.login__saudacao {
-  margin: 0 0 4px;
+.login__form > .campo {
+  margin-bottom: 14px;
+}
+
+/* A medalha num círculo branco, com a sombra rosa da marca. */
+.login__medalha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background-color: var(--c-0);
+  box-shadow:
+    0 0 0 6px rgb(255 193 234 / 0.35),
+    0 14px 30px -14px rgb(212 0 85 / 0.5);
+}
+
+.login__medalha img {
+  width: 76px;
+  height: auto;
+}
+
+.login__nome {
+  margin: 0 0 2px;
   color: var(--marca-rosa-texto);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-align: center;
 }
 
 .login__titulo {
@@ -3537,12 +3493,14 @@ input[type='date']::-webkit-date-and-time-value {
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.15;
+  text-align: center;
 }
 
 .login__sub {
   margin: 6px 0 24px;
   color: var(--texto-suave);
   font-size: 0.9375rem;
+  text-align: center;
 }
 
 /* O "Mostrar" mora dentro do campo da senha, à direita. */
@@ -3572,17 +3530,46 @@ input[type='date']::-webkit-date-and-time-value {
   cursor: pointer;
 }
 
+/* "Esqueci minha senha", colado embaixo da senha, à direita. */
+.login__form > .login__campo-senha {
+  margin-bottom: 2px;
+}
+
+.login__esqueci-linha {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.login__esqueci {
+  min-height: 44px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--marca-rosa-texto);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* Só onde existe mouse: no toque, o sublinhado ficava preso. */
 @media (hover: hover) {
-  .login__ver-senha:hover {
+  .login__ver-senha:hover,
+  .login__esqueci:hover {
     text-decoration: underline;
   }
 }
 
 .login__entrar {
-  margin-top: 8px;
   min-height: 48px;
   font-size: 1rem;
+}
+
+.login__ajuda {
+  margin: 0 0 10px;
+  color: var(--c-700);
+  font-size: 0.9375rem;
 }
 
 .login__rodape {
@@ -3597,39 +3584,25 @@ input[type='date']::-webkit-date-and-time-value {
     grid-template-rows: auto 1fr;
   }
 
-  .login__painel {
-    padding: 36px 20px 64px;
+  .login__foto {
+    height: min(34vh, 260px);
   }
 
-  .login__medalha {
-    width: 112px;
-    height: 112px;
-    margin-bottom: 4px;
-  }
-
-  .login__medalha img {
-    width: 88px;
-  }
-
-  .login__nome {
-    font-size: 1.875rem;
-  }
-
-  .login__frase {
-    font-size: 0.9375rem;
-  }
-
-  /* A folha: sobe 28px por cima do painel, com os cantos de cima
+  /* A folha: sobe 28px por cima da foto, com os cantos de cima
      arredondados, como as janelas do celular. */
   .login__lado {
     position: relative;
     z-index: 1;
     justify-content: flex-start;
     margin-top: -28px;
-    padding: 28px 20px 20px;
+    padding: 0 20px 20px;
     border-radius: 24px 24px 0 0;
     background-color: var(--superficie);
-    box-shadow: 0 -10px 30px -18px rgb(212 0 85 / 0.35);
+  }
+
+  /* A medalha no meio da borda da folha, metade sobre a foto. */
+  .login__medalha {
+    margin-top: -48px;
   }
 
   .login__rodape {
