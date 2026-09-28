@@ -237,3 +237,45 @@ describe('alertas de estoque', () => {
     expect(insumosBaixos.map((i) => i.id)).not.toContain(semMinimo.id);
   });
 });
+
+/**
+ * O histórico do Estoque (material) e o da Produção (doces) são listas
+ * separadas. Filtradas só na tela, as vendas — uma saída de doce cada —
+ * tomariam o limite da listagem e esconderiam as compras de ingrediente.
+ */
+describe('histórico separado entre material e doces', () => {
+  async function umDeCada() {
+    const insumo = await criarInsumo();
+    const produto = await criarProduto();
+    await prisma.$transaction(async (tx) => {
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: insumo.id,
+        quantidade: 5,
+      });
+      await estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_PRODUCAO',
+        produtoId: produto.id,
+        quantidade: 20,
+      });
+    });
+    return { insumo, produto };
+  }
+
+  it('"insumos" traz só o material', async () => {
+    const { insumo } = await umDeCada();
+    const lista = await estoqueService.listarMovimentacoes({ de: 'insumos' });
+    expect(lista.map((m) => m.insumoId)).toEqual([insumo.id]);
+  });
+
+  it('"doces" traz só os doces', async () => {
+    const { produto } = await umDeCada();
+    const lista = await estoqueService.listarMovimentacoes({ de: 'doces' });
+    expect(lista.map((m) => m.produtoId)).toEqual([produto.id]);
+  });
+
+  it('sem filtro, traz os dois', async () => {
+    await umDeCada();
+    expect(await estoqueService.listarMovimentacoes({})).toHaveLength(2);
+  });
+});

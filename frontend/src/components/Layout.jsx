@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Marca } from './Marca.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { estoque } from '../services/recursos.js';
+import { EVENTO_ESTOQUE } from './EstoqueComum.jsx';
 import {
   IconeInicio,
   IconeCaixa,
@@ -60,13 +61,19 @@ const GRUPOS = [
     itens: [
       { para: '/dashboard', rotulo: 'Início', titulo: null, Icone: IconeInicio },
       { para: '/caixa', rotulo: 'Caixa', titulo: 'Caixa', Icone: IconeCaixa },
-      { para: '/producao', rotulo: 'Produção', titulo: 'Produção', Icone: IconeProducao },
+      {
+        para: '/producao',
+        rotulo: 'Produção',
+        titulo: 'Produção',
+        Icone: IconeProducao,
+        contador: 'doces',
+      },
       {
         para: '/estoque',
         rotulo: 'Estoque',
         titulo: 'Estoque',
         Icone: IconeEstoque,
-        contador: true,
+        contador: 'material',
       },
     ],
   },
@@ -94,7 +101,7 @@ export function Layout() {
   const { pathname } = useLocation();
 
   /**
-   * O contador de estoque vive AQUI, e não na tela inicial.
+   * Os contadores de pendência vivem AQUI, e não na tela inicial.
    *
    * Antes era uma faixa de aviso na inicial: ela só via o problema se
    * estivesse naquela tela, e a faixa ocupava altura que os botões
@@ -104,26 +111,34 @@ export function Layout() {
    *
    * Recarrega a cada troca de tela: é quando ela pode ter mexido no
    * estoque, e evita uma consulta em laço só para manter o número fresco.
+   *
+   * Um número por aba, cada um com a sua ação: na Produção, doce acabando
+   * (produzir); no Estoque, ingrediente acabando ou vencendo (comprar,
+   * usar primeiro). Somados num só, "3" não dizia qual das duas coisas.
    */
-  const [alertas, setAlertas] = useState(0);
+  const [alertas, setAlertas] = useState({ doces: 0, material: 0 });
 
   useEffect(() => {
     let vivo = true;
-    estoque
-      .alertas()
-      .then((a) => {
-        if (!vivo) return;
-        const total =
-          (a.insumosBaixos?.length ?? 0) +
-          (a.produtosBaixos?.length ?? 0) +
-          (a.validadeProxima?.length ?? 0);
-        setAlertas(total);
-      })
-      // Um contador que não carregou não é motivo para quebrar a casca do
-      // sistema inteiro: sem número, o menu segue funcionando.
-      .catch(() => {});
+    const buscar = () =>
+      estoque
+        .alertas()
+        .then((a) => {
+          if (!vivo) return;
+          setAlertas({
+            doces: a.produtosBaixos?.length ?? 0,
+            material: (a.insumosBaixos?.length ?? 0) + (a.validadeProxima?.length ?? 0),
+          });
+        })
+        // Um contador que não carregou não é motivo para quebrar a casca do
+        // sistema inteiro: sem número, o menu segue funcionando.
+        .catch(() => {});
+    buscar();
+    // E de novo a cada lançamento que mexe no estoque, na mesma tela.
+    window.addEventListener(EVENTO_ESTOQUE, buscar);
     return () => {
       vivo = false;
+      window.removeEventListener(EVENTO_ESTOQUE, buscar);
     };
   }, [pathname]);
 
@@ -240,11 +255,17 @@ export function Layout() {
                 >
                   <Icone tamanho={20} />
                   <span className="nav__rotulo">{rotulo}</span>
-                  {contador && alertas > 0 && (
+                  {contador && alertas[contador] > 0 && (
                     <span className="nav__contador">
-                      {alertas}
+                      {alertas[contador]}
                       <span className="so-leitor">
-                        {alertas === 1 ? ' item precisa de atenção' : ' itens precisam de atenção'}
+                        {contador === 'doces'
+                          ? alertas.doces === 1
+                            ? ' doce acabando'
+                            : ' doces acabando'
+                          : alertas.material === 1
+                            ? ' item precisa de atenção'
+                            : ' itens precisam de atenção'}
                       </span>
                     </span>
                   )}
