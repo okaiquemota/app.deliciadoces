@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { dashboard } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { moeda } from '../utils/formato.js';
+import { moeda, saudacao } from '../utils/formato.js';
 import { VendaRapida } from '../components/VendaRapida.jsx';
 import { DinheiroRapido } from '../components/DinheiroRapido.jsx';
 import { avisarEstoqueMudou } from '../components/EstoqueComum.jsx';
@@ -59,14 +59,6 @@ const MEDIAS = [
   { id: 'entrada', rotulo: 'Entrada avulsa', Icone: IconeEntrada },
   { id: 'saida', rotulo: 'Saída', Icone: IconeSaida },
 ];
-
-/** "Boa tarde" conforme a hora — ela abre isso a manhã e a noite inteira. */
-function saudacao(agora = new Date()) {
-  const h = agora.getHours();
-  if (h < 12) return 'Bom dia';
-  if (h < 18) return 'Boa tarde';
-  return 'Boa noite';
-}
 
 const DIA_LONGO = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'long',
@@ -173,7 +165,7 @@ export function Dashboard() {
           fica escondido dele para não ser lido duas vezes. */}
       <header className="cabeca">
         <p className="cabeca__titulo" aria-hidden="true">
-          {saudacao()}, {usuario?.nome?.split(' ')[0]}
+          {saudacao()}, <span className="cabeca__nome">{usuario?.nome?.split(' ')[0]}</span>
         </p>
         <p className="cabeca__sub">{DIA_LONGO.format(new Date())}</p>
       </header>

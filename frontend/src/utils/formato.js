@@ -101,3 +101,11 @@ export function corDoDoce(nome = '') {
   for (let i = 0; i < nome.length; i += 1) soma += nome.charCodeAt(i);
   return CORES_DOCE[soma % CORES_DOCE.length];
 }
+
+/** "Bom dia", "Boa tarde" ou "Boa noite", pela hora do aparelho. */
+export function saudacao(agora = new Date()) {
+  const h = agora.getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
