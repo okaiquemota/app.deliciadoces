@@ -6,14 +6,21 @@ import {
   IconeEntrada,
   IconeSaida,
   IconeRetirada,
-  IconeSeta,
+  IconeFiltros,
+  IconeVisto,
 } from '../components/Icones.jsx';
 import { despesas, produtos, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { moeda, paraInput, quantidade, ROTULO_PAGAMENTO } from '../utils/formato.js';
+import {
+  data as formatarData,
+  moeda,
+  paraInput,
+  quantidade,
+  ROTULO_PAGAMENTO,
+} from '../utils/formato.js';
 
 /**
- * Caixa: o extrato do dinheiro, no desenho do extrato de banco.
+ * Caixa: o extrato do dinheiro, no desenho do extrato dos apps de banco.
  *
  * Lançar não é mais aqui — venda, entrada, saída e retirada nascem nos
  * botões da tela inicial. Esta tela existe para CONFERIR e CORRIGIR: o
@@ -22,11 +29,13 @@ import { moeda, paraInput, quantidade, ROTULO_PAGAMENTO } from '../utils/formato
  * Por isso uma lista só, e não abas de Vendas e Despesas. A pergunta que
  * ela faz aqui é "o que aconteceu com o meu dinheiro", e a resposta
  * separada em duas abas obrigava a juntar as duas de cabeça. Agrupada por
- * dia, com o total de cada dia, é a leitura que qualquer extrato ensinou.
+ * dia, com o saldo de cada dia, é a leitura que qualquer extrato ensinou.
  *
- * Os filtros são três, e de toque: período, tipo e uma busca. A busca
- * cobre doce, descrição, cliente e forma de pagamento — um campo só em
- * vez de três menus.
+ * O arranjo é o do extrato do banco que ela já usa: título grande, busca
+ * de largura toda e os filtros em chips. O primeiro chip mostra o período
+ * e abre a escolha dele; os outros ligam e desligam um tipo de lançamento
+ * com um toque. A busca cobre doce, descrição, cliente e forma de
+ * pagamento — um campo só em vez de três menus.
  */
 
 const TIPOS = {
@@ -47,15 +56,21 @@ const FORMAS = Object.entries(ROTULO_PAGAMENTO).map(([valor, rotulo]) => ({ valo
 
 const PERIODOS = [
   { id: 'hoje', rotulo: 'Hoje' },
-  { id: '7dias', rotulo: '7 dias' },
+  { id: '7dias', rotulo: 'Últimos 7 dias' },
   { id: 'mes', rotulo: 'Este mês' },
-  { id: 'datas', rotulo: 'Datas' },
+  { id: 'datas', rotulo: 'Escolher datas' },
 ];
 
-const FILTROS_TIPO = [
-  { id: 'tudo', rotulo: 'Tudo' },
-  { id: 'entradas', rotulo: 'Entradas' },
-  { id: 'saidas', rotulo: 'Saídas' },
+/**
+ * Os tipos em chips. Cada um liga e desliga sozinho; nenhum ligado é
+ * tudo. Ligar dois soma os dois — "Vendas" e "Entradas avulsas" juntos
+ * são tudo o que entrou.
+ */
+const CHIPS_TIPO = [
+  { id: 'venda', rotulo: 'Vendas' },
+  { id: 'entrada', rotulo: 'Entradas avulsas' },
+  { id: 'saida', rotulo: 'Saídas' },
+  { id: 'retirada', rotulo: 'Retiradas' },
 ];
 
 /**
@@ -74,8 +89,12 @@ const DIA_LONGO = new Intl.DateTimeFormat('pt-BR', {
   day: 'numeric',
   month: 'long',
 });
+const DIA_DO_MES = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long' });
 
 const maiuscula = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** "16h40", como a hora aparece nos extratos de banco. */
+const hora = (data) => HORA.format(data).replace(':', 'h');
 
 /** "2026-09-25" -> Date local, sem passar por UTC. */
 function daChave(chave) {
@@ -89,13 +108,19 @@ function diasAtras(n) {
   return paraInput(d);
 }
 
-/** "Hoje", "Ontem", ou "Quinta-feira, 24 de setembro" (+ ano, se outro). */
+/** "Hoje", "Ontem", ou "24 de setembro" (+ ano, se outro). */
 function rotuloDoDia(chave) {
   if (chave === paraInput()) return 'Hoje';
   if (chave === diasAtras(1)) return 'Ontem';
   const data = daChave(chave);
   const ano = data.getFullYear() !== new Date().getFullYear() ? ` de ${data.getFullYear()}` : '';
-  return maiuscula(DIA_LONGO.format(data)) + ano;
+  return DIA_DO_MES.format(data) + ano;
+}
+
+/** O que o chip de período diz: "Últimos 7 dias", ou "01/09 – 25/09". */
+function rotuloDoPeriodo(periodo, datas) {
+  if (periodo === 'datas') return `${formatarData(datas.inicio)} – ${formatarData(datas.fim)}`;
+  return PERIODOS.find((p) => p.id === periodo).rotulo;
 }
 
 function intervalo(periodo, datas) {
@@ -146,13 +171,9 @@ function daDespesa(d) {
   };
 }
 
-/** "Saída · Pix · 14:32" */
+/** "Saída · Pix". A hora fica embaixo do valor, como no extrato do banco. */
 function subtitulo(l) {
-  return [
-    l.cancelada ? 'Cancelada' : TIPOS[l.tipo].rotulo,
-    FORMA_CURTA[l.forma],
-    HORA.format(l.data),
-  ]
+  return [l.cancelada ? 'Cancelada' : TIPOS[l.tipo].rotulo, FORMA_CURTA[l.forma]]
     .filter(Boolean)
     .join(' · ');
 }
@@ -178,16 +199,20 @@ function textoDeBusca(l) {
   );
 }
 
-/** "+R$ 27,00" ou "−R$ 140,00", com o sinal de menos tipográfico. */
-const comSinal = (sinal, valor) => `${sinal > 0 ? '+' : '−'}${moeda(valor)}`;
+/**
+ * "+ R$ 27,00" ou "− R$ 140,00", com o sinal de menos tipográfico e um
+ * espaço que não quebra: o sinal nunca fica sozinho no fim da linha.
+ */
+const comSinal = (sinal, valor) => `${sinal > 0 ? '+' : '−'}\u00a0${moeda(valor)}`;
 
 // ============================================================ página
 
 export function Caixa() {
   const [periodo, setPeriodo] = useState('7dias');
   const [datas, setDatas] = useState(() => intervalo('mes'));
-  const [tipo, setTipo] = useState('tudo');
+  const [tipos, setTipos] = useState([]);
   const [busca, setBusca] = useState('');
+  const [escolhendoPeriodo, setEscolhendoPeriodo] = useState(false);
 
   const [lancamentos, setLancamentos] = useState(null);
   const [cortado, setCortado] = useState(false);
@@ -197,7 +222,6 @@ export function Caixa() {
   const [aberto, setAberto] = useState(null);
 
   const faixa = useMemo(() => intervalo(periodo, datas), [periodo, datas]);
-  const faixaInvalida = faixa.inicio && faixa.fim && faixa.inicio > faixa.fim;
 
   const carregar = useCallback(async () => {
     if (!faixa.inicio || !faixa.fim || faixa.inicio > faixa.fim) return;
@@ -225,11 +249,10 @@ export function Caixa() {
     if (!lancamentos) return [];
     const termo = normalizar(busca.trim());
     return lancamentos.filter((l) => {
-      if (tipo === 'entradas' && TIPOS[l.tipo].sinal < 0) return false;
-      if (tipo === 'saidas' && TIPOS[l.tipo].sinal > 0) return false;
+      if (tipos.length && !tipos.includes(l.tipo)) return false;
       return !termo || textoDeBusca(l).includes(termo);
     });
-  }, [lancamentos, tipo, busca]);
+  }, [lancamentos, tipos, busca]);
 
   // Cancelada fica na lista, apagada, mas fora de toda soma.
   const totais = useMemo(() => {
@@ -265,61 +288,62 @@ export function Caixa() {
     carregar();
   }
 
+  function escolherPeriodo(id, novasDatas) {
+    if (novasDatas) setDatas(novasDatas);
+    setPeriodo(id);
+    setEscolhendoPeriodo(false);
+    setAviso('');
+  }
+
+  const alternarTipo = (id) =>
+    setTipos((atuais) => (atuais.includes(id) ? atuais.filter((t) => t !== id) : [...atuais, id]));
+
+  const filtrando = tipos.length > 0 || busca.trim() !== '';
+
   return (
     <section className="extrato">
-      <div className="extrato__filtros">
-        <Segmentado
-          rotulo="Período"
-          opcoes={PERIODOS}
-          valor={periodo}
-          aoTrocar={(id) => {
-            setPeriodo(id);
-            setAviso('');
-          }}
-        />
-        <div className="extrato__filtros-linha">
-          <Segmentado rotulo="Tipo" opcoes={FILTROS_TIPO} valor={tipo} aoTrocar={setTipo} />
-          <input
-            type="search"
-            className="campo__entrada extrato__busca"
-            placeholder="Buscar"
-            aria-label="Buscar por doce, descrição, cliente ou forma de pagamento"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
-        </div>
+      {/* O título à vista, grande, como o "Extrato" dos apps de banco. Para
+          o leitor de tela o título da página é o `h1` da casca; este fica
+          escondido dele para não ser lido duas vezes. */}
+      <p className="extrato__cabeca" aria-hidden="true">
+        Caixa
+      </p>
+
+      <input
+        type="search"
+        className="campo__entrada extrato__busca"
+        placeholder="Buscar"
+        aria-label="Buscar por doce, descrição, cliente ou forma de pagamento"
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+      />
+
+      {/* No celular a fileira rola para o lado, e o chip cortado na borda
+          da tela é o que avisa que tem mais. */}
+      <div className="extrato__chips" role="group" aria-label="Filtros">
+        <button
+          type="button"
+          className="chip"
+          aria-haspopup="dialog"
+          onClick={() => setEscolhendoPeriodo(true)}
+        >
+          <IconeFiltros tamanho={18} />
+          <span className="so-leitor">Período: </span>
+          {rotuloDoPeriodo(periodo, datas)}
+        </button>
+        {CHIPS_TIPO.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            className="chip"
+            aria-pressed={tipos.includes(c.id)}
+            onClick={() => alternarTipo(c.id)}
+          >
+            {c.rotulo}
+          </button>
+        ))}
       </div>
 
-      {periodo === 'datas' && (
-        <div className="extrato__datas">
-          <label className="extrato__data">
-            <span>De</span>
-            <input
-              type="date"
-              className="campo__entrada"
-              value={datas.inicio}
-              max={paraInput()}
-              onChange={(e) => setDatas((d) => ({ ...d, inicio: e.target.value }))}
-            />
-          </label>
-          <label className="extrato__data">
-            <span>Até</span>
-            <input
-              type="date"
-              className="campo__entrada"
-              value={datas.fim}
-              max={paraInput()}
-              onChange={(e) => setDatas((d) => ({ ...d, fim: e.target.value }))}
-            />
-          </label>
-        </div>
-      )}
-
-      {faixaInvalida && (
-        <p className="alerta alerta--erro" role="alert">
-          A data inicial é depois da final.
-        </p>
-      )}
       {erro && (
         <p className="alerta alerta--erro" role="alert">
           {erro}
@@ -363,7 +387,9 @@ export function Caixa() {
           <p className="extrato__vazio">
             {busca.trim()
               ? `Nada encontrado para “${busca.trim()}”.`
-              : 'Nada lançado neste período.'}
+              : filtrando
+                ? 'Nada com esses filtros neste período.'
+                : 'Nada lançado neste período.'}
           </p>
         ) : (
           dias.map((dia) => (
@@ -374,6 +400,7 @@ export function Caixa() {
               <h2 className="extrato__dia-titulo">
                 <span>{rotuloDoDia(dia.chave)}</span>
                 <span className="extrato__dia-saldo">
+                  Saldo do dia{' '}
                   {dia.saldo === 0 ? moeda(0) : comSinal(Math.sign(dia.saldo), Math.abs(dia.saldo))}
                 </span>
               </h2>
@@ -394,15 +421,108 @@ export function Caixa() {
         )}
       </div>
 
+      {escolhendoPeriodo && (
+        <EscolherPeriodo
+          periodo={periodo}
+          datas={datas}
+          aoFechar={() => setEscolhendoPeriodo(false)}
+          aoEscolher={escolherPeriodo}
+        />
+      )}
       {aberto && <Detalhe l={aberto} aoFechar={() => setAberto(null)} aoMudar={aoMudar} />}
     </section>
   );
 }
 
 /**
- * Controle segmentado, o mesmo do Resumo. `aria-pressed` diz a quem usa
- * leitor de tela qual opção está ligada — a pastilha branca só diz a quem
- * vê.
+ * A escolha do período, numa janela: a lista de opções com o visto na
+ * escolhida, como nos ajustes do iPhone. Um toque escolhe e fecha; só
+ * "Escolher datas" pede mais — as duas datas e a confirmação.
+ */
+function EscolherPeriodo({ periodo, datas, aoFechar, aoEscolher }) {
+  const [escolhido, setEscolhido] = useState(periodo);
+  const [rascunho, setRascunho] = useState(datas);
+  const invalido = rascunho.inicio && rascunho.fim && rascunho.inicio > rascunho.fim;
+
+  function escolher(id) {
+    if (id === 'datas') setEscolhido('datas');
+    else aoEscolher(id);
+  }
+
+  function aplicar(e) {
+    e.preventDefault();
+    if (!invalido) aoEscolher('datas', rascunho);
+  }
+
+  const data = (campo) => (e) => setRascunho((r) => ({ ...r, [campo]: e.target.value }));
+
+  return (
+    <Modal aberto aoFechar={aoFechar} titulo="Período" largura={440}>
+      <div className="opcoes" role="group" aria-label="Período">
+        {PERIODOS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className="opcao"
+            aria-pressed={escolhido === p.id}
+            onClick={() => escolher(p.id)}
+          >
+            {p.rotulo}
+            {escolhido === p.id && <IconeVisto tamanho={20} />}
+          </button>
+        ))}
+      </div>
+
+      {escolhido === 'datas' && (
+        <form onSubmit={aplicar}>
+          <div className="extrato__datas">
+            <label className="extrato__data">
+              <span>De</span>
+              <input
+                type="date"
+                className="campo__entrada"
+                value={rascunho.inicio}
+                max={paraInput()}
+                onChange={data('inicio')}
+                required
+              />
+            </label>
+            <label className="extrato__data">
+              <span>Até</span>
+              <input
+                type="date"
+                className="campo__entrada"
+                value={rascunho.fim}
+                max={paraInput()}
+                onChange={data('fim')}
+                required
+              />
+            </label>
+          </div>
+          {invalido && (
+            <p className="alerta alerta--erro" role="alert">
+              A data inicial é depois da final.
+            </p>
+          )}
+          <div className="modal__acoes">
+            <button
+              type="submit"
+              className="botao botao--primario botao--auto"
+              disabled={Boolean(invalido) || !rascunho.inicio || !rascunho.fim}
+            >
+              Ver lançamentos
+            </button>
+          </div>
+        </form>
+      )}
+    </Modal>
+  );
+}
+
+/**
+ * Controle segmentado, o mesmo do Resumo — aqui, o Saída | Retirada
+ * pessoal da edição. `aria-pressed` diz a quem usa leitor de tela qual
+ * opção está ligada; a pastilha branca só diz a quem vê.
  */
 function Segmentado({ rotulo, opcoes, valor, aoTrocar, cheio = false }) {
   return (
@@ -430,7 +550,10 @@ function Segmentado({ rotulo, opcoes, valor, aoTrocar, cheio = false }) {
   );
 }
 
-/** Uma linha do extrato: ícone, o que foi, detalhe, valor com sinal. */
+/**
+ * Uma linha do extrato: o ícone num círculo, o que foi e o tipo à
+ * esquerda; o valor com sinal e a hora, um embaixo do outro, à direita.
+ */
 function Lancamento({ l, aoAbrir }) {
   const { Icone, sinal } = TIPOS[l.tipo];
   return (
@@ -440,17 +563,17 @@ function Lancamento({ l, aoAbrir }) {
       onClick={aoAbrir}
     >
       <span className="extrato__icone">
-        <Icone tamanho={20} />
+        <Icone tamanho={22} />
       </span>
       <span className="extrato__textos">
         <span className="extrato__titulo">{l.titulo}</span>
         <span className="extrato__detalhe">{subtitulo(l)}</span>
       </span>
-      <span className={sinal > 0 ? 'extrato__valor extrato__valor--entrada' : 'extrato__valor'}>
-        {comSinal(sinal, l.valor)}
-      </span>
-      <span className="extrato__seta">
-        <IconeSeta tamanho={16} />
+      <span className="extrato__lado">
+        <span className={sinal > 0 ? 'extrato__valor extrato__valor--entrada' : 'extrato__valor'}>
+          {comSinal(sinal, l.valor)}
+        </span>
+        <span className="extrato__hora">{hora(l.data)}</span>
       </span>
     </button>
   );
@@ -508,7 +631,7 @@ function Detalhe({ l, aoFechar, aoMudar }) {
           <span className="lancamento__alvo-textos">
             <span className="lancamento__alvo-titulo">{l.titulo}</span>
             <span className="lancamento__alvo-quando">
-              {maiuscula(DIA_LONGO.format(l.data))}, às {HORA.format(l.data)}
+              {maiuscula(DIA_LONGO.format(l.data))}, às {hora(l.data)}
             </span>
           </span>
           <strong className="lancamento__alvo-valor">{comSinal(sinal, l.valor)}</strong>
@@ -560,7 +683,7 @@ function Detalhe({ l, aoFechar, aoMudar }) {
           {comSinal(sinal, l.valor)}
         </p>
         <p className="lancamento__quando">
-          {maiuscula(DIA_LONGO.format(l.data))}, às {HORA.format(l.data)}
+          {maiuscula(DIA_LONGO.format(l.data))}, às {hora(l.data)}
         </p>
         {l.cancelada && <span className="etiqueta">Cancelada</span>}
       </div>
