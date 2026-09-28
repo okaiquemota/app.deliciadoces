@@ -189,13 +189,13 @@ Cada requisito, onde ele vive no código.
 | RF07, RF08      | `POST /api/despesas`                                         | Início → Saída / Retirada pessoal                | `tests/caixa.test.js`, `tests/dashboard.test.js` |
 | RF10, RF11      | `PATCH /api/vendas/:id/cancelar` e `/reabrir`                | Caixa                                            | `tests/caixa.test.js`                            |
 | RF12            | `GET /api/vendas`, `GET /api/despesas`                       | Caixa (extrato)                                  | `tests/periodo.test.js`                          |
-| RF13, RF14      | `/api/insumos`, `/api/produtos`                              | Estoque (ingredientes); Produção (doces)         | —                                                |
+| RF13, RF14      | `/api/insumos`, `/api/produtos`                              | Estoque (ingredientes); Produção (doces)         | `tests/edicao.test.js`                           |
 | RF15–RF17       | `POST /api/estoque/movimentacoes`                            | Estoque → Comprei / Ajustar; Produção → Ajustar  | `tests/estoque.test.js`                          |
 | RF18            | (efeito de `POST /api/vendas`)                               | —                                                | `tests/caixa.test.js`                            |
 | RF19            | `GET /api/estoque/movimentacoes`                             | Kardex                                           | `tests/estoque.test.js`                          |
 | RF37            | `GET /api/estoque/movimentacoes` (`insumoId`/`produtoId`)    | Kardex → escolher um item                        | `tests/estoque.test.js`                          |
 | RF20            | `GET /api/estoque/alertas`                                   | Contadores de Estoque e Produção no menu         | `tests/validade.test.js`                         |
-| RF21, RF22      | `GET /api/insumos` (campo `validade`)                        | Estoque → coluna Validade                        | `tests/validade.test.js`                         |
+| RF21, RF22      | `GET /api/insumos` (campo `validade`)                        | Estoque → linha e detalhe do ingrediente         | `tests/validade.test.js`                         |
 | RF23            | `POST /api/estoque/recalcular`                               | —                                                | `tests/estoque.test.js`                          |
 | RF24–RF26       | `POST /api/producoes`, `PUT /api/produtos/:id/ficha-tecnica` | Produção → Registrar lote; Editar doce (receita) | `tests/producao.test.js`                         |
 | (desfazer lote) | `DELETE /api/producoes/:id`                                  | Kardex → lote → Excluir lote                     | `tests/producao.test.js`                         |
@@ -207,8 +207,8 @@ Cada requisito, onde ele vive no código.
 
 ## 8. Validação dos requisitos
 
-A suíte automatizada tem **140 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade.
+A suíte automatizada tem **145 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade.
 
-Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro e calcular o saldo do kardex ignorando o que ficou fora do período. Todas foram detectadas.
+Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro calcular o saldo do kardex ignorando o que ficou fora do período e deixar a edição de um cadastro preencher os valores padrão (o que zerava o custo médio do ingrediente). Todas foram detectadas.
 
 Os requisitos não funcionais de interface (RNF01 a RNF04) foram verificados por medição em navegador nas resoluções 360×800, 390×844 e 1280×800.

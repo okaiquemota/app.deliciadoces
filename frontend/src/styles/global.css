@@ -626,26 +626,6 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 0.75rem;
 }
 
-.campo--inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.campo--inline input {
-  width: auto;
-}
-
-/* A caixinha padrão tem 13px: no dedo, um alvo que se erra. O alvo de
-   verdade é o rótulo inteiro (o `<label>` envolve a caixa). */
-.campo--inline input[type='checkbox'] {
-  flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin: 0;
-  accent-color: var(--acao);
-}
-
 .form__linha {
   display: flex;
   align-items: flex-end;
@@ -882,9 +862,9 @@ input[type='date']::-webkit-date-and-time-value {
    rola. No celular a tela inteira rola (ver o bloco do celular).
    ===================================================================== */
 
-/* Início e Caixa são brancos inteiros, como a referência de extrato. A
-   lista lisa e os blocos cinza-claro sobre o cinza das outras telas
-   pareceriam desbotados. */
+/* Início, Caixa, Kardex, Estoque e Produção são brancos inteiros, como a
+   referência de extrato. A lista lisa e os blocos cinza-claro sobre o
+   cinza das outras telas pareceriam desbotados. */
 .app__conteudo:has(> .extrato),
 .app__conteudo:has(> .inicio) {
   background-color: var(--superficie);
@@ -1343,6 +1323,265 @@ input[type='date']::-webkit-date-and-time-value {
   opacity: 0.55;
 }
 
+/* =====================================================================
+   ESTOQUE E PRODUÇÃO
+
+   As duas telas no desenho do extrato (Caixa, Kardex): título grande com
+   o botão de cadastrar do lado, busca, resumo cinza e a lista lisa. A
+   linha de um item leva, do lado, o botão do gesto mais comum — Comprei,
+   Produzir —; o resto abre no detalhe.
+   ===================================================================== */
+
+.cabeca--com-acao {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* O botão de cadastrar é uma pílula preta, a ação primária da tela. No
+   celular diz só "Novo" (o resto continua para o leitor de tela). */
+.cabeca__novo {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--acao);
+  color: var(--c-0);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cabeca__novo::after {
+  content: '';
+  position: absolute;
+  inset: -3px 0;
+}
+
+@media (hover: hover) {
+  .cabeca__novo:hover {
+    background-color: var(--acao-hover);
+  }
+}
+
+/* A linha do item e o botão ao lado dela. A linha perde a largura
+   estendida do Caixa (que ia até a borda da direita): ali agora mora o
+   botão. */
+.item-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-linha > .extrato__item {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  margin-right: 0;
+}
+
+.item-linha__acao {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border: 1.5px solid var(--borda-forte);
+  border-radius: 999px;
+  background-color: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Moldura invisível: o desenho tem 38px, o alvo do dedo 46. */
+.item-linha__acao::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+@media (hover: hover) {
+  .item-linha__acao:hover {
+    border-color: var(--c-400);
+  }
+}
+
+/* O círculo pinta o estado: vermelho é problema (vencido, acabando),
+   âmbar é prazo (vencendo). Ela vê de longe, antes de ler. */
+.icone-aro--alerta {
+  border-color: var(--erro-borda);
+  background-color: var(--erro-fundo);
+  color: var(--erro);
+}
+
+.icone-aro--aviso {
+  border-color: var(--aviso-borda);
+  background-color: var(--aviso-fundo);
+  color: var(--aviso);
+}
+
+/* A cor do doce, a mesma dos botões da Venda. */
+.item-cor {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(20 24 29 / 0.12);
+}
+
+.extrato__valor--alerta,
+.extrato__total-valor--alerta,
+.lancamento__valor--alerta {
+  color: var(--erro);
+}
+
+/* Segunda linha, menor, de um dado do detalhe: os ingredientes da
+   receita, "só 2 lata — o resto vence depois". */
+.lancamento__nota {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+/* "Ver entradas e saídas no Kardex": link de texto, com a seta. */
+.detalhe__kardex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  margin-top: 6px;
+  color: var(--texto);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Só onde existe mouse: no toque, o sublinhado ficava preso depois de
+   tocar na linha que abriu o detalhe. */
+@media (hover: hover) {
+  .detalhe__kardex:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Lista vazia com o convite para cadastrar. */
+.extrato__vazio > p {
+  margin: 0 0 14px;
+}
+
+@media (max-width: 560px) {
+  .cabeca__novo {
+    padding-right: 14px;
+  }
+
+  /* No celular o botão da linha vira só o "+", redondo: com o rótulo,
+     o nome do item ficaria com menos de cem pixels. */
+  .item-linha__acao {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  .cabeca__novo-resto,
+  .item-linha__acao-rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Interruptor (liga/desliga) ---------- */
+
+.interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  margin: 4px 0 14px;
+  cursor: pointer;
+}
+
+.interruptor__textos {
+  display: flex;
+  flex-direction: column;
+}
+
+.interruptor__rotulo {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.interruptor .campo__dica {
+  margin-top: 2px;
+}
+
+/* A chave do iPhone: trilho de 51x31, bolinha branca que desliza. O
+   trilho desligado tem contorno em --c-400 para passar os 3:1 que um
+   controle pede contra o fundo branco. */
+.interruptor input {
+  position: relative;
+  flex: 0 0 auto;
+  width: 51px;
+  height: 31px;
+  margin: 0;
+  border-radius: 999px;
+  background-color: var(--c-100);
+  box-shadow: inset 0 0 0 1.5px var(--c-400);
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color 200ms var(--curva-entra),
+    box-shadow 200ms var(--curva-entra);
+}
+
+.interruptor input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background-color: var(--c-0);
+  box-shadow:
+    0 3px 8px rgb(0 0 0 / 0.15),
+    0 1px 1px rgb(0 0 0 / 0.16);
+  transition: transform 260ms var(--curva-ios);
+}
+
+.interruptor input:checked {
+  background-color: var(--acao);
+  box-shadow: none;
+}
+
+.interruptor input:checked::after {
+  transform: translateX(20px);
+}
+
+.interruptor input:focus-visible {
+  outline: 2px solid var(--acao);
+  outline-offset: 2px;
+}
+
 /* ---------- Detalhe de um lançamento ---------- */
 
 .lancamento {
@@ -1580,34 +1819,6 @@ input[type='date']::-webkit-date-and-time-value {
   box-shadow: var(--sombra-cartao);
 }
 
-.barra-acoes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.barra-acoes__resumo {
-  color: var(--texto-suave);
-  font-size: 0.875rem;
-}
-
-/* Botões lado a lado sem quebrar: as ações de uma linha de tabela
-   (Comprei · Ajustar · Editar) e o par do topo (+ Novo doce · Registrar
-   lote). */
-.acoes-linha {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.barra-acoes .acoes-linha {
-  gap: 8px;
-}
-
 /* "Tem agora 12 un → vai ficar com 10": o antes e o depois de um
    lançamento de estoque, para ela conferir o número antes de gravar. */
 .ajuste__atual {
@@ -1635,13 +1846,6 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
-}
-
-.etiqueta--alerta {
-  margin-left: 6px;
-  border-color: var(--erro-borda);
-  background-color: var(--erro-fundo);
-  color: var(--erro);
 }
 
 .alerta {
@@ -2527,25 +2731,6 @@ input[type='date']::-webkit-date-and-time-value {
   color: var(--erro);
 }
 
-.saldo--baixo {
-  color: var(--erro);
-  font-weight: 600;
-}
-
-/* Validade na tabela do Estoque: a situação em cima e, quando só parte
-   do que tem vence naquela data, quanto — menor, embaixo. */
-.validade {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.validade__parte,
-.validade__nada {
-  color: var(--texto-suave);
-  font-size: 0.8125rem;
-}
-
 .fechamento__falta {
   color: var(--erro);
   font-weight: 600;
@@ -3033,22 +3218,8 @@ input[type='date']::-webkit-date-and-time-value {
     grid-template-columns: 1fr;
   }
 
-  .barra-acoes {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .botao--auto {
     width: 100%;
-  }
-
-  /* No celular o par do topo divide a largura. */
-  .barra-acoes .acoes-linha {
-    display: flex;
-  }
-
-  .barra-acoes .acoes-linha > .botao {
-    flex: 1 1 0;
   }
 
   .indicadores {
@@ -3147,10 +3318,6 @@ input[type='date']::-webkit-date-and-time-value {
   /* Os atalhos de valor (R$ 5, 10, 20, 50) são o toque mais repetido da
      Entrada, da Saída e da Retirada. */
   .atalho-valor {
-    min-height: 44px;
-  }
-
-  .campo--inline {
     min-height: 44px;
   }
 
@@ -3418,6 +3585,8 @@ input[type='date']::-webkit-date-and-time-value {
 .doce__toque,
 .doce__passo,
 .seletor-periodo__item,
+.item-linha__acao,
+.cabeca__novo,
 .nav__item,
 .extrato__item,
 .opcao,
@@ -3438,7 +3607,9 @@ input[type='date']::-webkit-date-and-time-value {
     .atalho-valor,
     .doce__toque,
     .doce__passo,
-    .seletor-periodo__item
+    .seletor-periodo__item,
+    .item-linha__acao,
+    .cabeca__novo
   ):active:not(:disabled) {
   transform: scale(0.96);
   transition-duration: 80ms;
@@ -3484,6 +3655,12 @@ input[type='date']::-webkit-date-and-time-value {
 /* O valor do cartão do Início muda de `key` quando ela lança: o número
    novo sobe no lugar do antigo. */
 .cartao-acao__valor {
+  animation: numero-muda 360ms var(--curva-entra) backwards;
+}
+
+/* A quantidade de um item muda de `key` quando ela compra ou produz: o
+   número novo sobe no lugar do antigo. */
+.item-linha__valor {
   animation: numero-muda 360ms var(--curva-entra) backwards;
 }
 

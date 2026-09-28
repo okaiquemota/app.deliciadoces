@@ -37,3 +37,21 @@ export function Selecao({ rotulo, dica, opcoes, ...props }) {
 export function Linha({ children }) {
   return <div className="form__linha">{children}</div>;
 }
+
+/**
+ * Liga/desliga no desenho do iPhone, no lugar da caixinha de marcar: a
+ * frase inteira é o alvo, e a chave diz de longe se está ligado. Por
+ * baixo é uma caixa de marcar com papel de interruptor — o leitor de tela
+ * anuncia "ligado" e "desligado".
+ */
+export function Interruptor({ rotulo, dica, ...props }) {
+  return (
+    <label className="interruptor">
+      <span className="interruptor__textos">
+        <span className="interruptor__rotulo">{rotulo}</span>
+        {dica && <span className="campo__dica">{dica}</span>}
+      </span>
+      <input type="checkbox" role="switch" {...props} />
+    </label>
+  );
+}

@@ -75,7 +75,11 @@ export const produtoService = {
     const produto = await prisma.produto.findUnique({
       where: { id },
       include: {
-        fichaTecnica: { include: { insumo: { select: { nome: true, unidade: true } } } },
+        // O custo médio vem junto: é com ele que o detalhe do doce mostra
+        // quanto a receita custa e quanto sobra de cada doce vendido.
+        fichaTecnica: {
+          include: { insumo: { select: { nome: true, unidade: true, custoUnitario: true } } },
+        },
       },
     });
     if (!produto) throw naoEncontrado('Produto');

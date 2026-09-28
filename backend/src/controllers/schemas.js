@@ -17,6 +17,28 @@ const numero = (min = 0, mensagem) =>
 
 const dataOpcional = z.coerce.date().optional();
 
+/**
+ * O schema de EDIÇÃO: os mesmos campos do cadastro, todos opcionais e SEM
+ * os valores padrão.
+ *
+ * No Zod 4 o `.default()` vale mesmo dentro do `.partial()` — e os
+ * padrões do cadastro entravam na edição sem ninguém pedir. Editar o nome
+ * de um ingrediente gravava custo 0 (o custo médio, que só as compras
+ * formam, zerava); editar um doce vendido por quilo o voltava para
+ * "unidade". Na edição, campo que não veio é campo que não muda.
+ */
+const paraEditar = (schema) =>
+  z
+    .object(
+      Object.fromEntries(
+        Object.entries(schema.shape).map(([campo, tipo]) => [
+          campo,
+          tipo instanceof z.ZodDefault ? tipo.unwrap() : tipo,
+        ])
+      )
+    )
+    .partial();
+
 export const periodoSchema = z.object({
   inicio: z.coerce.date().optional(),
   fim: z.coerce.date().optional(),
@@ -32,7 +54,7 @@ export const insumoSchema = z.object({
   fornecedorPadrao: z.string().trim().optional().nullable(),
 });
 
-export const insumoUpdateSchema = insumoSchema.partial();
+export const insumoUpdateSchema = paraEditar(insumoSchema);
 
 // --------------------------------------------------------------- produto
 export const produtoSchema = z.object({
@@ -43,7 +65,7 @@ export const produtoSchema = z.object({
   rendimentoReceita: z.coerce.number().int().positive().optional().nullable(),
 });
 
-export const produtoUpdateSchema = produtoSchema.partial();
+export const produtoUpdateSchema = paraEditar(produtoSchema);
 
 export const fichaTecnicaSchema = z.object({
   rendimentoReceita: z.coerce.number().int().positive().optional().nullable(),
@@ -121,7 +143,7 @@ export const despesaSchema = z.object({
   data: dataOpcional,
 });
 
-export const despesaUpdateSchema = despesaSchema.partial();
+export const despesaUpdateSchema = paraEditar(despesaSchema);
 
 // -------------------------------------------------------------- produção
 export const producaoSchema = z.object({

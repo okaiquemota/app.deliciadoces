@@ -81,6 +81,35 @@ export function porDia(lista) {
   return [...grupos].map(([chave, itens]) => ({ chave, itens }));
 }
 
+/**
+ * Um número do bloco de resumo cinza, com o rótulo pequeno em cima.
+ * `tom`: 'entrada' (verde, o que entra) ou 'alerta' (vermelho, problema).
+ */
+export function Total({ rotulo, valor, tom }) {
+  return (
+    <div className="extrato__total">
+      <span className="extrato__total-rotulo">{rotulo}</span>
+      <span
+        className={
+          tom ? `extrato__total-valor extrato__total-valor--${tom}` : 'extrato__total-valor'
+        }
+      >
+        {valor}
+      </span>
+    </div>
+  );
+}
+
+/** Uma linha dos dados de um detalhe: o rótulo à esquerda, o valor à direita. */
+export function Dado({ rotulo, children }) {
+  return (
+    <div>
+      <dt>{rotulo}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
 /** Minúsculas e sem acento: "credito" acha "Crédito". */
 export const normalizar = (t) =>
   String(t ?? '')

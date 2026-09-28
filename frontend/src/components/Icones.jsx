@@ -138,6 +138,14 @@ export const IconeAjuste = (p) => (
   </Base>
 );
 
+/** Mais: acrescentar ao estoque — a compra, o lote, o cadastro novo. */
+export const IconeMais = (p) => (
+  <Base {...p}>
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </Base>
+);
+
 /** Visto: a opção escolhida numa lista. */
 export const IconeVisto = (p) => (
   <Base {...p}>
