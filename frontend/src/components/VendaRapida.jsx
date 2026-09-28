@@ -188,7 +188,9 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
                       >
                         −
                       </button>
-                      <strong>{qtd}</strong>
+                      {/* `key` na quantidade: cada toque troca o número e ele
+                          "pula" — a confirmação de que o toque contou. */}
+                      <strong key={qtd}>{qtd}</strong>
                       <button
                         type="button"
                         className="doce__passo"

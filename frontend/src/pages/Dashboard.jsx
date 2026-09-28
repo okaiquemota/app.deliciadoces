@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { dashboard } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
@@ -76,11 +76,12 @@ const DIA_LONGO = new Intl.DateTimeFormat('pt-BR', {
 /**
  * O mini-histórico: o último de cada tipo, na mesma ordem dos botões
  * acima, para o olho descer de "Venda" para "Última venda" sem procurar.
+ * Ícone e sinal são os mesmos das linhas do Caixa.
  */
 const HISTORICO = [
-  { chave: 'venda', rotulo: 'Última venda' },
-  { chave: 'entrada', rotulo: 'Última entrada' },
-  { chave: 'saida', rotulo: 'Última saída' },
+  { chave: 'venda', rotulo: 'Última venda', Icone: IconeVenda, sinal: 1 },
+  { chave: 'entrada', rotulo: 'Última entrada', Icone: IconeEntrada, sinal: 1 },
+  { chave: 'saida', rotulo: 'Última saída', Icone: IconeSaida, sinal: -1 },
 ];
 
 const PEQUENAS = [
@@ -163,11 +164,14 @@ export function Dashboard() {
     <section className="inicio">
       {erro && <p className="alerta alerta--erro">{erro}</p>}
 
-      <header className="saudacao">
-        <h2 className="saudacao__titulo">
+      {/* O mesmo cabeçalho do Caixa: título grande, e aqui a data embaixo.
+          O título da página para o leitor de tela é o `h1` da casca; este
+          fica escondido dele para não ser lido duas vezes. */}
+      <header className="cabeca">
+        <p className="cabeca__titulo" aria-hidden="true">
           {saudacao()}, {usuario?.nome?.split(' ')[0]}
-        </h2>
-        <p className="saudacao__data">{DIA_LONGO.format(new Date())}</p>
+        </p>
+        <p className="cabeca__sub">{DIA_LONGO.format(new Date())}</p>
       </header>
 
       {/*
@@ -199,18 +203,28 @@ export function Dashboard() {
       </div>
 
       {/*
-        O mini-histórico. Cada cartão é um recibo do último lançamento
-        daquele tipo, e não um botão: clicar leva para o Caixa, onde a
-        lista inteira está. Sem dado ainda, o cartão fica em tom apagado
-        dizendo o que falta — um espaço em branco faria a tela parecer
-        quebrada no primeiro dia de uso.
+        O mini-histórico, no desenho da lista do Caixa: cada linha é o
+        recibo do último lançamento daquele tipo, e a lista inteira fica a
+        um clique, no "Ver no Caixa". Sem dado ainda, a linha diz o que
+        falta — um espaço em branco faria a tela parecer quebrada no
+        primeiro dia de uso.
       */}
       {largo && (
-        <div className="historico">
-          {HISTORICO.map(({ chave, rotulo }) => (
-            <Registro key={chave} rotulo={rotulo} dado={ultimos?.[chave]} />
-          ))}
-        </div>
+        <section className="recentes" aria-labelledby="recentes-titulo">
+          <div className="recentes__cabeca">
+            <h2 className="recentes__titulo" id="recentes-titulo">
+              Últimos lançamentos
+            </h2>
+            <Link to="/caixa" className="recentes__ver">
+              Ver no Caixa
+            </Link>
+          </div>
+          <div className="recentes__lista">
+            {HISTORICO.map(({ chave, ...tipo }) => (
+              <Registro key={chave} {...tipo} dado={ultimos?.[chave]} />
+            ))}
+          </div>
+        </section>
       )}
 
       <VendaRapida
@@ -244,13 +258,18 @@ function Cartao({ acao, tamanho = 'medio', dado, onClick }) {
   const { Icone, rotulo } = acao;
   return (
     <button type="button" className={`cartao-acao cartao-acao--${tamanho}`} onClick={onClick}>
-      <span className="cartao-acao__selo">
-        <Icone tamanho={tamanho === 'grande' ? 20 : 18} />
+      <span className="cartao-acao__selo icone-aro">
+        <Icone tamanho={tamanho === 'grande' ? 24 : 22} />
       </span>
       <span className="cartao-acao__rotulo">{rotulo}</span>
       {dado && (
         <>
-          <span className="cartao-acao__valor">{dado.valor}</span>
+          {/* `key` no valor: quando ela lança e o número muda, o elemento
+              é outro e a animação de entrada roda de novo — o cartão
+              "responde" ao lançamento. */}
+          <span key={dado.valor} className="cartao-acao__valor">
+            {dado.valor}
+          </span>
           <span className="cartao-acao__rodape">{dado.detalhe}</span>
         </>
       )}
@@ -267,19 +286,22 @@ function Cartao({ acao, tamanho = 'medio', dado, onClick }) {
  * Passado um dia a informação vira outra — aí a data absoluta é que
  * serve, e é o que a função devolve.
  */
-function Registro({ rotulo, dado }) {
+function Registro({ rotulo, Icone, sinal, dado }) {
   return (
-    <div className={dado ? 'registro' : 'registro registro--vazio'}>
-      <span className="registro__rotulo">{rotulo}</span>
-      {dado ? (
-        <>
-          <span className="registro__valor">{moeda(dado.valor)}</span>
-          <span className="registro__detalhe">
-            {dado.descricao} · {quando(dado.data)}
-          </span>
-        </>
-      ) : (
-        <span className="registro__detalhe">Nada registrado ainda</span>
+    <div className={dado ? 'recente' : 'recente recente--vazio'}>
+      <span className="icone-aro">
+        <Icone tamanho={22} />
+      </span>
+      <span className="recente__textos">
+        <span className="recente__titulo">{dado ? dado.descricao : rotulo}</span>
+        <span className="recente__detalhe">
+          {dado ? `${rotulo} · ${quando(dado.data)}` : 'Nada registrado ainda'}
+        </span>
+      </span>
+      {dado && (
+        <span className={sinal > 0 ? 'recente__valor recente__valor--entrada' : 'recente__valor'}>
+          {`${sinal > 0 ? '+' : '\u2212'}\u00a0${moeda(dado.valor)}`}
+        </span>
       )}
     </div>
   );

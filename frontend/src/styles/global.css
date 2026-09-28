@@ -101,6 +101,12 @@
   /* Cantos de cima da barra de baixo do celular. É também quanto ela
      avança sobre o conteúdo, para os cantos mostrarem a tela por trás. */
   --barra-raio: 20px;
+
+  /* ----- Movimento ---------------------------------------------------- */
+  /* A curva das animações do iOS: sai rápido e assenta devagar. */
+  --curva-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Saída suave para o que entra na tela. */
+  --curva-entra: cubic-bezier(0.2, 0.8, 0.2, 1);
   --gutter: 24px;
 
   /* Sombra de cartão no nível da Apple: quase nada, só o suficiente para
@@ -296,12 +302,48 @@ body {
 
 /* O ativo é fundo cinza + texto preto + peso, os três juntos. Só o peso
    não se lê de longe, e só a cor de fundo não sobrevive a um monitor mal
-   calibrado no laboratório da faculdade. */
+   calibrado no laboratório da faculdade.
+
+   O fundo cinza não é do item: é o `.nav__marca`, que desliza de um item
+   para o outro. Por isso o item ativo fica transparente e por cima dele. */
 .nav__item--ativo,
 .nav__item--ativo:hover {
-  background-color: var(--c-100);
+  background-color: transparent;
   color: var(--texto);
   font-weight: 600;
+}
+
+.nav {
+  position: relative;
+}
+
+.nav__item {
+  position: relative;
+  z-index: 1;
+}
+
+/* O marcador, com a posição e o tamanho medidos no item ativo (ver
+   Layout.jsx). No computador é a pastilha cinza atrás do item. */
+.nav__marca {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: var(--marca-w);
+  height: var(--marca-h);
+  border-radius: var(--r-1);
+  background-color: var(--c-100);
+  transform: translate(var(--marca-x), var(--marca-y));
+  pointer-events: none;
+}
+
+/* A curva é a das animações do iOS: sai rápido e assenta devagar, sem
+   quicar. */
+.nav__marca--desliza {
+  transition:
+    transform 360ms var(--curva-ios),
+    width 360ms var(--curva-ios),
+    height 360ms var(--curva-ios);
 }
 
 .nav__item .icone {
@@ -840,10 +882,56 @@ input[type='date']::-webkit-date-and-time-value {
    rola. No celular a tela inteira rola (ver o bloco do celular).
    ===================================================================== */
 
-/* A tela do Caixa é branca inteira, como a referência. A lista lisa
-   sobre o cinza das outras telas pareceria desbotada. */
-.app__conteudo:has(> .extrato) {
+/* Início e Caixa são brancos inteiros, como a referência de extrato. A
+   lista lisa e os blocos cinza-claro sobre o cinza das outras telas
+   pareceriam desbotados. */
+.app__conteudo:has(> .extrato),
+.app__conteudo:has(> .inicio) {
   background-color: var(--superficie);
+}
+
+/* ---------- Peças comuns ao Início e ao Caixa ---------- */
+
+/* O título grande das duas telas, e a linha de apoio embaixo (a data, no
+   Início). */
+.cabeca {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cabeca__titulo {
+  margin: 0;
+  color: var(--texto);
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.cabeca__sub {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+}
+
+.cabeca__sub::first-letter {
+  text-transform: uppercase;
+}
+
+/* Ícone num círculo branco com aro cinza, como no extrato do banco: nas
+   linhas do Caixa, nos cartões e nos últimos lançamentos do Início. */
+.icone-aro {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--c-200);
+  border-radius: 50%;
+  background-color: var(--superficie);
+  color: var(--texto);
 }
 
 .extrato {
@@ -856,14 +944,6 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato > * {
   flex: 0 0 auto;
   margin: 0;
-}
-
-.extrato__cabeca {
-  color: var(--texto);
-  font-size: 1.875rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
 }
 
 /* Busca: uma pílula com contorno e a lupa dentro, na largura toda. */
@@ -1159,20 +1239,6 @@ input[type='date']::-webkit-date-and-time-value {
   .extrato__item:hover {
     background-color: var(--c-50);
   }
-}
-
-/* Ícone num círculo branco com aro cinza, como no extrato do banco. */
-.extrato__icone {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border: 2px solid var(--c-200);
-  border-radius: 50%;
-  background-color: var(--superficie);
-  color: var(--texto);
 }
 
 .extrato__textos {
@@ -1717,36 +1783,13 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 /* =====================================================================
-   TELA INICIAL — botões de ação
+   TELA INICIAL — no mesmo desenho do Caixa
+
+   Fundo branco, título grande, e os blocos em cinza-claro sem borda —
+   o mesmo bloco do resumo do Caixa. O ícone de cada ação vai num círculo
+   com aro, o mesmo das linhas do extrato: as duas telas que ela mais usa
+   falam a mesma língua.
    ===================================================================== */
-
-/* A saudação some do bloco próprio e vira uma linha, com a data ao lado.
-   Ela é cortesia, não informação: em duas linhas custava mais altura que
-   um botão inteiro. */
-.saudacao {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 10px;
-  margin-bottom: 16px;
-}
-
-.saudacao__titulo {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.saudacao__data {
-  margin: 0;
-  color: var(--texto-suave);
-  font-size: 0.8125rem;
-}
-
-.saudacao__data::first-letter {
-  text-transform: uppercase;
-}
 
 /* Grade de 6 colunas: o tamanho do botão é quantas colunas ele ocupa —
    6 em Venda, 3 nos dois do meio, 2 nos três de baixo. Uma grade só, um
@@ -1756,161 +1799,121 @@ input[type='date']::-webkit-date-and-time-value {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 10px;
-  margin-bottom: 12px;
 }
 
-/* O botão agora é uma FICHA: rótulo em cima, número grande no meio,
-   detalhe embaixo, ícone no canto. A versão anterior era um quadrado com
-   o ícone no alto e um vão vazio de 100px até o rótulo — ocupava a tela
-   inteira para dizer uma palavra. Aqui o mesmo toque continua grande e o
-   espaço passa a mostrar o movimento do dia. */
+/* O botão é uma FICHA: o ícone no alto, e embaixo o que ela faz, quanto
+   já deu hoje e o detalhe. O `margin-bottom: auto` do ícone empurra o
+   texto para o pé do cartão, qualquer que seja a altura que a grade der
+   a ele. */
 .cartao-acao {
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 2px;
+  min-width: 0;
   min-height: var(--altura, 92px);
-  padding: 13px 14px;
-  border: 1px solid var(--borda);
-  border-radius: var(--r-2);
-  background-color: var(--superficie);
+  padding: 16px;
+  border: none;
+  border-radius: var(--r-3);
+  background-color: var(--c-50);
   color: var(--texto);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition:
-    border-color 90ms ease-out,
-    background-color 90ms ease-out;
-  box-shadow: var(--sombra-cartao);
 }
 
-.cartao-acao:hover {
-  border-color: var(--borda-forte);
-  background-color: var(--c-50);
+@media (hover: hover) {
+  .cartao-acao:hover {
+    background-color: var(--c-100);
+  }
 }
 
 .cartao-acao__selo {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  color: var(--icone-fraco);
-}
-
-.cartao-acao:hover .cartao-acao__selo {
-  color: var(--texto-suave);
+  margin-bottom: auto;
 }
 
 .cartao-acao__rotulo {
-  padding-right: 26px; /* o ícone mora aqui */
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--texto-suave);
+  margin-top: 12px;
+  color: var(--texto);
+  font-size: 0.9375rem;
+  font-weight: 600;
   line-height: 1.3;
 }
 
 .cartao-acao__valor {
-  margin-top: auto;
-  font-size: 1.375rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   letter-spacing: var(--tr-numero);
   line-height: 1.15;
 }
 
 .cartao-acao__rodape {
-  font-size: 0.75rem;
   color: var(--texto-suave);
+  font-size: 0.8125rem;
 }
 
 /* Venda ocupa a linha: é o que ela repete dez vezes por dia, e o tamanho
    é a hierarquia inteira — nenhum botão é preenchido de cor. */
 .cartao-acao--grande {
   grid-column: span 6;
-  --altura: 104px;
-}
-
-.cartao-acao--grande .cartao-acao__rotulo {
-  font-size: 0.875rem;
+  --altura: 120px;
 }
 
 .cartao-acao--grande .cartao-acao__valor {
-  font-size: 1.75rem;
+  font-size: 2rem;
 }
 
 .cartao-acao--medio {
   grid-column: span 3;
 }
 
-/* Os três de fim de expediente não têm número: só rótulo e ícone, e por
-   isso são mais baixos.
-
-   Aqui o ícone sai do canto e volta para cima do rótulo, centralizado. No
-   canto ele obrigava a reservar 26px à direita do texto, e num celular de
-   375px sobravam 59 para "Fechar dia", que pede 66 — o rótulo quebrava em
-   duas linhas e só ESSE cartão crescia, desalinhando a fileira. Sem a
-   reserva sobram 83px e ele cabe inteiro. */
+/* Os três de fim de expediente não têm número: o ícone e o rótulo,
+   centrados. No celular um terço da largura não comporta ícone e
+   rótulo lado a lado — "Retirada pessoal" quebraria em três linhas. */
 .cartao-acao--pequeno {
   grid-column: span 2;
   --altura: 68px;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 8px;
+  padding: 12px 8px;
 }
 
 .cartao-acao--pequeno .cartao-acao__selo {
-  position: static;
+  margin-bottom: 0;
 }
 
 .cartao-acao--pequeno .cartao-acao__rotulo {
-  padding-right: 0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--texto);
+  margin-top: 0;
   text-align: center;
 }
 
-/* Tela larga: Venda deixa de ser uma faixa e vira um bloco de meia
-   largura com o dobro de altura.
-
-   Sem teto de largura, um cartão de 1160x104 com um valor de 28px é
-   quase tudo vão — o motivo pelo qual a versão anterior tinha um teto.
-   Aqui a solução não é estreitar a tela, é dar ao cartão principal uma
-   forma que aguente a largura: duas linhas de altura, meia largura, e o
-   valor em corpo de título. Entrou e Saiu empilham ao lado, ocupando as
-   mesmas duas linhas, e os três de fim de expediente fecham embaixo. */
 /* A tela inicial ocupa a ALTURA também, não só a largura.
 
-   As três fileiras dividem o que sobrar em 1 : 1 : 0,58 — a proporção
+   As três fileiras dividem o que sobrar em 1 : 1 : 0,62 — a proporção
    que mantém a hierarquia (Venda vale duas fileiras, as tarefas de fim
-   de expediente valem pouco mais de meia). Vale também no celular: ali o ganho é outro — os botões descem para
-   mais perto do polegar em vez de ficarem agrupados no alto da tela.
-   O teto de 460px existe
-   porque sem ele, num monitor de 27 polegadas, o botão de Venda teria
-   setecentos pixels de altura: a tela estaria cheia e o botão,
-   ridículo. O que sobrar abaixo do teto fica vazio mesmo — encher
-   aquilo pede conteúdo que esta tela ainda não tem. */
+   de expediente valem pouco mais de meia). No celular os botões descem
+   para mais perto do polegar em vez de ficarem agrupados no alto da
+   tela. O teto de 460px existe porque sem ele, num monitor de 27
+   polegadas, o botão de Venda teria setecentos pixels de altura. */
 .inicio {
   display: flex;
   flex-direction: column;
+  gap: 16px;
   height: 100%;
+}
+
+.inicio > * {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .acoes {
   flex: 1 1 auto;
   min-height: 0;
   max-height: 460px;
-  grid-template-rows: 1fr 1fr 0.58fr;
-}
-
-/* Esticados na altura, os cartões precisam do conteúdo CENTRADO. O
-   `margin-top: auto` do valor existe para encostá-lo no pé de um cartão
-   baixo; num cartão esticado ele abre um vão entre o rótulo e o número,
-   que são a mesma informação lida em duas linhas. */
-.cartao-acao {
-  justify-content: center;
-}
-
-.cartao-acao__valor {
-  margin-top: 6px;
+  grid-template-rows: 1fr 1fr 0.62fr;
 }
 
 @media (min-width: 1100px) {
@@ -1918,11 +1921,15 @@ input[type='date']::-webkit-date-and-time-value {
     gap: 14px;
   }
 
+  /* Tela larga: Venda deixa de ser uma faixa e vira um bloco de meia
+     largura com o dobro de altura — sem isso, um cartão de 1160x120 com
+     o valor de 32px é quase todo vão. Entrada e Saída empilham ao lado,
+     e as três tarefas fecham embaixo. */
   .cartao-acao--grande {
     grid-column: span 3;
     grid-row: span 2;
     --altura: 100%;
-    padding: 22px;
+    padding: 24px;
   }
 
   .cartao-acao--grande .cartao-acao__valor {
@@ -1930,89 +1937,132 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--grande .cartao-acao__rotulo {
-    font-size: 0.9375rem;
+    font-size: 1.0625rem;
   }
 
   .cartao-acao--medio {
     --altura: 0;
-    padding: 16px 18px;
+    padding: 18px 20px;
   }
 
-  /* Na largura grande o ícone volta para o canto e o rótulo para a
-     esquerda, alinhado com os outros cartões. O arranjo centrado existe
-     por falta de espaço no celular, não por escolha: aqui sobra. */
+  /* Aqui sobra largura: ícone e rótulo lado a lado, alinhados à
+     esquerda com os outros cartões. */
   .cartao-acao--pequeno {
     --altura: 74px;
-    align-items: flex-start;
-  }
-
-  .cartao-acao--pequeno .cartao-acao__selo {
-    position: absolute;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
   }
 
   .cartao-acao--pequeno .cartao-acao__rotulo {
-    padding-right: 26px;
     text-align: left;
   }
 }
 
-/* ---------- Mini-histórico: o último lançamento de cada tipo ----------
+/* ---------- Últimos lançamentos (computador) ----------
 
-   Três fichas em tom mais baixo que os botões acima: mesma superfície,
-   mas sem sombra e com o fundo do painel, porque não são alvo de toque —
-   são recibo. A diferença de peso é o que impede a cliente de tentar
-   lançar uma venda clicando aqui. */
+   O desenho da lista do Caixa, em três colunas: cabeçalho como o do dia,
+   e cada linha com o ícone no aro, o que foi, quando, e o valor com
+   sinal. Não são botões — são recibo; a lista inteira fica a um clique,
+   no "Ver no Caixa". */
 
-.historico {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+.recentes__cabeca {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
-.registro {
+.recentes__titulo {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: var(--tr-titulo);
+}
+
+.recentes__ver {
+  position: relative;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.recentes__ver:hover {
+  color: var(--texto);
+  text-decoration: underline;
+}
+
+/* Moldura invisível: o texto tem 21px de altura; o alvo, 45. */
+.recentes__ver::after {
+  content: '';
+  position: absolute;
+  inset: -12px -8px;
+}
+
+.recentes__lista {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 20px;
+}
+
+.recente {
   display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 0;
+}
+
+.recente__textos {
+  display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 1px;
-  padding: 11px 14px;
-  border: 1px solid var(--borda);
-  border-radius: var(--r-2);
-  background-color: var(--superficie);
   min-width: 0;
 }
 
-.registro--vazio {
-  background-color: transparent;
-  border-style: dashed;
-}
-
-.registro__rotulo {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
-  color: var(--texto-suave);
-}
-
-.registro__valor {
-  font-size: 1.0625rem;
-  font-weight: 600;
-  letter-spacing: var(--tr-numero);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Uma linha só, com reticências. O nome do doce mais o horário não cabem
-   em 1/3 de um celular, e deixar quebrar faria só ESTE cartão crescer e
-   desalinhar a fileira. */
-.registro__detalhe {
-  font-size: 0.75rem;
-  color: var(--texto-suave);
-  white-space: nowrap;
+/* Uma linha só, com reticências: o nome do doce não cabe em um terço
+   da tela, e deixar quebrar faria só ESTA linha crescer. */
+.recente__titulo,
+.recente__detalhe {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.registro--vazio .registro__detalhe {
+.recente__titulo {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.recente__detalhe {
   color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+.recente__valor {
+  flex: 0 0 auto;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.recente__valor--entrada {
+  color: var(--ok);
+}
+
+.recente--vazio .icone-aro {
+  border-style: dashed;
+  color: var(--icone-fraco);
+}
+
+.recente--vazio .recente__titulo {
+  color: var(--texto-suave);
+  font-weight: 500;
 }
 
 /* =====================================================================
@@ -2755,7 +2805,7 @@ input[type='date']::-webkit-date-and-time-value {
     overflow: visible;
   }
 
-  .extrato__cabeca {
+  .cabeca__titulo {
     font-size: 1.75rem;
   }
 
@@ -2785,7 +2835,7 @@ input[type='date']::-webkit-date-and-time-value {
     gap: 12px;
   }
 
-  .extrato__icone {
+  .icone-aro {
     width: 44px;
     height: 44px;
   }
@@ -2825,8 +2875,20 @@ input[type='date']::-webkit-date-and-time-value {
      no balcão ela está aqui para LANÇAR, não para conferir. O histórico
      inteiro fica a um toque, no Caixa. No computador sobra espaço e ele
      continua valendo como recibo. */
-  .historico {
+  .recentes {
     display: none;
+  }
+
+  /* Um terço da largura do celular: ícone e rótulo menores nos três de
+     fim de expediente, senão "Retirada pessoal" em duas linhas mais o
+     ícone passavam da altura que a grade dá à fileira. */
+  .cartao-acao--pequeno .cartao-acao__selo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .cartao-acao--pequeno .cartao-acao__rotulo {
+    font-size: 0.875rem;
   }
 
   .nav {
@@ -2879,16 +2941,14 @@ input[type='date']::-webkit-date-and-time-value {
     font-weight: 700;
   }
 
-  .nav__item--ativo::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
+  /* No celular o marcador é o traço colado na borda de cima da barra,
+     centrado no item ativo — e desliza de um item para o outro. */
+  .nav__marca {
     width: 36px;
     height: 4px;
-    margin-left: -18px;
     border-radius: 0 0 4px 4px;
     background-color: var(--acao);
+    transform: translateX(calc(var(--marca-x) + var(--marca-w) / 2 - 18px));
   }
 
   .nav__rotulo {
@@ -3138,21 +3198,60 @@ input[type='date']::-webkit-date-and-time-value {
     padding: var(--respiro-topo) 14px calc(16px + var(--avanco-barra, 0px));
   }
 
-  .saudacao {
-    margin-bottom: 10px;
+  .cabeca__titulo {
+    font-size: 1.5rem;
   }
 
-  .saudacao__titulo {
-    font-size: 1rem;
+  .cabeca__sub {
+    font-size: 0.875rem;
+  }
+
+  .inicio {
+    gap: 10px;
   }
 
   .acoes {
     gap: 8px;
-    margin-bottom: 8px;
   }
 
   .cartao-acao {
     padding: 10px 12px;
+  }
+
+  /* Tela baixa: o ícone sai de cima do texto e vai para o canto, menor.
+     Empilhado, ele pedia 56px de altura que a fileira não tem. */
+  .cartao-acao--grande,
+  .cartao-acao--medio {
+    justify-content: flex-end;
+  }
+
+  .cartao-acao--grande .cartao-acao__selo,
+  .cartao-acao--medio .cartao-acao__selo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .cartao-acao--grande .cartao-acao__rotulo,
+  .cartao-acao--medio .cartao-acao__rotulo {
+    margin-top: 0;
+  }
+
+  .cartao-acao__selo .icone {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cartao-acao--pequeno .cartao-acao__selo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cartao-acao--pequeno {
+    gap: 4px;
+    padding: 8px;
   }
 
   .cartao-acao--grande {
@@ -3178,8 +3277,249 @@ input[type='date']::-webkit-date-and-time-value {
   }
 }
 
+/* =====================================================================
+   MOVIMENTO
+
+   Tudo o que se mexe no sistema mora aqui, para ter um ritmo só. As
+   regras de bolso:
+
+   - Curto. Nada passa de 420ms: ela está no balcão, com cliente
+     esperando, e animação que atrasa o toque seguinte é defeito.
+   - Com motivo. Cada movimento responde a um gesto dela (tocou, trocou
+     de tela, escolheu) ou mostra para onde algo foi. Nada se mexe
+     sozinho.
+   - Só `transform` e `opacity` nas animações de entrada: são as duas
+     propriedades que o navegador anima sem redesenhar a página, e é o
+     que mantém tudo liso num celular simples.
+   - Quem pediu ao aparelho para reduzir o movimento não vê nenhuma (ver
+     o último bloco da folha).
+   ===================================================================== */
+
+@keyframes entra-subindo {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes aparece {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes janela-entra {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+/* No celular a janela é tela cheia: sobe de baixo, como as folhas do
+   iPhone. */
+@keyframes folha-sobe {
+  from {
+    opacity: 0.4;
+    transform: translateY(32px);
+  }
+}
+
+@keyframes desce {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* O "pulo" de algo que acabou de ser escolhido: cresce um pouco além e
+   assenta. */
+@keyframes pula {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes aperta {
+  from {
+    transform: scale(0.94);
+  }
+}
+
+@keyframes realca {
+  40% {
+    transform: scale(1.14);
+  }
+}
+
+@keyframes numero-muda {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* ---------- Troca de tela ----------
+
+   O conteúdo novo entra subindo um pouco, enquanto o marcador do menu
+   desliza até o item. `backwards` e não `both`: terminada a entrada, não
+   sobra `transform` nenhum no elemento — um `transform` parado mudaria a
+   referência dos elementos fixos e grudados dentro da tela. */
+.app__conteudo > :not(h1) {
+  animation: entra-subindo 300ms var(--curva-entra) backwards;
+}
+
+/* Início: os cartões entram em cascata, na ordem de leitura. */
+.acoes > .cartao-acao {
+  animation: entra-subindo 420ms var(--curva-entra) backwards;
+}
+
+.acoes > :nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.acoes > :nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.acoes > :nth-child(4) {
+  animation-delay: 120ms;
+}
+
+.acoes > :nth-child(5) {
+  animation-delay: 150ms;
+}
+
+.acoes > :nth-child(6) {
+  animation-delay: 180ms;
+}
+
+/* O ícone do item que acabou de ficar ativo dá um realce. */
+.nav__item--ativo .icone {
+  animation: realca 380ms var(--curva-ios);
+}
+
+/* ---------- Toque ----------
+
+   Tudo o que se toca responde ao dedo: afunda um pouco enquanto está
+   apertado. Cor, borda e sombra mudam em transição, nunca de estalo. */
+.botao,
+.chip,
+.cartao-acao,
+.forma,
+.atalho-valor,
+.doce,
+.doce__toque,
+.doce__passo,
+.seletor-periodo__item,
+.abas__item,
+.nav__item,
+.extrato__item,
+.opcao,
+.perfil__item {
+  transition-duration: 200ms;
+  transition-property: background-color, border-color, color, box-shadow, transform, opacity;
+  transition-timing-function: var(--curva-entra);
+}
+
+.nav__item .icone {
+  transition: color 200ms var(--curva-entra);
+}
+
+:is(
+    .botao,
+    .chip,
+    .forma,
+    .atalho-valor,
+    .doce__toque,
+    .doce__passo,
+    .seletor-periodo__item,
+    .abas__item
+  ):active:not(:disabled) {
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}
+
+/* Os cartões grandes afundam menos: 4% de um cartão de 360px é um
+   deslocamento que se vê como tremida, não como toque. */
+.cartao-acao:active {
+  transform: scale(0.98);
+  transition-duration: 80ms;
+}
+
+/* Linhas de lista não encolhem — escurecem, como nas listas do iPhone. */
+:is(.extrato__item, .opcao, .perfil__item):active {
+  background-color: var(--c-100);
+  transition-duration: 60ms;
+}
+
+/* ---------- Seleção ---------- */
+
+/* Chip ligado e forma de pagamento escolhida dão um aperto rápido no
+   instante em que ligam. */
+.chip[aria-pressed='true'],
+.forma--ativa {
+  animation: aperta 280ms var(--curva-ios);
+}
+
+/* O visto da opção escolhida (Período) e o contador do doce na Venda
+   entram com um pulo. O número do contador pula a cada toque: ele muda de
+   `key` e é outro elemento (ver VendaRapida.jsx). */
+.opcao .icone,
+.doce__contador {
+  animation: pula 300ms var(--curva-entra);
+}
+
+.doce__contador strong {
+  display: inline-block;
+  animation: aperta 220ms var(--curva-ios);
+}
+
+/* ---------- Valores e listas que mudam ---------- */
+
+/* O valor do cartão do Início muda de `key` quando ela lança: o número
+   novo sobe no lugar do antigo. */
+.cartao-acao__valor {
+  animation: numero-muda 360ms var(--curva-entra) backwards;
+}
+
+/* A lista do Caixa entra de novo a cada período ou chip. */
+.extrato__troca {
+  animation: aparece 260ms var(--curva-entra);
+}
+
+/* Aviso ("Venda alterada.") desce no lugar. */
+.alerta {
+  animation: desce 260ms var(--curva-entra);
+}
+
+/* ---------- Janelas ---------- */
+
+.modal {
+  animation: aparece 200ms ease-out;
+}
+
+.modal__caixa {
+  animation: janela-entra 300ms var(--curva-ios);
+}
+
+@media (max-width: 900px) {
+  .modal__caixa {
+    animation-name: folha-sobe;
+  }
+}
+
+/* Movimento reduzido: quem pediu isso ao aparelho (enjoo, vertigem,
+   concentração) vê tudo pronto no lugar, sem animação nenhuma. */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
     transition: none !important;
   }
 }
