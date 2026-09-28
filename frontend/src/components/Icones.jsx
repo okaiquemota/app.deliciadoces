@@ -208,6 +208,22 @@ export const IconeKardex = (p) => (
   </Base>
 );
 
+/** Janela com a coluna da esquerda: recolher e abrir o menu lateral. */
+export const IconeLateral = (p) => (
+  <Base {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+    <path d="M9.5 4.5v15" />
+  </Base>
+);
+
+/** Busto: a conta de quem está usando, no menu recolhido. */
+export const IconePessoa = (p) => (
+  <Base {...p}>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </Base>
+);
+
 /** Porta com seta saindo: encerrar a sessão. */
 export const IconeSair = (p) => (
   <Base {...p}>

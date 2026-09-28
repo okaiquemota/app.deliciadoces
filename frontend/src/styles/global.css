@@ -97,6 +97,8 @@
 
   /* ----- Medidas do esqueleto --------------------------------------- */
   --lateral: 236px;
+  /* A coluna recolhida: o ícone de 20px com respiro dos dois lados. */
+  --lateral-recolhida: 72px;
   --barra-baixo: 64px;
   /* Cantos de cima da barra de baixo do celular. É também quanto ela
      avança sobre o conteúdo, para os cantos mostrarem a tela por trás. */
@@ -180,6 +182,8 @@ body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  /* Recolher e abrir o menu: a coluna encolhe, não pula. */
+  transition: grid-template-columns 280ms var(--curva-ios);
 }
 
 /* Topo e lado formam juntos a coluna da esquerda: mesma superfície branca
@@ -205,6 +209,35 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* A marca e o botão de recolher o menu, na mesma linha. */
+.app__marca-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.app__recolher {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.app__recolher:hover {
+  background-color: var(--c-100);
+  color: var(--texto);
 }
 
 .app__principal {
@@ -421,6 +454,160 @@ body {
 .app__sair:hover {
   background-color: var(--c-100);
   color: var(--texto);
+}
+
+/* O ícone da conta só aparece com o menu recolhido (ver abaixo). */
+.conta-link .icone {
+  display: none;
+}
+
+/* ---------- Menu recolhido (só no computador) ----------
+
+   A coluna encolhe para os ícones. O nome de cada item continua no
+   elemento — é ele que o leitor de tela lê — e aparece ao lado, numa
+   etiqueta escura, ao passar o mouse ou chegar pelo teclado. Os botões
+   só de ícone (recolher, sair) ganham a mesma etiqueta pelo `data-dica`.
+
+   Tudo dentro de `min-width: 901px`: a preferência fica guardada, e sem
+   esse limite ela desmontaria a barra de baixo do celular. */
+@media (min-width: 901px) {
+  .app__recolher,
+  .app__sair {
+    position: relative;
+  }
+
+  /* A etiqueta dos botões só de ícone, para os dois estados do menu. */
+  [data-dica]:is(:hover, :focus-visible)::after {
+    content: attr(data-dica);
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 20px);
+    z-index: 5;
+    padding: 5px 10px;
+    border-radius: 7px;
+    background-color: var(--c-900);
+    color: var(--c-0);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transform: translateY(-50%);
+    pointer-events: none;
+    animation: aparece 150ms ease-out;
+  }
+
+  .app--recolhida {
+    grid-template-columns: var(--lateral-recolhida) 1fr;
+  }
+
+  /* A etiqueta passa por cima do conteúdo: a coluna fica acima dele e
+     deixa de cortar o que sai pela direita. */
+  .app--recolhida .app__topo,
+  .app--recolhida .app__lado {
+    position: relative;
+    z-index: 3;
+  }
+
+  .app--recolhida .app__topo {
+    align-items: center;
+    padding: 14px 8px 8px;
+  }
+
+  .app--recolhida .app__marca-linha {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .app--recolhida .app__topo .marca {
+    padding: 2px 0 0;
+  }
+
+  .app--recolhida .app__conta {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .app--recolhida .conta-link {
+    position: relative;
+    flex: none;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  .app--recolhida .conta-link .icone {
+    display: block;
+  }
+
+  .app--recolhida .nav {
+    overflow: visible;
+    padding: 4px 12px;
+  }
+
+  /* O cabeçalho de grupo vira um fio: a divisão entre o expediente e o
+     fim do dia continua à vista, sem palavra. */
+  .app--recolhida .nav__grupo {
+    height: 1px;
+    margin: 10px 6px;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--borda);
+    color: transparent;
+  }
+
+  .app--recolhida .nav__item {
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  /* Escondidos à vista, mas não do leitor de tela — e, ao apontar, viram
+     a etiqueta. */
+  .app--recolhida :is(.nav__rotulo, .marca__nome, .conta-link__nome) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .app--recolhida
+    :is(.nav__item, .conta-link):is(:hover, :focus-visible)
+    :is(.nav__rotulo, .conta-link__nome) {
+    top: 50%;
+    left: calc(100% + 20px);
+    z-index: 5;
+    width: auto;
+    height: auto;
+    padding: 5px 10px;
+    border-radius: 7px;
+    background-color: var(--c-900);
+    color: var(--c-0);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    clip-path: none;
+    transform: translateY(-50%);
+    pointer-events: none;
+    animation: aparece 150ms ease-out;
+  }
+
+  /* O número de pendências vira um ponto no canto do ícone, como na
+     barra do celular. */
+  .app--recolhida .nav__contador {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    min-width: 8px;
+    height: 8px;
+    margin-left: 6px;
+    padding: 0;
+    font-size: 0;
+    line-height: 0;
+  }
+
+  .app--recolhida .app__versao {
+    display: none;
+  }
 }
 
 /* =====================================================================
@@ -3192,7 +3379,7 @@ input[type='date']::-webkit-date-and-time-value {
   gap: 9px;
 }
 
-.app__topo > .marca {
+.app__topo .marca {
   padding: 2px 8px 6px;
 }
 
@@ -3256,8 +3443,18 @@ input[type='date']::-webkit-date-and-time-value {
     border-bottom: 1px solid var(--borda);
   }
 
-  .app__topo > .marca {
+  .app__topo .marca {
     padding: 0;
+  }
+
+  /* No celular o menu é a barra de baixo: não há o que recolher. A linha
+     da marca desfaz a caixa e a marca volta a ser filha direta do topo. */
+  .app__marca-linha {
+    display: contents;
+  }
+
+  .app__recolher {
+    display: none;
   }
 
   /* No celular o nome divide a barra com a marca e o sair. Um nome longo
@@ -3558,11 +3755,13 @@ input[type='date']::-webkit-date-and-time-value {
      aparelho — justamente onde errar o alvo é mais fácil. */
   .nav__item,
   .conta-link,
-  .app__sair {
+  .app__sair,
+  .app__recolher {
     min-height: 44px;
   }
 
-  .app__sair {
+  .app__sair,
+  .app__recolher {
     min-width: 44px;
   }
 

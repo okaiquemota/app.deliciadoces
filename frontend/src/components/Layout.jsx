@@ -13,6 +13,8 @@ import {
   IconeFechamento,
   IconeResumo,
   IconeSair,
+  IconeLateral,
+  IconePessoa,
 } from './Icones.jsx';
 
 /**
@@ -98,6 +100,30 @@ const SECOES = GRUPOS.flatMap((g) => g.itens);
 
 const TITULOS_EXTRA = { '/minha-conta': 'Minha conta' };
 
+/**
+ * Onde fica guardado se o menu lateral está recolhido. É preferência de
+ * quem usa, neste navegador — não vai para o servidor. O acesso é
+ * protegido: em janela anônima ou com os dados do site bloqueados, o
+ * `localStorage` falha, e o menu só volta aberto.
+ */
+const CHAVE_MENU = 'delicia:menu-recolhido';
+
+function lerMenuRecolhido() {
+  try {
+    return localStorage.getItem(CHAVE_MENU) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function guardarMenuRecolhido(recolhido) {
+  try {
+    localStorage.setItem(CHAVE_MENU, recolhido ? '1' : '0');
+  } catch {
+    // Sem onde guardar, vale só até recarregar a página.
+  }
+}
+
 export function Layout() {
   const { usuario, sair } = useAuth();
   const { pathname } = useLocation();
@@ -164,6 +190,22 @@ export function Layout() {
   const [marca, setMarca] = useState(null);
   const [marcaPronta, setMarcaPronta] = useState(false);
 
+  /**
+   * Menu lateral recolhido: no computador, a coluna da esquerda pode
+   * encolher para só os ícones e devolver a largura ao conteúdo — numa
+   * tela de notebook, é a diferença entre a lista do Caixa caber ou não.
+   * O nome de cada item aparece ao passar o mouse ou chegar pelo teclado.
+   * No celular não muda nada: lá o menu é a barra de baixo.
+   */
+  const [recolhido, setRecolhido] = useState(lerMenuRecolhido);
+
+  function alternarMenu() {
+    setRecolhido((atual) => {
+      guardarMenuRecolhido(!atual);
+      return !atual;
+    });
+  }
+
   useLayoutEffect(() => {
     let vivo = true;
     const medir = () => {
@@ -181,12 +223,18 @@ export function Layout() {
     // A fonte do sistema chega depois do primeiro desenho e muda a altura
     // dos itens: mede de novo quando ela estiver pronta.
     document.fonts?.ready.then(medir);
+    // E toda vez que o menu muda de tamanho — a janela, ou a coluna
+    // recolhendo e abrindo, quadro a quadro: a pastilha acompanha o item
+    // em vez de pular para o lugar no fim.
+    const observador = new ResizeObserver(medir);
+    if (refNav.current) observador.observe(refNav.current);
     window.addEventListener('resize', medir);
     return () => {
       vivo = false;
+      observador.disconnect();
       window.removeEventListener('resize', medir);
     };
-  }, [pathname]);
+  }, [pathname, recolhido]);
 
   // Na primeira medida o marcador só aparece no lugar; deslizar do canto
   // da tela até o item ao abrir o sistema seria movimento sem motivo.
@@ -201,32 +249,55 @@ export function Layout() {
   const secao = SECOES.find((s) => s.para === pathname);
   const titulo = secao?.titulo ?? TITULOS_EXTRA[pathname] ?? `Olá, ${primeiroNome}`;
 
+  // O ícone só aparece com o menu recolhido, quando o nome não cabe.
   const conta = (
     <NavLink to="/minha-conta" className="conta-link">
+      <IconePessoa tamanho={18} />
       <span className="conta-link__nome">{usuario?.nome}</span>
     </NavLink>
   );
 
   const botaoSair = (
-    <button type="button" className="app__sair" onClick={sair} aria-label="Sair do sistema">
+    <button
+      type="button"
+      className="app__sair"
+      onClick={sair}
+      aria-label="Sair do sistema"
+      data-dica="Sair"
+    >
       <IconeSair tamanho={18} />
     </button>
   );
 
   return (
-    <div className="app">
+    <div className={recolhido ? 'app app--recolhida' : 'app'}>
       {/* `header` e não `div`: é o marco de cabeçalho da página, e sem ele
           a marca e a conta ficavam fora de qualquer marco — conteúdo que
           um leitor de tela não alcança pela navegação por regiões. */}
       <header className="app__topo">
-        <Marca />
+        <div className="app__marca-linha">
+          <Marca />
+          {/* O botão diz o que vai fazer ("Recolher", "Abrir"), e o
+              `aria-expanded` diz em que estado o menu está. */}
+          <button
+            type="button"
+            className="app__recolher"
+            onClick={alternarMenu}
+            aria-expanded={!recolhido}
+            aria-controls="menu-lateral"
+            aria-label={recolhido ? 'Abrir o menu' : 'Recolher o menu'}
+            data-dica={recolhido ? 'Abrir o menu' : 'Recolher o menu'}
+          >
+            <IconeLateral tamanho={18} />
+          </button>
+        </div>
         <span className="app__conta">
           {conta}
           {botaoSair}
         </span>
       </header>
 
-      <div className="app__lado">
+      <div className="app__lado" id="menu-lateral">
         <nav className="nav" aria-label="Seções do sistema" ref={refNav}>
           {marca && (
             <span
