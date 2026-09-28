@@ -1557,6 +1557,33 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 0.875rem;
 }
 
+/* Botões lado a lado sem quebrar: as ações de uma linha de tabela
+   (Comprei · Ajustar · Editar) e o par do topo (+ Novo doce · Registrar
+   lote). */
+.acoes-linha {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.barra-acoes .acoes-linha {
+  gap: 8px;
+}
+
+/* "Tem agora 12 un → vai ficar com 10": o antes e o depois de um
+   lançamento de estoque, para ela conferir o número antes de gravar. */
+.ajuste__atual {
+  margin: 12px 0;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+}
+
+.ajuste__atual strong {
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+
 /* =====================================================================
    ETIQUETAS E AVISOS
    ===================================================================== */
@@ -3012,6 +3039,15 @@ input[type='date']::-webkit-date-and-time-value {
     width: 100%;
   }
 
+  /* No celular o par do topo divide a largura. */
+  .barra-acoes .acoes-linha {
+    display: flex;
+  }
+
+  .barra-acoes .acoes-linha > .botao {
+    flex: 1 1 0;
+  }
+
   .indicadores {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -3128,18 +3164,16 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 /* ---------------------------------------------------------------------
-   Telas ESTREITAS — abaixo de 400px o controle segmentado quebra em duas
-   fileiras de dois.
+   Telas ESTREITAS — abaixo de 400px, o filtro de situação da Validade
+   quebra em duas fileiras de dois.
 
-   Em 320px as quatro abas do Estoque dividem 288: sobram 71 por aba e
-   "Ingredientes" pede 84 numa palavra só, que não tem onde quebrar — a
-   palavra saía cortada dentro da pastilha. Espremer a fonte não resolve
-   (12px ainda pede 77) e quebrar no meio da palavra é pior que o
-   problema.
+   Em 320px as quatro opções dividem 288: "Vence em 30 dias" não cabe em
+   71 e empurrava "Todos" para fora da tela. Em 2x2 cada uma fica com
+   143px, e as quatro continuam à vista de uma vez.
 
-   Em 2x2 cada aba fica com 143px e sobra folga para o rótulo mais longo.
-   As quatro continuam à vista de uma vez, que é a razão de isto ser um
-   controle segmentado e não uma barra que rola.
+   As abas (Estoque e Produção) já não quebram: são três em cada tela, e
+   três cabem numa fileira até em 320px — "Ingredientes", a mais longa,
+   pede 92 dos 96 que sobram.
    --------------------------------------------------------------------- */
 
 /* Resumo do extrato em tela estreita: três colunas de 90px não seguram
@@ -3169,16 +3203,11 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 @media (max-width: 400px) {
-  .abas,
   .seletor-periodo--quebra {
     flex-wrap: wrap;
   }
 
   .seletor-periodo--quebra .seletor-periodo__item {
-    flex: 1 1 44%;
-  }
-
-  .abas__item {
     flex: 1 1 44%;
   }
 }

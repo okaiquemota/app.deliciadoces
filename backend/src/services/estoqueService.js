@@ -181,11 +181,19 @@ export const estoqueService = {
   },
 
   /** Histórico, com filtros de período e de item. */
-  async listarMovimentacoes({ insumoId, produtoId, tipo, inicio, fim, limite = 100 }) {
+  /**
+   * `de` separa o histórico do MATERIAL (`insumos`) do dos DOCES (`doces`):
+   * são abas diferentes, Estoque e Produção. Filtrar na tela não serviria —
+   * cada venda gera uma saída de doce, e as cem linhas mais recentes seriam
+   * quase todas venda, sem sobrar espaço para a compra de farinha.
+   */
+  async listarMovimentacoes({ insumoId, produtoId, tipo, de, inicio, fim, limite = 100 }) {
     return prisma.movimentacaoEstoque.findMany({
       where: {
         ...(insumoId ? { insumoId } : {}),
         ...(produtoId ? { produtoId } : {}),
+        ...(de === 'insumos' ? { insumoId: { not: null } } : {}),
+        ...(de === 'doces' ? { produtoId: { not: null } } : {}),
         ...(tipo ? { tipo } : {}),
         ...(inicio || fim
           ? { data: { ...(inicio ? { gte: inicio } : {}), ...(fim ? { lte: fim } : {}) } }

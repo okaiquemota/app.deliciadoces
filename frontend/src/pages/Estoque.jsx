@@ -3,22 +3,31 @@ import { Abas } from '../components/Abas.jsx';
 import { Tabela } from '../components/Tabela.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Linha, Selecao, Texto } from '../components/Campo.jsx';
-import { estoque, insumos, produtos } from '../services/recursos.js';
-import { mensagemDeErro } from '../services/api.js';
 import {
-  data as formatarData,
-  dataHora,
-  moeda,
-  quantidade,
-  ROTULO_MOVIMENTACAO,
-  UNIDADE_CURTA,
-} from '../utils/formato.js';
+  AjusteEstoque,
+  HistoricoMovimentos,
+  SaldoComAlerta,
+  avisarEstoqueMudou,
+  lerNumero,
+  quantosAcabando,
+} from '../components/EstoqueComum.jsx';
+import { estoque, insumos } from '../services/recursos.js';
+import { mensagemDeErro } from '../services/api.js';
+import { data as formatarData, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
 
 const UNIDADES = Object.entries(UNIDADE_CURTA).map(([valor, rotulo]) => ({
   valor,
   rotulo: `${rotulo} (${valor.toLowerCase()})`,
 }));
 
+/**
+ * Estoque: o MATERIAL — ingredientes e embalagens. A pergunta desta tela
+ * é "o que eu tenho para fazer os doces?".
+ *
+ * Os doces prontos moram na Produção, que responde "o que eu tenho para
+ * vender?". Antes os dois dividiam esta tela, e o doce ficava espalhado:
+ * o saldo aqui, o lote feito lá.
+ */
 export function Estoque() {
   const [aba, setAba] = useState('insumos');
 
@@ -29,38 +38,38 @@ export function Estoque() {
         aoTrocar={setAba}
         abas={[
           { id: 'insumos', rotulo: 'Ingredientes' },
-          { id: 'produtos', rotulo: 'Doces prontos' },
           { id: 'validade', rotulo: 'Validade' },
           { id: 'historico', rotulo: 'Histórico' },
         ]}
       />
 
       {aba === 'insumos' && <ListaInsumos />}
-      {aba === 'produtos' && <ListaProdutos />}
       {aba === 'validade' && <Validades />}
-      {aba === 'historico' && <Historico />}
+      {aba === 'historico' && (
+        <HistoricoMovimentos
+          de="insumos"
+          rotuloItem="Ingrediente"
+          vazio="Nenhuma entrada ou saída de material ainda."
+        />
+      )}
     </section>
   );
 }
 
-/** Marca em vermelho quem está no ou abaixo do mínimo. */
-function saldoComAlerta(item) {
-  const baixo =
-    Number(item.estoqueMinimo) > 0 && Number(item.quantidadeAtual) <= Number(item.estoqueMinimo);
-  return (
-    <span className={baixo ? 'saldo saldo--baixo' : 'saldo'}>
-      {quantidade(item.quantidadeAtual, item.unidade)}
-      {baixo && <span className="etiqueta etiqueta--alerta">acabando</span>}
-    </span>
-  );
-}
-
+/**
+ * A lista de ingredientes, com as duas coisas que acontecem com eles
+ * direto na linha: **Comprei** (o gesto de toda semana) e **Ajustar**
+ * (perdeu, ou a contagem não bate). Antes as duas passavam por um
+ * "Movimentar" com um menu dentro — um toque e uma escolha a mais para
+ * registrar a compra, que é quase sempre o que ela quer.
+ */
 function ListaInsumos() {
   const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [editando, setEditando] = useState(null);
-  const [movimentando, setMovimentando] = useState(null);
+  const [comprando, setComprando] = useState(null);
+  const [ajustando, setAjustando] = useState(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -78,10 +87,20 @@ function ListaInsumos() {
     carregar();
   }, [carregar]);
 
+  const acabando = quantosAcabando(lista);
+  const depoisDeSalvar = (fechar) => () => {
+    fechar(null);
+    carregar();
+    avisarEstoqueMudou();
+  };
+
   return (
     <>
       <div className="barra-acoes">
-        <span className="barra-acoes__resumo">{lista.length} ingrediente(s)</span>
+        <span className="barra-acoes__resumo">
+          {lista.length} ingrediente(s)
+          {acabando > 0 && <span className="fechamento__falta"> · {acabando} acabando</span>}
+        </span>
         <button className="botao botao--primario botao--auto" onClick={() => setEditando({})}>
           + Novo ingrediente
         </button>
@@ -95,7 +114,11 @@ function ListaInsumos() {
         vazio="Nenhum ingrediente cadastrado ainda."
         colunas={[
           { chave: 'nome', titulo: 'Ingrediente' },
-          { chave: 'quantidadeAtual', titulo: 'Em estoque', render: saldoComAlerta },
+          {
+            chave: 'quantidadeAtual',
+            titulo: 'Em estoque',
+            render: (i) => <SaldoComAlerta item={i} />,
+          },
           {
             chave: 'estoqueMinimo',
             titulo: 'Mínimo',
@@ -105,21 +128,24 @@ function ListaInsumos() {
             chave: 'custoUnitario',
             titulo: 'Custo médio',
             alinhar: 'right',
-            render: (i) => moeda(i.custoUnitario),
+            render: (i) => `${moeda(i.custoUnitario)}/${UNIDADE_CURTA[i.unidade] ?? i.unidade}`,
           },
           {
             chave: 'acoes',
             titulo: '',
             alinhar: 'right',
             render: (i) => (
-              <>
-                <button className="botao botao--texto" onClick={() => setMovimentando(i)}>
-                  Movimentar
+              <span className="acoes-linha">
+                <button className="botao botao--texto" onClick={() => setComprando(i)}>
+                  Comprei
+                </button>
+                <button className="botao botao--texto" onClick={() => setAjustando(i)}>
+                  Ajustar
                 </button>
                 <button className="botao botao--texto" onClick={() => setEditando(i)}>
                   Editar
                 </button>
-              </>
+              </span>
             ),
           },
         ]}
@@ -129,22 +155,22 @@ function ListaInsumos() {
         <FormularioInsumo
           insumo={editando}
           aoFechar={() => setEditando(null)}
-          aoSalvar={() => {
-            setEditando(null);
-            carregar();
-          }}
+          aoSalvar={depoisDeSalvar(setEditando)}
         />
       )}
-
-      {movimentando && (
-        <FormularioMovimentacao
-          alvo={movimentando}
+      {comprando && (
+        <FormularioCompra
+          insumo={comprando}
+          aoFechar={() => setComprando(null)}
+          aoSalvar={depoisDeSalvar(setComprando)}
+        />
+      )}
+      {ajustando && (
+        <AjusteEstoque
+          alvo={ajustando}
           tipoAlvo="insumo"
-          aoFechar={() => setMovimentando(null)}
-          aoSalvar={() => {
-            setMovimentando(null);
-            carregar();
-          }}
+          aoFechar={() => setAjustando(null)}
+          aoSalvar={depoisDeSalvar(setAjustando)}
         />
       )}
     </>
@@ -223,286 +249,114 @@ function FormularioInsumo({ insumo, aoFechar, aoSalvar }) {
   );
 }
 
-function ListaProdutos() {
-  const [lista, setLista] = useState([]);
-  const [carregando, setCarregando] = useState(true);
+/**
+ * Comprei: quanto entrou e quanto pagou.
+ *
+ * Pede o TOTAL pago, e não o preço por unidade. É o número que está na
+ * nota e no extrato; o preço do quilo, com a lata de 395 g, ela teria que
+ * calcular de cabeça. A conta é do sistema, e é ela que atualiza o custo
+ * médio que alimenta o custo de cada lote na Produção.
+ */
+function FormularioCompra({ insumo, aoFechar, aoSalvar }) {
+  const [qtd, setQtd] = useState('');
+  const [total, setTotal] = useState('');
+  const [validade, setValidade] = useState('');
   const [erro, setErro] = useState('');
-  const [editando, setEditando] = useState(null);
+  const [salvando, setSalvando] = useState(false);
 
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      setLista(await produtos.listar());
-      setErro('');
-    } catch (e) {
-      setErro(mensagemDeErro(e));
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    carregar();
-  }, [carregar]);
-
-  return (
-    <>
-      <div className="barra-acoes">
-        <span className="barra-acoes__resumo">{lista.length} doce(s)</span>
-        <button className="botao botao--primario botao--auto" onClick={() => setEditando({})}>
-          + Novo doce
-        </button>
-      </div>
-
-      {erro && <p className="alerta alerta--erro">{erro}</p>}
-
-      <Tabela
-        carregando={carregando}
-        dados={lista}
-        vazio="Nenhum doce cadastrado ainda."
-        colunas={[
-          { chave: 'nome', titulo: 'Doce' },
-          { chave: 'quantidadeAtual', titulo: 'Prontos', render: saldoComAlerta },
-          {
-            chave: 'precoVenda',
-            titulo: 'Preço',
-            alinhar: 'right',
-            render: (p) => moeda(p.precoVenda),
-          },
-          {
-            chave: 'rendimentoReceita',
-            titulo: 'Receita rende',
-            render: (p) => (p.rendimentoReceita ? `${p.rendimentoReceita} un` : '—'),
-          },
-          {
-            chave: 'acoes',
-            titulo: '',
-            alinhar: 'right',
-            render: (p) => (
-              <button className="botao botao--texto" onClick={() => setEditando(p)}>
-                Editar
-              </button>
-            ),
-          },
-        ]}
-      />
-
-      {editando && (
-        <FormularioProduto
-          produto={editando}
-          aoFechar={() => setEditando(null)}
-          aoSalvar={() => {
-            setEditando(null);
-            carregar();
-          }}
-        />
-      )}
-    </>
-  );
-}
-
-function FormularioProduto({ produto, aoFechar, aoSalvar }) {
-  const edicao = Boolean(produto.id);
-  const [form, setForm] = useState({
-    nome: produto.nome ?? '',
-    precoVenda: produto.precoVenda ?? '',
-    unidade: produto.unidade ?? 'UNIDADE',
-    estoqueMinimo: produto.estoqueMinimo ?? 0,
-    rendimentoReceita: produto.rendimentoReceita ?? '',
-  });
-  const [erro, setErro] = useState('');
-  const campo = (nome) => (e) => setForm((f) => ({ ...f, [nome]: e.target.value }));
+  const unidade = UNIDADE_CURTA[insumo.unidade] ?? insumo.unidade;
+  const n = lerNumero(qtd);
+  const pago = lerNumero(total);
+  const porUnidade = n > 0 && pago > 0 ? pago / n : null;
 
   async function enviar(e) {
     e.preventDefault();
-    try {
-      const corpo = {
-        ...form,
-        precoVenda: Number(form.precoVenda),
-        estoqueMinimo: Number(form.estoqueMinimo),
-        rendimentoReceita: form.rendimentoReceita ? Number(form.rendimentoReceita) : null,
-      };
-      if (edicao) await produtos.atualizar(produto.id, corpo);
-      else await produtos.criar(corpo);
-      aoSalvar();
-    } catch (err) {
-      setErro(mensagemDeErro(err));
+    if (!(n > 0)) {
+      setErro('Informe quanto comprou.');
+      return;
     }
-  }
-
-  return (
-    <Modal aberto aoFechar={aoFechar} titulo={edicao ? 'Editar doce' : 'Novo doce'}>
-      <form onSubmit={enviar}>
-        <Texto rotulo="Nome" value={form.nome} onChange={campo('nome')} required />
-        <Linha>
-          <Texto
-            rotulo="Preço de venda (R$)"
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={form.precoVenda}
-            onChange={campo('precoVenda')}
-            required
-          />
-          <Texto
-            rotulo="Estoque mínimo"
-            type="number"
-            step="any"
-            min="0"
-            value={form.estoqueMinimo}
-            onChange={campo('estoqueMinimo')}
-          />
-        </Linha>
-        <Texto
-          rotulo="Uma receita rende quantos? (opcional)"
-          type="number"
-          min="1"
-          value={form.rendimentoReceita}
-          onChange={campo('rendimentoReceita')}
-          dica="Só precisa se for usar ficha técnica"
-        />
-
-        {erro && <p className="alerta alerta--erro">{erro}</p>}
-        <button type="submit" className="botao botao--primario">
-          Salvar
-        </button>
-      </form>
-    </Modal>
-  );
-}
-
-function FormularioMovimentacao({ alvo, tipoAlvo, aoFechar, aoSalvar }) {
-  const [form, setForm] = useState({
-    tipo: 'ENTRADA_COMPRA',
-    quantidade: '',
-    custoUnitario: '',
-    validade: '',
-    motivo: '',
-  });
-  const [erro, setErro] = useState('');
-  const campo = (nome) => (e) => setForm((f) => ({ ...f, [nome]: e.target.value }));
-  const precisaMotivo = form.tipo === 'PERDA' || form.tipo === 'AJUSTE';
-
-  async function enviar(e) {
-    e.preventDefault();
+    if (total.trim() && !(pago > 0)) {
+      setErro('O valor pago não é um número válido.');
+      return;
+    }
+    setSalvando(true);
     setErro('');
     try {
       await estoque.movimentar({
-        tipo: form.tipo,
-        [tipoAlvo === 'insumo' ? 'insumoId' : 'produtoId']: alvo.id,
-        quantidade: Number(form.quantidade),
-        custoUnitario: form.custoUnitario ? Number(form.custoUnitario) : null,
-        validade: form.validade || null,
-        motivo: form.motivo || null,
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: insumo.id,
+        quantidade: n,
+        custoUnitario: porUnidade ? Number(porUnidade.toFixed(4)) : null,
+        validade: validade || null,
       });
       aoSalvar();
     } catch (err) {
       setErro(mensagemDeErro(err));
+      setSalvando(false);
     }
   }
 
-  return (
-    <Modal aberto aoFechar={aoFechar} titulo={`Movimentar — ${alvo.nome}`}>
-      <form onSubmit={enviar}>
-        <Selecao
-          rotulo="O que aconteceu"
-          value={form.tipo}
-          onChange={campo('tipo')}
-          opcoes={[
-            { valor: 'ENTRADA_COMPRA', rotulo: 'Comprei' },
-            { valor: 'PERDA', rotulo: 'Perdi (estragou, venceu)' },
-            { valor: 'AJUSTE', rotulo: 'Corrigir contagem' },
-          ]}
-        />
+  const mudar = (setter) => (e) => {
+    setter(e.target.value);
+    setErro('');
+  };
 
+  return (
+    <Modal aberto aoFechar={aoFechar} titulo={`Comprei ${insumo.nome}`} largura={460}>
+      <form onSubmit={enviar}>
+        <p className="ajuste__atual">
+          Tem agora <strong>{quantidade(insumo.quantidadeAtual, insumo.unidade)}</strong>
+          {n > 0 && (
+            <>
+              {' '}
+              → vai ficar com{' '}
+              <strong>{quantidade(Number(insumo.quantidadeAtual) + n, insumo.unidade)}</strong>
+            </>
+          )}
+        </p>
         <Linha>
           <Texto
-            rotulo="Quantidade"
-            type="number"
-            step="any"
-            value={form.quantidade}
-            onChange={campo('quantidade')}
+            rotulo={`Quanto comprou (${unidade})`}
+            type="text"
+            inputMode="decimal"
+            value={qtd}
+            onChange={mudar(setQtd)}
             required
-            dica={
-              form.tipo === 'AJUSTE'
-                ? 'Use negativo para diminuir (ex.: -2)'
-                : `Em ${UNIDADE_CURTA[alvo.unidade] ?? alvo.unidade}`
-            }
+            autoFocus
           />
-          {form.tipo === 'ENTRADA_COMPRA' && (
-            <Texto
-              rotulo="Custo por unidade (R$)"
-              type="number"
-              step="0.0001"
-              value={form.custoUnitario}
-              onChange={campo('custoUnitario')}
-              dica="Recalcula o custo médio"
-            />
-          )}
-        </Linha>
-
-        {form.tipo === 'ENTRADA_COMPRA' && alvo.controlaValidade && (
-          <Texto rotulo="Validade" type="date" value={form.validade} onChange={campo('validade')} />
-        )}
-
-        {precisaMotivo && (
           <Texto
-            rotulo="Motivo"
-            value={form.motivo}
-            onChange={campo('motivo')}
-            required
-            dica="Obrigatório para perda e ajuste"
+            rotulo="Quanto pagou (R$)"
+            type="text"
+            inputMode="decimal"
+            placeholder="Opcional"
+            value={total}
+            onChange={mudar(setTotal)}
           />
+        </Linha>
+        {porUnidade && (
+          <p className="ajuste__atual">
+            Sai a <strong>{moeda(porUnidade)}</strong> por {unidade}.
+          </p>
+        )}
+        {insumo.controlaValidade && (
+          <Texto rotulo="Validade" type="date" value={validade} onChange={mudar(setValidade)} />
         )}
 
-        {erro && <p className="alerta alerta--erro">{erro}</p>}
-        <button type="submit" className="botao botao--primario">
-          Registrar
-        </button>
+        {erro && (
+          <p className="alerta alerta--erro" role="alert">
+            {erro}
+          </p>
+        )}
+        <div className="modal__acoes">
+          <button type="button" className="botao botao--auto" onClick={aoFechar}>
+            Cancelar
+          </button>
+          <button type="submit" className="botao botao--primario botao--auto" disabled={salvando}>
+            {salvando ? 'Registrando...' : 'Registrar compra'}
+          </button>
+        </div>
       </form>
     </Modal>
-  );
-}
-
-function Historico() {
-  const [lista, setLista] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    estoque
-      .movimentacoes({})
-      .then(setLista)
-      .finally(() => setCarregando(false));
-  }, []);
-
-  return (
-    <>
-      <Tabela
-        carregando={carregando}
-        dados={lista}
-        vazio="Nenhuma movimentação registrada."
-        colunas={[
-          { chave: 'data', titulo: 'Quando', render: (m) => dataHora(m.data) },
-          {
-            chave: 'item',
-            titulo: 'Item',
-            render: (m) => m.insumo?.nome ?? m.produto?.nome ?? '—',
-          },
-          {
-            chave: 'tipo',
-            titulo: 'O que foi',
-            render: (m) => <span className="etiqueta">{ROTULO_MOVIMENTACAO[m.tipo]}</span>,
-          },
-          {
-            chave: 'quantidade',
-            titulo: 'Qtd.',
-            alinhar: 'right',
-            render: (m) => quantidade(m.quantidade, m.insumo?.unidade ?? m.produto?.unidade ?? ''),
-          },
-          { chave: 'motivo', titulo: 'Motivo', render: (m) => m.motivo ?? '' },
-        ]}
-      />
-    </>
   );
 }
 

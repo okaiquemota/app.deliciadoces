@@ -144,7 +144,7 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
 
       {!carregando && lista.length === 0 && (
         <p className="tabela__aviso">
-          Nenhum doce cadastrado ainda. Cadastre em Estoque para vender por aqui.
+          Nenhum doce cadastrado ainda. Cadastre na Produção para vender por aqui.
         </p>
       )}
 

@@ -64,6 +64,7 @@ export const estoqueController = {
         insumoId: req.query.insumoId,
         produtoId: req.query.produtoId,
         tipo: req.query.tipo,
+        de: req.query.de,
       })
     );
   },

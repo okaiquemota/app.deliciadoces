@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal } from '../components/Modal.jsx';
 import { Linha, Selecao, Texto } from '../components/Campo.jsx';
+import { Segmentado } from '../components/Segmentado.jsx';
 import {
   IconeVenda,
   IconeEntrada,
@@ -528,37 +529,6 @@ function EscolherPeriodo({ periodo, datas, aoFechar, aoEscolher }) {
         </form>
       )}
     </Modal>
-  );
-}
-
-/**
- * Controle segmentado, o mesmo do Resumo — aqui, o Saída | Retirada
- * pessoal da edição. `aria-pressed` diz a quem usa leitor de tela qual
- * opção está ligada; a pastilha branca só diz a quem vê.
- */
-function Segmentado({ rotulo, opcoes, valor, aoTrocar, cheio = false }) {
-  return (
-    <div
-      className={cheio ? 'seletor-periodo seletor-periodo--cheio' : 'seletor-periodo'}
-      role="group"
-      aria-label={rotulo}
-    >
-      {opcoes.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          aria-pressed={valor === o.id}
-          className={
-            valor === o.id
-              ? 'seletor-periodo__item seletor-periodo__item--ativo'
-              : 'seletor-periodo__item'
-          }
-          onClick={() => aoTrocar(o.id)}
-        >
-          {o.rotulo}
-        </button>
-      ))}
-    </div>
   );
 }
 

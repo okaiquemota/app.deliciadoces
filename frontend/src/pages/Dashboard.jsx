@@ -6,6 +6,7 @@ import { mensagemDeErro } from '../services/api.js';
 import { moeda } from '../utils/formato.js';
 import { VendaRapida } from '../components/VendaRapida.jsx';
 import { DinheiroRapido } from '../components/DinheiroRapido.jsx';
+import { avisarEstoqueMudou } from '../components/EstoqueComum.jsx';
 import {
   IconeVenda,
   IconeEntrada,
@@ -140,6 +141,9 @@ export function Dashboard() {
   function aoLancar() {
     setAberto(null);
     carregar();
+    // A venda baixa doce pronto: o número de "acabando" da Produção pode
+    // ter mudado.
+    avisarEstoqueMudou();
   }
 
   /**
