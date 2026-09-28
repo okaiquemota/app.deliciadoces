@@ -153,8 +153,15 @@ export const movimentacaoService = {
 
         // Média ponderada. Se o saldo anterior era zero ou negativo, o
         // custo da compra nova passa a valer sozinho.
+        //
+        // O mesmo quando o custo anterior é 0, que aqui quer dizer "não
+        // sei" — estoque que entrou por ajuste ("achei no estoque") ou por
+        // compra sem valor. Pesado como se tivesse custado nada, ele
+        // puxava a média para baixo: 15 caixas achadas mais 21 compradas a
+        // R$ 1,20 davam custo de R$ 0,70, e todo lote saía mais barato do
+        // que é.
         const custoMedio =
-          saldoAnterior > 0
+          saldoAnterior > 0 && custoAnterior > 0
             ? (saldoAnterior * custoAnterior + qtdComprada * custoCompra) /
               (saldoAnterior + qtdComprada)
             : custoCompra;

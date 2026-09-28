@@ -201,14 +201,14 @@ Cada requisito, onde ele vive no código.
 | (desfazer lote) | `DELETE /api/producoes/:id`                                  | Kardex → lote → Excluir lote                     | `tests/producao.test.js`                         |
 | RF27            | `GET /api/producoes/previsao`                                | Produção                                         | `tests/producao.test.js`                         |
 | RF28–RF32       | `/api/fechamentos`                                           | Fechamento                                       | `tests/fechamento.test.js`                       |
-| RF33–RF36       | `GET /api/dashboard`                                         | Resumo                                           | —                                                |
+| RF33–RF36       | `GET /api/dashboard`                                         | Resumo (gráfico com tabela dos números)          | `tests/dashboard.test.js`                        |
 
 ---
 
 ## 8. Validação dos requisitos
 
-A suíte automatizada tem **145 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade.
+A suíte automatizada tem **146 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade.
 
-Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro calcular o saldo do kardex ignorando o que ficou fora do período e deixar a edição de um cadastro preencher os valores padrão (o que zerava o custo médio do ingrediente). Todas foram detectadas.
+Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro calcular o saldo do kardex ignorando o que ficou fora do período deixar a edição de um cadastro preencher os valores padrão (o que zerava o custo médio do ingrediente) e pesar como custo zero o estoque de custo desconhecido na média de uma compra nova. Todas foram detectadas.
 
 Os requisitos não funcionais de interface (RNF01 a RNF04) foram verificados por medição em navegador nas resoluções 360×800, 390×844 e 1280×800.

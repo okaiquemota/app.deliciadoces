@@ -232,6 +232,26 @@ describe('custo médio do insumo', () => {
     expect(Number(atual.custoUnitario)).toBeCloseTo(17.5, 2);
     expect(await saldoInsumo(insumo.id)).toBe(40);
   });
+
+  it('estoque de custo desconhecido não entra na média como se fosse de graça', async () => {
+    // 15 caixas achadas na contagem (custo 0 = não sei) + 21 a R$ 1,20:
+    // o custo é R$ 1,20, e não os R$ 0,70 de pesar as achadas como zero.
+    const insumo = await criarInsumo({ custoUnitario: 0 });
+    await prisma.$transaction((tx) =>
+      estoqueService.movimentar(tx, {
+        tipo: 'AJUSTE',
+        insumoId: insumo.id,
+        quantidade: 15,
+        motivo: 'achei no estoque',
+      })
+    );
+    await movimentacaoService.registrar(
+      { tipo: 'ENTRADA_COMPRA', insumoId: insumo.id, quantidade: 21, custoUnitario: 1.2 },
+      null
+    );
+    const atual = await prisma.insumo.findUnique({ where: { id: insumo.id } });
+    expect(Number(atual.custoUnitario)).toBeCloseTo(1.2, 4);
+  });
 });
 
 describe('alertas de estoque', () => {

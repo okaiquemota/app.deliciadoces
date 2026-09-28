@@ -146,12 +146,7 @@ body {
 /* Todo número que vai ser comparado de cima a baixo usa figura de largura
    fixa: sem isso R$ 1.111,00 fica visivelmente mais estreito que
    R$ 8.888,00 e a coluna deixa de alinhar na vírgula. */
-.tabela td,
-.indicador__valor,
 .cartao-acao__valor,
-.conta__linha,
-.conta__total,
-.saldo-grande,
 .barra-confirmar__total,
 .valor__campo {
   font-variant-numeric: tabular-nums;
@@ -236,23 +231,6 @@ body {
      onde nasce; isto garante que a próxima não vire tela torta. */
   overflow-x: hidden;
   padding: var(--gutter);
-}
-
-/* Tela cujo conteúdo é uma tabela: ela ocupa a altura que sobrar e rola
-   por dentro, em vez de esticar a página. */
-.app__conteudo > *:has(.tabela__rolagem) {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.app__conteudo > *:has(.tabela__rolagem) > *:not(.tabela__rolagem) {
-  flex: 0 0 auto;
-}
-
-.app__conteudo > *:has(.tabela__rolagem) > .tabela__rolagem {
-  min-height: 160px;
-  box-shadow: var(--sombra-cartao);
 }
 
 .app__conteudo > * > *:last-child {
@@ -460,29 +438,6 @@ body {
   clip-path: inset(50%);
 }
 
-.pagina__cabecalho {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.pagina__titulo {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.pagina__texto,
-.pagina__periodo {
-  margin: 0;
-  color: var(--texto-suave);
-  font-size: 0.875rem;
-}
-
 /* =====================================================================
    BOTÕES
    ===================================================================== */
@@ -636,20 +591,6 @@ input[type='date']::-webkit-date-and-time-value {
   flex: 1;
 }
 
-.filtro-periodo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--texto-suave);
-  font-size: 0.8125rem;
-}
-
-.filtro-periodo .campo__entrada {
-  width: auto;
-  padding: 6px 9px;
-  font-size: 0.875rem;
-}
-
 /* =====================================================================
    SUPERFÍCIES
    ===================================================================== */
@@ -660,11 +601,6 @@ input[type='date']::-webkit-date-and-time-value {
   border-radius: var(--r-2);
   background-color: var(--superficie);
   box-shadow: var(--sombra-cartao);
-}
-
-.cartao--alerta {
-  border-color: var(--erro-borda);
-  background-color: var(--erro-fundo);
 }
 
 .cartao__titulo {
@@ -715,21 +651,6 @@ input[type='date']::-webkit-date-and-time-value {
   background-color: var(--c-100);
   color: var(--c-700);
   font-size: 0.8125rem;
-}
-
-.painel-duplo {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 14px;
-  margin-top: 20px;
-}
-
-/* O gráfico é o que ganha com largura; o texto ao lado, não. Dois terços
-   e um terço, em vez de metade e metade. */
-@media (min-width: 1100px) {
-  .painel-duplo {
-    grid-template-columns: 2fr 1fr;
-  }
 }
 
 /* ---------- Minha conta, no desenho da página de perfil do Mercado Livre
@@ -866,8 +787,22 @@ input[type='date']::-webkit-date-and-time-value {
    referência de extrato. A lista lisa e os blocos cinza-claro sobre o
    cinza das outras telas pareceriam desbotados. */
 .app__conteudo:has(> .extrato),
-.app__conteudo:has(> .inicio) {
+.app__conteudo:has(> .inicio),
+.app__conteudo:has(> .pagina-lisa) {
   background-color: var(--superficie);
+}
+
+/* Tela no desenho do extrato que não é uma lista que rola por dentro
+   (Fechar dia, Resumo): os mesmos blocos, um embaixo do outro, e a página
+   inteira rola. */
+.pagina-lisa {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pagina-lisa > * {
+  margin: 0;
 }
 
 /* ---------- Peças comuns ao Início e ao Caixa ---------- */
@@ -1706,108 +1641,6 @@ input[type='date']::-webkit-date-and-time-value {
   height: 42px;
 }
 
-/* =====================================================================
-   INDICADORES (tela de resumo)
-   ===================================================================== */
-
-.indicadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
-}
-
-.indicador {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 16px;
-  border: 1px solid var(--borda);
-  border-radius: var(--r-2);
-  background-color: var(--superficie);
-  box-shadow: var(--sombra-cartao);
-}
-
-.indicador__rotulo {
-  font-size: 0.8125rem;
-  color: var(--texto-suave);
-}
-
-.indicador__valor {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: var(--tr-numero);
-}
-
-.indicador__dica {
-  font-size: 0.75rem;
-  color: var(--texto-suave);
-}
-
-.indicador--positivo .indicador__valor {
-  color: var(--ok);
-}
-
-.indicador--negativo .indicador__valor {
-  color: var(--erro);
-}
-
-/* =====================================================================
-   TABELA
-   ===================================================================== */
-
-.tabela__rolagem {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-width: 100%;
-  overflow: auto;
-  border: 1px solid var(--borda);
-  border-radius: var(--r-2);
-  background-color: var(--superficie);
-}
-
-.tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.tabela thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background-color: var(--c-50);
-}
-
-.tabela th {
-  padding: 9px 14px;
-  border-bottom: 1px solid var(--borda);
-  color: var(--texto-suave);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.tabela td {
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--c-100);
-  vertical-align: middle;
-}
-
-.tabela tr:last-child td {
-  border-bottom: none;
-}
-
-.tabela__linha--clicavel {
-  cursor: pointer;
-}
-
-.tabela__linha--clicavel:hover {
-  background-color: var(--c-50);
-}
-
 .tabela__aviso {
   padding: 40px 24px;
   border: 1px solid var(--borda);
@@ -1865,12 +1698,6 @@ input[type='date']::-webkit-date-and-time-value {
   border-color: var(--ok-borda);
   background-color: var(--ok-fundo);
   color: var(--ok);
-}
-
-.alerta--atencao {
-  border-color: var(--aviso-borda);
-  background-color: var(--aviso-fundo);
-  color: var(--aviso);
 }
 
 /* =====================================================================
@@ -2667,70 +2494,6 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 0.8125rem;
 }
 
-.conta {
-  margin: 0 0 8px;
-  padding: 0;
-  list-style: none;
-}
-
-.conta__linha,
-.conta__total {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--c-100);
-  font-size: 0.9375rem;
-  letter-spacing: var(--tr-numero);
-}
-
-.conta__linha {
-  color: var(--texto-suave);
-}
-
-.conta__total {
-  padding-top: 12px;
-  border-bottom: none;
-  font-size: 1.0625rem;
-  font-weight: 600;
-}
-
-.conta__sinal {
-  margin-right: 4px;
-  color: var(--texto-suave);
-}
-
-.lista-simples {
-  margin: 0 0 6px;
-  padding: 0;
-  font-size: 0.875rem;
-  list-style: none;
-}
-
-.lista-simples li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--c-100);
-}
-
-.lista-simples li:last-child {
-  border-bottom: none;
-}
-
-.saldo-grande {
-  margin: 6px 0 0;
-  color: var(--ok);
-  font-size: 1.625rem;
-  font-weight: 600;
-  letter-spacing: var(--tr-numero);
-}
-
-.saldo-grande--negativo {
-  color: var(--erro);
-}
-
 .fechamento__falta {
   color: var(--erro);
   font-weight: 600;
@@ -2751,24 +2514,398 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 /* =====================================================================
-   GRÁFICO
+   FECHAR DIA E RESUMO
+
+   No desenho do resto do sistema: título grande, os filtros em chips, o
+   bloco cinza com o número que importa, e o resto em blocos lisos com
+   título. No computador, duas colunas; no celular, uma embaixo da outra.
    ===================================================================== */
 
-.grafico {
-  display: flex;
-  align-items: flex-end;
-  gap: 7px;
-  height: 150px;
-  margin-bottom: 8px;
+.bloco__titulo {
+  margin: 0;
+  color: var(--texto);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: var(--tr-titulo);
 }
 
-.grafico__coluna {
+.bloco__cabeca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 14px;
+  margin-bottom: 12px;
+}
+
+/* Um estado ao lado dos chips ("Dia fechado"): mesma altura, mas não é
+   botão — fundo de cor, sem contorno. */
+.selo {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.selo--ok {
+  background-color: var(--ok-fundo);
+  color: var(--ok);
+}
+
+.icone-aro--ok {
+  border-color: var(--ok-borda);
+  background-color: var(--ok-fundo);
+  color: var(--ok);
+}
+
+/* O dia aberto na tela, na lista dos últimos dias. */
+.extrato__item--atual {
+  background-color: var(--c-50);
+}
+
+.extrato__total-nota {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+/* Linhas de uma conta: o nome à esquerda, o valor à direita, um fio
+   entre elas. A última pode ser o total. */
+.conta-linhas {
+  margin: 0;
+}
+
+.conta-linhas > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--c-200);
+  font-size: 0.9375rem;
+}
+
+.conta-linhas dt {
+  color: var(--texto-suave);
+}
+
+.conta-linhas dd {
+  margin: 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.conta-linhas__total {
+  font-weight: 700;
+}
+
+.conta-linhas__total dt,
+.conta-linhas__total dd {
+  color: var(--texto);
+  font-weight: 700;
+}
+
+/* ---------- Fechar dia ---------- */
+
+/* `minmax(0, 1fr)` e não a coluna automática: esta cresce até caber o
+   texto mais comprido que não quebra (o detalhe de um dia, com
+   reticências), e no celular empurrava a tela inteira para fora. */
+.fechar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+
+.fechar__principal {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  gap: 14px;
+}
+
+/* O esperado é o bloco cinza da tela: o número grande e, embaixo, a conta
+   que chegou nele. */
+.fechar__conta {
+  padding: 18px 20px 8px;
+  border-radius: var(--r-2);
+  background-color: var(--c-50);
+}
+
+.fechar__rotulo {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.fechar__esperado {
+  margin: 2px 0 12px;
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.fechar__nota {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.fechar__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.fechar__form .valor,
+.fechar__form .campo {
+  margin-bottom: 0;
+}
+
+.fechar__apagar {
+  align-self: center;
+}
+
+.fechar__historico .bloco__titulo {
+  margin-bottom: 4px;
+}
+
+/* A diferença em palavras, com o ícone e a cor do estado — nunca só a
+   cor. */
+.veredito {
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-2);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.veredito .icone {
+  flex: 0 0 auto;
+}
+
+.veredito--ok {
+  background-color: var(--ok-fundo);
+  color: var(--ok);
+}
+
+.veredito--aviso {
+  background-color: var(--aviso-fundo);
+  color: var(--aviso);
+}
+
+.veredito--alerta {
+  background-color: var(--erro-fundo);
+  color: var(--erro);
+}
+
+/* ---------- Resumo ---------- */
+
+.resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.resumo__rotulo {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+/* O número da tela: o lucro, grande, na mesma fonte de tudo, com os
+   algarismos proporcionais (os de largura fixa deixam "121" frouxo nesse
+   tamanho). Vermelho só quando é prejuízo. */
+.resumo__numero {
+  margin: 0;
+  font-size: clamp(2.25rem, 10vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.resumo__numero--negativo {
+  color: var(--erro);
+}
+
+.resumo__explica {
+  margin: 4px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.resumo__grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  margin-top: 6px;
+}
+
+.resumo__lado {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.resumo__bloco > .bloco__titulo {
+  margin-bottom: 10px;
+}
+
+.resumo__vazio {
+  margin: 0;
+  padding: 20px 0;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+}
+
+/* Como receberam: nome e valor em cima, a fatia do total embaixo — o
+   trilho é o verde mais claro, a barra o verde de "entrou". */
+.formas-pagamento {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.forma-pagamento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  font-size: 0.9375rem;
+}
+
+.forma-pagamento__valor {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.forma-pagamento__fatia {
+  display: inline-block;
+  min-width: 3.2em;
+  margin-left: 8px;
+  color: var(--texto-suave);
+  font-weight: 400;
+  text-align: right;
+}
+
+.forma-pagamento__trilho {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--ok-fundo);
+}
+
+.forma-pagamento__barra {
+  display: block;
   height: 100%;
+  border-radius: 3px;
+  background-color: var(--ok);
+  transition: width 360ms var(--curva-entra);
+}
+
+/* ---------- Gráfico de colunas por dia ----------
+
+   As medidas vêm do guia de gráficos do projeto: barra de no máximo 24px,
+   canto de 4px só na ponta (a base é reta, no eixo), 2px de vão entre as
+   duas barras do mesmo dia, grade em fio contínuo um tom acima do branco
+   e um eixo só. Vendas no verde de "entrou"; custos no cinza --c-400, que
+   passa 3:1 contra o branco. */
+
+.grafico {
+  --grafico-altura: 180px;
+  display: flex;
+  gap: 8px;
+}
+
+.grafico__eixo {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px;
+  height: var(--grafico-altura);
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Cada valor do eixo centrado no fio da grade que ele nomeia. */
+.grafico__eixo > span {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.grafico__eixo > span:nth-child(1) {
+  top: 0;
+}
+
+.grafico__eixo > span:nth-child(2) {
+  top: 50%;
+}
+
+.grafico__eixo > span:nth-child(3) {
+  top: 100%;
+}
+
+.grafico__area {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.grafico__grade {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: var(--grafico-altura);
+  pointer-events: none;
+}
+
+.grafico__grade > span {
+  border-top: 1px solid var(--c-100);
+}
+
+/* A linha do zero é o eixo: um tom mais firme que a grade. */
+.grafico__grade > span:last-child {
+  border-top-color: var(--c-300);
+}
+
+.grafico__dias {
+  position: relative;
+  display: flex;
+}
+
+/* O dia inteiro é o alvo — do topo do gráfico ao rótulo —, não só a
+   barra: ninguém acerta uma coluna de 6px com o dedo. */
+.grafico__dia {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
 .grafico__barras {
@@ -2776,54 +2913,219 @@ input[type='date']::-webkit-date-and-time-value {
   align-items: flex-end;
   justify-content: center;
   gap: 2px;
-  width: 100%;
-  height: 100%;
+  height: var(--grafico-altura);
+  padding: 0 14%;
+  border-radius: 8px 8px 0 0;
+  transition: background-color 150ms ease-out;
+}
+
+/* O dia apontado ganha um véu por trás das barras: ela vê que o toque
+   pegou, e em qual dia. */
+.grafico__dia--ativo .grafico__barras {
+  background-color: var(--c-50);
 }
 
 .grafico__barra {
-  width: 45%;
-  min-height: 2px;
-  border-radius: 2px 2px 0 0;
-  transition: height 0.2s;
+  flex: 0 1 24px;
+  min-width: 2px;
+  max-width: 24px;
+  border-radius: 4px 4px 0 0;
+  transition: height 360ms var(--curva-entra);
 }
 
-/* Venda é o preto cheio; despesa é o cinza médio. Duas cores não fazem
-   falta: a legenda diz qual é qual e a diferença de valor já se lê pela
-   altura. */
-.grafico__barra--venda {
-  background-color: var(--c-800);
+.grafico__barra--venda,
+.grafico__chave--venda,
+.grafico__traco--venda {
+  background-color: var(--ok);
 }
 
-.grafico__barra--despesa {
-  background-color: var(--c-300);
+.grafico__barra--custo,
+.grafico__chave--custo,
+.grafico__traco--custo {
+  background-color: var(--c-400);
 }
 
 .grafico__rotulo {
-  font-size: 0.6875rem;
+  height: 26px;
+  overflow: visible;
   color: var(--texto-suave);
+  font-size: 0.75rem;
+  line-height: 26px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.grafico__dias--denso .grafico__rotulo {
+  font-size: 0.6875rem;
+}
+
+/* A dica do dia: o valor em destaque, o nome da série depois, e um traço
+   da cor da série — não um quadrado, que pesaria mais que o texto. */
+.grafico__dica {
+  position: absolute;
+  top: 4px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 150px;
+  padding: 9px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background-color: var(--superficie);
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.2);
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  text-align: left;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.grafico__dica--esquerda {
+  left: 50%;
+}
+
+.grafico__dica--meio {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.grafico__dica--direita {
+  right: 50%;
+}
+
+.grafico__dica-dia {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.grafico__dica-linha strong {
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.grafico__traco {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: middle;
 }
 
 .grafico__legenda {
   display: flex;
   gap: 14px;
-  font-size: 0.75rem;
+  margin: 0;
+  padding: 0;
   color: var(--texto-suave);
+  font-size: 0.8125rem;
+  list-style: none;
 }
 
-.ponto {
+.grafico__chave {
   display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 5px;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
   border-radius: 2px;
 }
 
-.ponto--venda {
-  background-color: var(--c-800);
+/* Os números do gráfico, para quem não aponta nem vê a cor. */
+.grafico__tabela {
+  margin-top: 8px;
 }
 
-.ponto--despesa {
-  background-color: var(--c-300);
+.grafico__tabela summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--texto);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.grafico__tabela summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A seta diz que abre; aberta, aponta para baixo. */
+.grafico__tabela summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 200ms var(--curva-entra);
+}
+
+.grafico__tabela[open] summary::after {
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.tabela-simples {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tabela-simples th,
+.tabela-simples td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-100);
+  text-align: right;
+}
+
+.tabela-simples th:first-child {
+  text-align: left;
+}
+
+.tabela-simples thead th {
+  color: var(--texto-suave);
+  font-weight: 500;
+}
+
+.tabela-simples td,
+.tabela-simples tbody th {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela-simples tbody th {
+  font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  .fechar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 40px;
+  }
+
+  .resumo__grade {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 560px) {
+  .grafico {
+    --grafico-altura: 150px;
+    gap: 6px;
+  }
+
+  .grafico__eixo {
+    width: 44px;
+    font-size: 0.6875rem;
+  }
+
+  .fechar__esperado {
+    font-size: 2rem;
+  }
 }
 
 /* =====================================================================
@@ -3185,20 +3487,8 @@ input[type='date']::-webkit-date-and-time-value {
     padding: var(--respiro-topo) 14px calc(20px + var(--avanco-barra));
   }
 
-  .pagina__cabecalho {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .filtro-periodo,
   .seletor-periodo {
     width: 100%;
-  }
-
-  .filtro-periodo .campo__entrada {
-    flex: 1;
-    min-width: 0;
   }
 
   .seletor-periodo__item {
@@ -3214,16 +3504,8 @@ input[type='date']::-webkit-date-and-time-value {
     gap: 0;
   }
 
-  .painel-duplo {
-    grid-template-columns: 1fr;
-  }
-
   .botao--auto {
     width: 100%;
-  }
-
-  .indicadores {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .cartao {
@@ -3246,20 +3528,6 @@ input[type='date']::-webkit-date-and-time-value {
     margin-top: 10px;
   }
 
-  .indicador {
-    padding: 13px;
-  }
-
-  .indicador__valor {
-    font-size: 1.25rem;
-  }
-
-  .tabela th,
-  .tabela td {
-    padding: 10px 12px;
-    white-space: nowrap;
-  }
-
   /* O modal vira tela cheia: em 390px, margem lateral é espaço perdido. */
   .modal {
     align-items: stretch;
@@ -3274,10 +3542,6 @@ input[type='date']::-webkit-date-and-time-value {
 
   .modal__corpo {
     padding: 16px;
-  }
-
-  .grafico {
-    height: 120px;
   }
 }
 
@@ -3302,11 +3566,10 @@ input[type='date']::-webkit-date-and-time-value {
     min-width: 44px;
   }
 
-  /* `botao--texto` é ação secundária dentro de linha de tabela ("editar",
-     "cancelar"), e é a única exceção. Subir para 44 engordaria a tabela
-     inteira: com dez linhas são 100px a mais de rolagem para nada. Os
-     34px passam o mínimo de 24 da WCAG 2.5.8 (AA); os 44 são recomendação
-     de plataforma, não exigência. */
+  /* `botao--texto` é ação secundária de texto ("Tirar" um item, "Apagar
+     este fechamento"), e é a única exceção: subir para 44 abriria vãos no
+     meio dos formulários. Os 34px passam o mínimo de 24 da WCAG 2.5.8
+     (AA); os 44 são recomendação de plataforma, não exigência. */
   .botao--texto {
     min-height: 34px;
   }
@@ -3326,8 +3589,7 @@ input[type='date']::-webkit-date-and-time-value {
      alguém descobrir o gesto de pinça. Os campos estavam com 14 e 15. */
   .campo__entrada,
   .extrato__busca,
-  .extrato__data .campo__entrada,
-  .filtro-periodo .campo__entrada {
+  .extrato__data .campo__entrada {
     font-size: 1rem;
   }
 }
