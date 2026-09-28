@@ -109,3 +109,41 @@ export function saudacao(agora = new Date()) {
   if (h < 18) return 'Boa tarde';
   return 'Boa noite';
 }
+
+/** Só dígitos, em centavos, para o campo: "155000" → "1.550,00". */
+function centavosParaCampo(digitos) {
+  const c = digitos.padStart(3, '0');
+  return `${Number(c.slice(0, -2)).toLocaleString('pt-BR')},${c.slice(-2)}`;
+}
+
+/**
+ * Dinheiro digitado no jeito dos apps de banco: os dígitos entram pela
+ * DIREITA, começando pelos centavos — 1 vira 0,01; 15, 0,15; 1500, 15,00.
+ * Não há vírgula para caçar no teclado, e o valor está sempre com duas
+ * casas. Fica só com os dígitos do que chegou (colado com "R$", com
+ * ponto, com espaço). Até 8 dígitos: R$ 999.999,99 — o dígito a mais é
+ * ignorado, não empurra o valor.
+ *
+ * `anterior` é o que estava no campo antes. Serve para o zero: digitar
+ * "0" num campo vazio mostra 0,00 (a gaveta pode estar vazia, e isso é
+ * uma resposta), mas apagar o 0,00 esvazia o campo — sem olhar o antes,
+ * os dois dariam o mesmo texto.
+ */
+export function digitarDinheiro(texto, anterior = '') {
+  const bruto = String(texto ?? '');
+  const digitos = bruto.replace(/\D/g, '').replace(/^0+/, '');
+  if (!digitos) return /0/.test(bruto) && bruto.length > anterior.length ? '0,00' : '';
+  const antes = anterior.replace(/\D/g, '').replace(/^0+/, '');
+  return digitos.length > 8 && digitos.length > antes.length
+    ? anterior
+    : centavosParaCampo(digitos);
+}
+
+/** Número para o campo de dinheiro: 1234.5 → "1.234,50". */
+export const dinheiroParaCampo = (n) => centavosParaCampo(String(Math.round(Number(n ?? 0) * 100)));
+
+/** O texto do campo de dinheiro de volta para número; vazio → NaN. */
+export function lerDinheiro(texto) {
+  const t = String(texto ?? '').trim();
+  return t ? Number(t.replace(/\./g, '').replace(',', '.')) : NaN;
+}

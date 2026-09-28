@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Modal } from '../components/Modal.jsx';
-import { Interruptor, Linha, Selecao, Texto } from '../components/Campo.jsx';
+import { Dinheiro, Interruptor, Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { Dado, Total, normalizar } from '../components/Extrato.jsx';
 import { IconeEstoque } from '../components/Icones.jsx';
 import {
@@ -546,13 +546,14 @@ function FormularioCompra({ insumo, aoFechar, aoSalvar }) {
             required
             autoFocus
           />
-          <Texto
+          <Dinheiro
             rotulo="Quanto pagou (R$)"
-            type="text"
-            inputMode="decimal"
             placeholder="Opcional"
             value={total}
-            onChange={mudar(setTotal)}
+            aoMudar={(v) => {
+              setTotal(v);
+              setErro('');
+            }}
           />
         </Linha>
         {porUnidade && (
