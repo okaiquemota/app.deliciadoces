@@ -98,6 +98,25 @@ export const IconeSeta = (p) => (
   </Base>
 );
 
+/** Três trilhos com botão: o sinal de "filtros" que os apps de banco usam. */
+export const IconeFiltros = (p) => (
+  <Base {...p}>
+    <path d="M4 6h8M16 6h4" />
+    <circle cx="14" cy="6" r="2" />
+    <path d="M4 12h2M10 12h10" />
+    <circle cx="8" cy="12" r="2" />
+    <path d="M4 18h10M18 18h2" />
+    <circle cx="16" cy="18" r="2" />
+  </Base>
+);
+
+/** Visto: a opção escolhida numa lista. */
+export const IconeVisto = (p) => (
+  <Base {...p}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </Base>
+);
+
 /* ---------------------------------------------------------------------
    Ícones de navegação.
 

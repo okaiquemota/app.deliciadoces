@@ -97,7 +97,10 @@
 
   /* ----- Medidas do esqueleto --------------------------------------- */
   --lateral: 236px;
-  --barra-baixo: 60px;
+  --barra-baixo: 64px;
+  /* Cantos de cima da barra de baixo do celular. É também quanto ela
+     avança sobre o conteúdo, para os cantos mostrarem a tela por trás. */
+  --barra-raio: 20px;
   --gutter: 24px;
 
   /* Sombra de cartão no nível da Apple: quase nada, só o suficiente para
@@ -828,10 +831,20 @@ input[type='date']::-webkit-date-and-time-value {
 /* =====================================================================
    EXTRATO (Caixa)
 
-   O desenho do extrato de banco: filtros no alto, o resumo do período
-   num cartão, e a lista agrupada por dia rolando dentro do próprio
-   quadro — os filtros e o resumo nunca saem da tela.
+   No desenho do extrato dos apps de banco: título grande, a busca na
+   largura toda, os filtros em chips e a lista LISA — sem cartão e sem
+   fio entre as linhas, sobre fundo branco. O que separa um lançamento do
+   outro é o respiro; o que separa um dia do outro é o cabeçalho do dia.
+
+   No computador, título, busca, chips e resumo ficam parados e só a lista
+   rola. No celular a tela inteira rola (ver o bloco do celular).
    ===================================================================== */
+
+/* A tela do Caixa é branca inteira, como a referência. A lista lisa
+   sobre o cinza das outras telas pareceria desbotada. */
+.app__conteudo:has(> .extrato) {
+  background-color: var(--superficie);
+}
 
 .extrato {
   display: flex;
@@ -845,77 +858,182 @@ input[type='date']::-webkit-date-and-time-value {
   margin: 0;
 }
 
-.extrato__filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+.extrato__cabeca {
+  color: var(--texto);
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
 }
 
-.extrato__filtros-linha {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Campo de busca no desenho do iOS: preenchido de cinza, sem borda, com
-   a lupa dentro. Mesma altura e mesmo cinza do controle segmentado ao
-   lado, para a barra de filtros ler como uma peça só. */
+/* Busca: uma pílula com contorno e a lupa dentro, na largura toda. */
 .extrato__busca {
-  width: 260px;
-  margin-left: auto;
-  padding: 5px 10px 5px 32px;
-  border: none;
-  border-radius: 9px;
-  background: rgb(118 118 128 / 0.12)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4.5 4.5'/%3E%3C/svg%3E")
-    no-repeat 10px center / 15px;
-  font-size: 0.875rem;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 18px 10px 48px;
+  border: 1.5px solid var(--borda-forte);
+  border-radius: 999px;
+  background: var(--superficie)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1d1f' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4.5 4.5'/%3E%3C/svg%3E")
+    no-repeat 18px center / 20px;
+  font-size: 1rem;
 }
 
 .extrato__busca:focus {
-  border: none;
-  background-color: var(--superficie);
-  box-shadow:
-    0 0 0 1px var(--borda-forte),
-    0 0 0 4px rgb(0 0 0 / 0.08);
+  border-color: var(--acao);
+  box-shadow: 0 0 0 3.5px rgb(0 0 0 / 0.08);
 }
 
 .extrato__busca::-webkit-search-cancel-button {
   cursor: pointer;
 }
 
+/* ---------- Chips de filtro ----------
+
+   Uma fileira que rola para o lado quando não cabe — no celular, o chip
+   cortado na borda da tela é o que avisa que tem mais. O respiro de 4px
+   em cima e embaixo é para o anel de foco e a moldura de toque não serem
+   recortados pela rolagem. */
+
+.extrato__chips {
+  display: flex;
+  gap: 8px;
+  margin: -4px 0;
+  padding: 4px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.extrato__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1.5px solid var(--borda-forte);
+  border-radius: 12px;
+  background-color: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 90ms ease-out,
+    border-color 90ms ease-out;
+}
+
+/* Moldura invisível: o desenho tem 38px, o alvo do dedo 46. */
+.chip::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.chip:focus-visible {
+  outline-offset: 1px;
+}
+
+/* Chip ligado: preenchido com a cor de ação, como um botão apertado. */
+.chip[aria-pressed='true'] {
+  border-color: var(--acao);
+  background-color: var(--acao);
+  color: var(--c-0);
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    border-color: var(--c-400);
+  }
+
+  .chip[aria-pressed='true']:hover {
+    border-color: var(--acao-hover);
+    background-color: var(--acao-hover);
+  }
+}
+
+/* ---------- Escolha do período (janela) ---------- */
+
+.opcoes {
+  display: flex;
+  flex-direction: column;
+}
+
+.opcao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 12px 2px;
+  border: none;
+  border-bottom: 1px solid var(--c-100);
+  background: none;
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.opcao:last-child {
+  border-bottom: none;
+}
+
+.opcao[aria-pressed='true'] {
+  font-weight: 600;
+}
+
+/* Uma data por linha, com o rótulo à esquerda — como Início e Fim de um
+   evento no Calendário do iPhone. Lado a lado não cabiam no celular: a
+   data por extenso do Safari ("25 de set. de 2026") pede quase metade da
+   tela cada uma. */
 .extrato__datas {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .extrato__data {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  min-width: 0;
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
-.extrato__data .campo__entrada {
-  width: auto;
-  padding: 6px 9px;
-  font-size: 0.875rem;
+.extrato__data > span {
+  flex: 0 0 30px;
 }
 
-/* ---------- Resumo do período: três números lado a lado ---------- */
+.extrato__data .campo__entrada {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+/* ---------- Resumo do período ----------
+
+   Um bloco cinza-claro, sem borda nem sombra: na lista lisa, um cartão
+   com contorno seria o único objeto "de caixa" da tela. */
 
 .extrato__resumo {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border: 1px solid var(--borda);
+  gap: 12px;
+  padding: 14px 18px;
   border-radius: var(--r-2);
-  background-color: var(--superficie);
-  box-shadow: var(--sombra-cartao);
+  background-color: var(--c-50);
 }
 
 .extrato__total {
@@ -923,25 +1041,18 @@ input[type='date']::-webkit-date-and-time-value {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  padding: 14px 20px;
-}
-
-.extrato__total + .extrato__total {
-  border-left: 1px solid var(--borda);
 }
 
 .extrato__total-rotulo {
   color: var(--texto-suave);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 .extrato__total-valor {
   overflow: hidden;
-  font-size: 1.375rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tr-numero);
   line-height: 1.2;
@@ -962,50 +1073,59 @@ input[type='date']::-webkit-date-and-time-value {
   color: var(--erro);
 }
 
-/* ---------- A lista ---------- */
+/* ---------- A lista ----------
+
+   Os lançamentos saem 12px para cada lado da margem do texto, para o
+   realce de passar o mouse ter respiro em volta do ícone e do valor. A
+   lista devolve esses 12px no próprio respiro: como ela rola, qualquer
+   coisa além da sua borda abriria uma rolagem para o lado. */
 
 .extrato__lista {
   flex: 1 1 auto;
   min-height: 160px;
+  margin: 0 -12px;
+  padding: 0 12px;
   overflow-y: auto;
-  border: 1px solid var(--borda);
-  border-radius: var(--r-2);
-  background-color: var(--superficie);
-  box-shadow: var(--sombra-cartao);
 }
 
 .extrato__vazio {
   margin: 0;
-  padding: 40px 24px;
+  padding: 40px 0;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   text-align: center;
 }
 
 .extrato__dia + .extrato__dia {
-  border-top: 1px solid var(--borda);
+  margin-top: 8px;
 }
 
 /* O cabeçalho do dia gruda no alto enquanto a lista do dia passa por
-   baixo: rolando uma semana, ela sempre sabe em que dia está. */
+   baixo: rolando uma semana, ela sempre sabe em que dia está. Branco
+   como a tela, e estendido nos 12px da lista para cobrir o que passa. */
 .extrato__dia-titulo {
   position: sticky;
   top: 0;
   z-index: 1;
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin: 0;
-  padding: 8px 20px;
-  border-bottom: 1px solid var(--borda);
-  background-color: var(--c-50);
-  color: var(--texto-suave);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  margin: 0 -12px;
+  padding: 14px 12px 6px;
+  background-color: var(--superficie);
+  color: var(--texto);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: var(--tr-titulo);
 }
 
 .extrato__dia-saldo {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -1016,14 +1136,15 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .extrato__item {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
-  width: 100%;
-  min-height: 62px;
-  padding: 11px 20px;
+  width: calc(100% + 24px);
+  min-height: 70px;
+  margin: 0 -12px;
+  padding: 10px 12px;
   border: none;
+  border-radius: 14px;
   background: none;
   color: var(--texto);
   font-family: inherit;
@@ -1032,44 +1153,33 @@ input[type='date']::-webkit-date-and-time-value {
   transition: background-color 90ms ease-out;
 }
 
-.extrato__item:hover {
-  background-color: var(--c-50);
+/* Só onde existe mouse: no toque, o realce ficaria preso na linha
+   tocada depois que a janela fecha. */
+@media (hover: hover) {
+  .extrato__item:hover {
+    background-color: var(--c-50);
+  }
 }
 
-.extrato__item:focus-visible {
-  outline-offset: -3px;
-}
-
-/* Fio entre lançamentos começando no texto, não na borda — o ícone
-   fica de fora, como nas listas do iOS. 20 de margem + 36 do ícone +
-   14 de vão. */
-.extrato__itens > li + li > .extrato__item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 70px;
-  height: 1px;
-  background-color: var(--c-100);
-}
-
+/* Ícone num círculo branco com aro cinza, como no extrato do banco. */
 .extrato__icone {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--c-200);
   border-radius: 50%;
-  background-color: var(--c-100);
-  color: var(--c-700);
+  background-color: var(--superficie);
+  color: var(--texto);
 }
 
 .extrato__textos {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -1079,8 +1189,8 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato__titulo {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
@@ -1096,19 +1206,26 @@ input[type='date']::-webkit-date-and-time-value {
   white-space: nowrap;
 }
 
-.extrato__valor {
+/* Valor em cima, hora embaixo, os dois alinhados à direita. */
+.extrato__lado {
+  display: flex;
   flex: 0 0 auto;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.extrato__valor {
+  font-size: 1rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.extrato__seta {
-  display: flex;
-  flex: 0 0 auto;
-  margin-right: -6px;
-  color: var(--icone-fraco);
+.extrato__hora {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Venda cancelada continua à vista — ela pode querer restaurar —, mas
@@ -2577,9 +2694,18 @@ input[type='date']::-webkit-date-and-time-value {
     max-width: 34vw;
   }
 
+  /* A barra de baixo no desenho dos apps de banco: branca, com os cantos
+     de cima arredondados e uma sombra para cima, flutuando sobre a tela.
+     Ela avança sobre o conteúdo a medida do canto — sem isso, o canto
+     arredondado mostraria o fundo cinza da página por trás, e não a tela
+     (no Caixa, branca). */
   .app__lado {
+    position: relative;
+    z-index: 2;
+    margin-top: calc(-1 * var(--barra-raio));
     border-right: none;
-    border-top: 1px solid var(--borda);
+    border-radius: var(--barra-raio) var(--barra-raio) 0 0;
+    box-shadow: 0 -4px 20px rgb(0 0 0 / 0.07);
     /* A barra encosta no fim da tela; no iPhone o "queixo" do gesto de
        voltar para casa fica por cima dela sem este respiro. */
     padding-bottom: env(safe-area-inset-bottom);
@@ -2613,13 +2739,11 @@ input[type='date']::-webkit-date-and-time-value {
     flex: 1 1 0;
   }
 
-  /* Extrato no celular: o período ganha a fileira inteira; tipo e busca
-     dividem a de baixo. Três fileiras de filtro comeriam a lista.
-
-     E a tela inteira rola, não só a lista. Presa entre filtros e resumo,
-     a lista ficava com 183px num iPhone SE — dois lançamentos e meio. Como
-     num app nativo, filtros e resumo sobem junto e a lista ganha a altura
-     toda; o cabeçalho do dia continua grudando no alto. */
+  /* Extrato no celular: a tela inteira rola, não só a lista. Presa entre
+     os filtros e o resumo, a lista ficava com 183px num iPhone SE — dois
+     lançamentos e meio. Como num app de banco, título, busca e filtros
+     sobem junto e a lista ganha a altura toda; o cabeçalho do dia continua
+     grudando no alto. */
   .extrato {
     gap: 12px;
     height: auto;
@@ -2631,98 +2755,39 @@ input[type='date']::-webkit-date-and-time-value {
     overflow: visible;
   }
 
-  /* Sem o recorte do quadro, o fundo do primeiro cabeçalho e o realce do
-     último lançamento passariam por cima dos cantos arredondados. */
-  .extrato__dia:first-child > .extrato__dia-titulo {
-    border-radius: calc(var(--r-2) - 1px) calc(var(--r-2) - 1px) 0 0;
+  .extrato__cabeca {
+    font-size: 1.75rem;
   }
 
-  .extrato__dia:last-child > .extrato__itens > li:last-child > .extrato__item {
-    border-radius: 0 0 calc(var(--r-2) - 1px) calc(var(--r-2) - 1px);
+  /* Os chips vão de uma borda da tela à outra enquanto rolam, e começam
+     alinhados com o resto do texto. */
+  .extrato__chips {
+    margin: -4px -14px;
+    padding: 4px 14px;
   }
 
-  /* `nowrap` é o que segura a largura: em coluna com quebra, a fileira
-     tomava a largura natural do conteúdo (408px num iPhone de 393) e a
-     busca saía da tela. */
-  .extrato__filtros {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .extrato__filtros-linha {
-    gap: 8px;
-  }
-
-  .extrato__filtros-linha > .seletor-periodo {
-    flex: 1 1 60%;
-    width: auto;
-  }
-
-  .extrato__busca {
-    flex: 1 1 40%;
-    width: auto;
-    min-width: 0;
-    margin-left: 0;
-  }
-
-  /* Uma data por linha, com o rótulo à esquerda — como Início e Fim de
-     um evento no Calendário do iPhone. Lado a lado não cabiam: a data por
-     extenso do Safari ("25 de set. de 2026") pede quase metade da tela
-     cada uma, e em 320px nem com a fonte menor. */
-  .extrato__datas {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .extrato__data {
-    gap: 10px;
-    min-width: 0;
-  }
-
-  .extrato__data > span {
-    flex: 0 0 26px;
-  }
-
-  .extrato__data .campo__entrada {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
-  }
-
-  .extrato__total {
-    padding: 10px 12px;
+  .extrato__resumo {
+    padding: 12px 14px;
   }
 
   .extrato__total-valor {
-    font-size: 1.0625rem;
+    font-size: 1.125rem;
   }
 
   /* O "grudar no alto" conta a partir do respiro do quadro que rola: com
-     top 0, sobrava uma faixa de 16px acima do cabeçalho com lançamentos
-     passando por ela. Negativo, ele encosta na barra de cima. */
+     top 0, sobrava uma faixa acima do cabeçalho com lançamentos passando
+     por ela. Negativo, ele encosta na barra de cima. */
   .extrato__dia-titulo {
     top: calc(-1 * var(--respiro-topo, 0px));
-    padding: 7px 14px;
   }
 
   .extrato__item {
     gap: 12px;
-    padding: 10px 14px;
-  }
-
-  .extrato__itens > li + li > .extrato__item::before {
-    left: 62px;
   }
 
   .extrato__icone {
-    width: 36px;
-    height: 36px;
-  }
-
-  .extrato__seta {
-    display: none;
+    width: 44px;
+    height: 44px;
   }
 
   /* Sem teto no celular: os botões vão até a barra de baixo.
@@ -2741,9 +2806,9 @@ input[type='date']::-webkit-date-and-time-value {
      o iOS marca um item de barra com pendência. */
   .nav__contador {
     position: absolute;
-    top: 4px;
+    top: 10px;
     left: 50%;
-    margin-left: 6px;
+    margin-left: 8px;
     min-width: 8px;
     height: 8px;
     padding: 0;
@@ -2776,40 +2841,66 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   /* Ícone em cima, palavra embaixo, e o item inteiro é o alvo: a fileira
-     divide a largura por igual, então o dedo acerta um quarto da tela. */
+     divide a largura por igual, então o dedo acerta um quarto da tela.
+     Ícone e rótulo no tamanho dos apps de banco — 26px e 12px —, e não os
+     11px de antes, que se liam com esforço. */
   .nav__item {
     flex: 1 1 0;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     min-width: 0;
     min-height: var(--barra-baixo);
-    padding: 7px 2px 6px;
+    padding: 10px 2px 8px;
     border-radius: 0;
-    font-size: 0.6875rem;
-    font-weight: 500;
+    color: var(--texto-suave);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .nav__item .icone {
+    width: 26px;
+    height: 26px;
+    color: currentColor;
   }
 
   .nav__item:hover {
     background: none;
   }
 
-  /* Sem pastilha cinza aqui: numa barra de quatro itens colados, o bloco
-     de fundo vira uma mancha. O que marca o ativo é o preto no ícone e no
-     texto, mais o peso. */
+  /* O ativo: ícone e rótulo na cor do texto e um traço arredondado colado
+     na borda de cima da barra, sobre o item — o desenho da referência.
+     Sem pastilha de fundo: numa barra de quatro itens colados, o bloco
+     cinza vira uma mancha. */
   .nav__item--ativo,
   .nav__item--ativo:hover {
     background: none;
     color: var(--texto);
-    font-weight: 600;
+    font-weight: 700;
+  }
+
+  .nav__item--ativo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 0 0 4px 4px;
+    background-color: var(--acao);
   }
 
   .nav__rotulo {
     max-width: 100%;
   }
 
+  /* `--avanco-barra`: a barra de baixo cobre os últimos 20px do conteúdo
+     (ver `.app__lado`), e o respiro de baixo devolve essa medida. */
   .app__conteudo {
     --respiro-topo: 16px;
-    padding: var(--respiro-topo) 14px 20px;
+    --avanco-barra: var(--barra-raio);
+    padding: var(--respiro-topo) 14px calc(20px + var(--avanco-barra));
   }
 
   .pagina__cabecalho {
@@ -3006,10 +3097,8 @@ input[type='date']::-webkit-date-and-time-value {
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    padding-top: 9px;
-    padding-bottom: 9px;
-    border-top: 1px solid var(--borda);
-    border-left: none;
+    padding-top: 10px;
+    border-top: 1px solid var(--c-200);
   }
 }
 
@@ -3046,7 +3135,7 @@ input[type='date']::-webkit-date-and-time-value {
 @media (max-height: 640px) {
   .app__conteudo {
     --respiro-topo: 12px;
-    padding: var(--respiro-topo) 14px 16px;
+    padding: var(--respiro-topo) 14px calc(16px + var(--avanco-barra, 0px));
   }
 
   .saudacao {
@@ -3083,7 +3172,9 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .nav__item {
-    min-height: 54px;
+    min-height: 56px;
+    padding-top: 8px;
+    padding-bottom: 6px;
   }
 }
 
