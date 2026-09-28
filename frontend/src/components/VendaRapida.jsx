@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { produtos as apiProdutos, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { Modal } from './Modal.jsx';
-import { corDoDoce, moeda, quantidade } from '../utils/formato.js';
+import { EntradaDinheiro } from './Campo.jsx';
+import { corDoDoce, dinheiroParaCampo, lerDinheiro, moeda, quantidade } from '../utils/formato.js';
 
 const FORMAS = [
   ['DINHEIRO', 'Dinheiro'],
@@ -94,20 +95,15 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
   const pecas = itens.reduce((n, [, q]) => n + q, 0);
 
   const editando = cobrado !== null;
-  const valorCobrado = editando ? Number(cobrado.replace(',', '.')) : subtotal;
+  // Campo apagado conta como zero, como antes da máscara: é o doce dado de presente.
+  const valorCobrado = editando ? (cobrado === '' ? 0 : lerDinheiro(cobrado)) : subtotal;
   const cobradoValido = Number.isFinite(valorCobrado) && valorCobrado >= 0;
   const desconto = cobradoValido ? Number((subtotal - valorCobrado).toFixed(2)) : 0;
 
   function abrirEdicao() {
-    setCobrado(subtotal.toFixed(2).replace('.', ','));
+    setCobrado(dinheiroParaCampo(subtotal));
     // O campo só existe depois deste render; daí o atraso de um quadro.
     setTimeout(() => campoTotal.current?.select(), 0);
-  }
-
-  function digitarTotal(texto) {
-    const limpo = texto.replace(/\./g, ',').replace(/[^\d,]/g, '');
-    const [inteiro, ...resto] = limpo.split(',');
-    setCobrado(resto.length ? `${inteiro},${resto.join('').slice(0, 2)}` : inteiro);
   }
 
   async function confirmar() {
@@ -236,15 +232,12 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
                   <span className="total-editavel__moeda" aria-hidden="true">
                     R$
                   </span>
-                  <input
+                  <EntradaDinheiro
                     ref={campoTotal}
                     className="total-editavel__campo"
-                    type="text"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    size={Math.max(4, cobrado.length || 4)}
+                    justo
                     value={cobrado}
-                    onChange={(e) => digitarTotal(e.target.value)}
+                    aoMudar={setCobrado}
                     aria-label="Quanto você cobrou"
                   />
                 </span>

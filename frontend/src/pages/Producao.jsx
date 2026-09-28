@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Modal } from '../components/Modal.jsx';
-import { Linha, Selecao, Texto } from '../components/Campo.jsx';
+import { Dinheiro, Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { Dado, Total, normalizar } from '../components/Extrato.jsx';
 import {
   AjusteEstoque,
@@ -16,7 +16,13 @@ import {
 } from '../components/EstoqueComum.jsx';
 import { insumos, producoes, produtos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { corDoDoce, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
+import {
+  corDoDoce,
+  dinheiroParaCampo,
+  moeda,
+  quantidade,
+  UNIDADE_CURTA,
+} from '../utils/formato.js';
 
 /**
  * Produção: os DOCES. A pergunta desta tela é "o que eu tenho para
@@ -350,7 +356,7 @@ function FormularioDoce({ doce, aoFechar, aoSalvar }) {
   const edicao = Boolean(doce.id);
   const [form, setForm] = useState({
     nome: doce.nome ?? '',
-    precoVenda: doce.precoVenda ? paraCampo(doce.precoVenda) : '',
+    precoVenda: doce.precoVenda ? dinheiroParaCampo(doce.precoVenda) : '',
     estoqueMinimo: doce.estoqueMinimo ? paraCampo(doce.estoqueMinimo) : '',
   });
   const [rendimento, setRendimento] = useState(
@@ -437,12 +443,13 @@ function FormularioDoce({ doce, aoFechar, aoSalvar }) {
           autoFocus={!edicao}
         />
         <Linha>
-          <Texto
+          <Dinheiro
             rotulo="Preço de venda (R$)"
-            type="text"
-            inputMode="decimal"
             value={form.precoVenda}
-            onChange={campo('precoVenda')}
+            aoMudar={(v) => {
+              setForm((f) => ({ ...f, precoVenda: v }));
+              setErro('');
+            }}
             required
           />
           <Texto

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal } from '../components/Modal.jsx';
-import { Linha, Selecao, Texto } from '../components/Campo.jsx';
+import { Dinheiro, Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { Segmentado } from '../components/Segmentado.jsx';
 import {
   IconeVenda,
@@ -21,7 +21,13 @@ import {
 } from '../components/Extrato.jsx';
 import { despesas, produtos, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { moeda, quantidade, ROTULO_PAGAMENTO } from '../utils/formato.js';
+import {
+  dinheiroParaCampo,
+  lerDinheiro,
+  moeda,
+  quantidade,
+  ROTULO_PAGAMENTO,
+} from '../utils/formato.js';
 
 /**
  * Caixa: o extrato do dinheiro, no desenho do extrato dos apps de banco.
@@ -612,13 +618,11 @@ function Erro({ texto }) {
   );
 }
 
-/** "25,50" -> 25.5; qualquer coisa que não vire número positivo -> NaN. */
+/** "1.025,50" -> 1025.5; qualquer coisa que não vire número positivo -> NaN. */
 function lerValor(texto) {
-  const n = Number(String(texto).trim().replace(/\./g, '').replace(',', '.'));
+  const n = lerDinheiro(texto);
   return Number.isFinite(n) && n > 0 ? n : NaN;
 }
-
-const valorParaCampo = (n) => Number(n).toFixed(2).replace('.', ',');
 
 // ----------------------------------------------------- editar venda
 
@@ -628,7 +632,7 @@ function EditarVenda({ registro, aoVoltar, aoSalvar }) {
     registro.itens.map((i) => ({ produtoId: i.produtoId, quantidade: Number(i.quantidade) }))
   );
   const [formaPagamento, setFormaPagamento] = useState(registro.formaPagamento);
-  const [desconto, setDesconto] = useState(valorParaCampo(registro.desconto ?? 0));
+  const [desconto, setDesconto] = useState(dinheiroParaCampo(registro.desconto ?? 0));
   const [clienteNome, setClienteNome] = useState(registro.clienteNome ?? '');
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
@@ -640,7 +644,7 @@ function EditarVenda({ registro, aoVoltar, aoSalvar }) {
       .catch((e) => setErro(mensagemDeErro(e)));
   }, []);
 
-  const descontoNumero = Number(String(desconto).replace(',', '.')) || 0;
+  const descontoNumero = lerDinheiro(desconto) || 0;
 
   // Prévia. O servidor recalcula pelo preço de cadastro — aqui é só para
   // ela conferir antes de salvar.
@@ -733,13 +737,7 @@ function EditarVenda({ registro, aoVoltar, aoSalvar }) {
           onChange={(e) => setFormaPagamento(e.target.value)}
           opcoes={FORMAS}
         />
-        <Texto
-          rotulo="Desconto (R$)"
-          type="text"
-          inputMode="decimal"
-          value={desconto}
-          onChange={(e) => setDesconto(e.target.value)}
-        />
+        <Dinheiro rotulo="Desconto (R$)" value={desconto} aoMudar={setDesconto} />
       </Linha>
 
       <Texto
@@ -762,7 +760,7 @@ function EditarVenda({ registro, aoVoltar, aoSalvar }) {
 // -------------------------------------------- editar entrada avulsa
 
 function EditarAvulsa({ registro, aoVoltar, aoSalvar }) {
-  const [valor, setValor] = useState(valorParaCampo(registro.total));
+  const [valor, setValor] = useState(dinheiroParaCampo(registro.total));
   const [formaPagamento, setFormaPagamento] = useState(registro.formaPagamento);
   const [comOQue, setComOQue] = useState(registro.observacao ?? '');
   const [erro, setErro] = useState('');
@@ -793,15 +791,7 @@ function EditarAvulsa({ registro, aoVoltar, aoSalvar }) {
   return (
     <form onSubmit={salvar}>
       <Linha>
-        <Texto
-          rotulo="Valor (R$)"
-          type="text"
-          inputMode="decimal"
-          value={valor}
-          onChange={(e) => setValor(e.target.value)}
-          required
-          autoFocus
-        />
+        <Dinheiro rotulo="Valor (R$)" value={valor} aoMudar={setValor} required autoFocus />
         <Selecao
           rotulo="Pagamento"
           value={formaPagamento}
@@ -839,7 +829,7 @@ const TIPOS_DESPESA = [
 function EditarDespesa({ registro, aoVoltar, aoSalvar }) {
   const [form, setForm] = useState({
     descricao: registro.descricao,
-    valor: valorParaCampo(registro.valor),
+    valor: dinheiroParaCampo(registro.valor),
     tipo: registro.retirada ? 'retirada' : 'saida',
     formaPagamento: registro.formaPagamento ?? '',
   });
@@ -882,12 +872,10 @@ function EditarDespesa({ registro, aoVoltar, aoSalvar }) {
         autoFocus
       />
       <Linha>
-        <Texto
+        <Dinheiro
           rotulo="Valor (R$)"
-          type="text"
-          inputMode="decimal"
           value={form.valor}
-          onChange={campo('valor')}
+          aoMudar={(v) => setForm((f) => ({ ...f, valor: v }))}
           required
         />
         <Selecao

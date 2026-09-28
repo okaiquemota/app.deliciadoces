@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { despesas, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { Modal } from './Modal.jsx';
-import { moeda } from '../utils/formato.js';
+import { EntradaDinheiro } from './Campo.jsx';
+import { dinheiroParaCampo, lerDinheiro, moeda } from '../utils/formato.js';
 
 const FORMAS = [
   ['DINHEIRO', 'Dinheiro'],
@@ -95,28 +96,9 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
     return () => clearTimeout(t);
   }, [modo]);
 
-  /**
-   * Filtra o que o teclado do aparelho manda.
-   *
-   * O teclado numérico do iOS e do Android não impede nada: ela consegue
-   * digitar "12,,5", colar "R$ 1.234,56" ou emendar "12,500". Sem este
-   * filtro o `Number()` devolveria NaN ou um valor errado, e o erro só
-   * apareceria depois de salvar.
-   *
-   * O ponto vira vírgula porque os dois teclados oferecem um ou outro
-   * conforme o idioma do aparelho, e quem digita não deveria precisar
-   * saber qual dos dois este campo aceita.
-   */
-  function aoDigitar(texto) {
-    const limpo = texto.replace(/\./g, ',').replace(/[^\d,]/g, '');
-    const [inteiro, ...resto] = limpo.split(',');
-    if (!resto.length) return setValor(inteiro);
-    return setValor(`${inteiro},${resto.join('').slice(0, 2)}`);
-  }
-
   async function enviar(evento) {
     evento.preventDefault();
-    const numero = Number(String(valor).replace(',', '.'));
+    const numero = lerDinheiro(valor);
     if (!Number.isFinite(numero) || numero <= 0) {
       setErro('Informe um valor maior que zero.');
       return;
@@ -160,29 +142,17 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
           <label className="valor__rotulo" htmlFor="campo-valor">
             {config.rotuloValor}
           </label>
-          {/*
-            `type="text"` com `inputMode="decimal"`, e não `type="number"`:
-            o número nativo aceita notação científica, mostra setinhas de
-            incremento que não servem para dinheiro, e no Firefox deixa
-            digitar letra sem avisar. O modo de entrada é o que faz o
-            celular abrir o teclado numérico — o tipo do campo continua
-            texto, e quem valida é o filtro acima.
-          */}
           <span className="valor__linha">
             <span className="valor__moeda" aria-hidden="true">
               R$
             </span>
-            <input
+            <EntradaDinheiro
               id="campo-valor"
               ref={campo}
               className="valor__campo"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              placeholder="0,00"
-              size={Math.max(4, valor.length || 4)}
+              justo
               value={valor}
-              onChange={(e) => aoDigitar(e.target.value)}
+              aoMudar={setValor}
               aria-label={config.rotuloValor}
             />
           </span>
@@ -195,7 +165,7 @@ export function DinheiroRapido({ modo, aoFechar, aoLancar }) {
               key={v}
               type="button"
               className="atalho-valor"
-              onClick={() => setValor(String(v).replace('.', ','))}
+              onClick={() => setValor(dinheiroParaCampo(v))}
             >
               {moeda(v)}
             </button>

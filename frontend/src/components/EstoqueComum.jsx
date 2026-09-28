@@ -86,7 +86,7 @@ export function SecaoItens({ titulo, conta, children }) {
     <section className="extrato__dia">
       <h2 className="extrato__dia-titulo">
         <span>{titulo}</span>
-        <span className="extrato__dia-saldo">{conta}</span>
+        <span className="contagem">{conta}</span>
       </h2>
       <ul className="extrato__itens">{children}</ul>
     </section>

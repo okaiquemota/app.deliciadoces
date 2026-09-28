@@ -88,6 +88,12 @@
   --marca-rosa-claro: #ffc1ea;
   --marca-creme: #fef4d1;
   --marca-preto: #010200;
+  /* Rosa-claro bem diluído, para realce de linha (o texto secundário
+     fica com 4,8:1) e o fundo das contagens. */
+  --marca-rosa-nevoa: #fff6fb;
+  --marca-rosa-bruma: #ffedf8;
+  /* Texto rosa sobre a bruma: 6:1. */
+  --marca-rosa-escuro: #b8004a;
 
   /* Blocos de resumo, login, cartão de Venda: creme 45% → rosa-claro
      22%. O cinza secundário fica com 4,6:1 ou mais em qualquer ponto —
@@ -98,7 +104,8 @@
   /* A pastilha do item ativo no menu (rosa 38% → creme 60%): o ícone rosa
      por cima tem 3,3:1. */
   --degrade-ativo: linear-gradient(90deg, #ffe7f7 0%, #fef8e3 100%);
-  /* O selo do cartão de Venda (creme 70% → rosa 45%). */
+  /* O selo dos ícones redondos (creme 70% → rosa 45%): o ícone em
+     rosa-texto por cima tem 4,5:1 ou mais. */
   --degrade-selo: linear-gradient(135deg, #fef7df 0%, #ffe3f6 100%);
   /* Traço fino (o marcador da barra do celular): as duas pontas com 3:1
      ou mais no branco. */
@@ -340,7 +347,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--texto-suave);
+  color: var(--marca-rosa-texto);
 }
 
 .nav__item {
@@ -944,7 +951,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .perfil__item:hover {
-  background-color: var(--c-50);
+  background-color: var(--marca-rosa-nevoa);
 }
 
 /* Dentro de um cartão com `overflow: hidden`, o anel de foco padrão (para
@@ -966,7 +973,7 @@ input[type='date']::-webkit-date-and-time-value {
 .perfil__icone {
   display: flex;
   flex: 0 0 auto;
-  color: var(--texto-suave);
+  color: var(--marca-rosa-texto);
 }
 
 .perfil__textos {
@@ -1093,8 +1100,10 @@ input[type='date']::-webkit-date-and-time-value {
   text-transform: uppercase;
 }
 
-/* Ícone num círculo branco com aro cinza, como no extrato do banco: nas
-   linhas do Caixa, nos cartões e nos últimos lançamentos do Início. */
+/* Ícone num círculo com aro, como no extrato do banco: nas linhas do
+   Caixa, do Kardex e do Estoque, nos cartões e nos últimos lançamentos do
+   Início. O círculo é da casa (creme → rosa, ícone rosa); os estados
+   (vencido, vencendo, certo) trocam o fundo inteiro pela cor do estado. */
 .icone-aro {
   display: flex;
   flex: 0 0 auto;
@@ -1102,10 +1111,10 @@ input[type='date']::-webkit-date-and-time-value {
   justify-content: center;
   width: 46px;
   height: 46px;
-  border: 2px solid var(--c-200);
+  border: 2px solid var(--marca-rosa-claro);
   border-radius: 50%;
-  background-color: var(--superficie);
-  color: var(--texto);
+  background: var(--degrade-selo);
+  color: var(--marca-rosa-texto);
 }
 
 .extrato {
@@ -1425,6 +1434,19 @@ input[type='date']::-webkit-date-and-time-value {
   white-space: nowrap;
 }
 
+/* A contagem de um grupo ("Pede atenção 3"): uma pílula rosa. */
+.contagem {
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background-color: var(--marca-rosa-bruma);
+  color: var(--marca-rosa-escuro);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
 .extrato__itens {
   margin: 0;
   padding: 0;
@@ -1453,7 +1475,7 @@ input[type='date']::-webkit-date-and-time-value {
    tocada depois que a janela fecha. */
 @media (hover: hover) {
   .extrato__item:hover {
-    background-color: var(--c-50);
+    background-color: var(--marca-rosa-nevoa);
   }
 }
 
@@ -1630,13 +1652,13 @@ input[type='date']::-webkit-date-and-time-value {
    âmbar é prazo (vencendo). Ela vê de longe, antes de ler. */
 .icone-aro--alerta {
   border-color: var(--erro-borda);
-  background-color: var(--erro-fundo);
+  background: var(--erro-fundo);
   color: var(--erro);
 }
 
 .icone-aro--aviso {
   border-color: var(--aviso-borda);
-  background-color: var(--aviso-fundo);
+  background: var(--aviso-fundo);
   color: var(--aviso);
 }
 
@@ -2049,6 +2071,7 @@ input[type='date']::-webkit-date-and-time-value {
   box-shadow: var(--sombra-modal);
 }
 
+/* A faixa do título no creme → rosa da casa. */
 .modal__topo {
   display: flex;
   align-items: center;
@@ -2056,6 +2079,9 @@ input[type='date']::-webkit-date-and-time-value {
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--borda);
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  background: var(--degrade-suave);
 }
 
 .modal__titulo {
@@ -2139,7 +2165,7 @@ input[type='date']::-webkit-date-and-time-value {
   padding: 16px;
   border: none;
   border-radius: var(--r-3);
-  background-color: var(--c-50);
+  background: var(--degrade-suave);
   color: var(--texto);
   font-family: inherit;
   text-align: left;
@@ -2148,11 +2174,11 @@ input[type='date']::-webkit-date-and-time-value {
 
 @media (hover: hover) {
   .cartao-acao:hover {
-    background-color: var(--c-100);
+    background: var(--degrade-suave-forte);
   }
 
   .cartao-acao--grande:hover {
-    background: var(--degrade-suave-forte);
+    background: var(--degrade-selo);
   }
 }
 
@@ -2181,17 +2207,16 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 /* Venda ocupa a linha: é o que ela repete dez vezes por dia, e o tamanho
-   é a hierarquia inteira — nenhum botão é preenchido de cor. O único
-   com a cor da casa, num degradê que só se nota perto dos cinzas. */
+   é a hierarquia inteira — nenhum botão é preenchido de cor. Todos os
+   cartões vêm no creme → rosa da casa; o de Venda, um tom acima, com o
+   ícone no rosa vivo. */
 .cartao-acao--grande {
   grid-column: span 6;
   --altura: 120px;
-  background: var(--degrade-suave);
+  background: var(--degrade-suave-forte);
 }
 
 .cartao-acao--grande .cartao-acao__selo {
-  border-color: var(--marca-rosa-claro);
-  background: var(--degrade-selo);
   color: var(--marca-rosa);
 }
 
@@ -2230,8 +2255,13 @@ input[type='date']::-webkit-date-and-time-value {
    que mantém a hierarquia (Venda vale duas fileiras, as tarefas de fim
    de expediente valem pouco mais de meia). No celular os botões descem
    para mais perto do polegar em vez de ficarem agrupados no alto da
-   tela. O teto de 460px existe porque sem ele, num monitor de 27
-   polegadas, o botão de Venda teria setecentos pixels de altura. */
+   tela, com teto de 460px.
+
+   No computador não há teto: os cartões vão até o pé da janela, e a
+   folga de baixo é a mesma das laterais em qualquer tamanho de tela (ou
+   de zoom). Para o cartão alto não virar vão, o valor cresce junto com a
+   altura da janela, e a fileira das tarefas fica na altura própria —
+   quem ganha o espaço são os cartões com número. */
 .inicio {
   display: flex;
   flex-direction: column;
@@ -2251,6 +2281,17 @@ input[type='date']::-webkit-date-and-time-value {
   grid-template-rows: 1fr 1fr 0.62fr;
 }
 
+@media (min-width: 901px) {
+  .acoes {
+    max-height: none;
+    grid-template-rows: 1fr 1fr auto;
+  }
+
+  .cartao-acao--medio .cartao-acao__valor {
+    font-size: clamp(1.5rem, 0.5rem + 2vh, 2.25rem);
+  }
+}
+
 @media (min-width: 1100px) {
   .acoes {
     gap: 14px;
@@ -2268,7 +2309,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--grande .cartao-acao__valor {
-    font-size: 2.75rem;
+    font-size: clamp(2.75rem, 1.25rem + 3vh, 4rem);
   }
 
   .cartao-acao--grande .cartao-acao__rotulo {
@@ -2389,8 +2430,11 @@ input[type='date']::-webkit-date-and-time-value {
   color: var(--ok);
 }
 
+/* Vazio não é da casa ainda: aro tracejado cinza, sem cor. */
 .recente--vazio .icone-aro {
   border-style: dashed;
+  border-color: var(--c-200);
+  background: var(--superficie);
   color: var(--icone-fraco);
 }
 
@@ -2655,10 +2699,8 @@ input[type='date']::-webkit-date-and-time-value {
   font-weight: 500;
 }
 
-/* Alinhado à ESQUERDA, e quem centra é a linha inteira. Centrado dentro
-   do próprio campo, o texto ficava no meio de uma caixa mais larga que
-   ele — o atributo `size` reserva largura pela média dos caracteres — e
-   isso abria um vão entre o "R$" e o primeiro dígito. */
+/* Quem centra é a linha inteira; o campo tem a largura exata do número
+   (ver `.dinheiro-justo`), então não sobra vão entre o "R$" e o dígito. */
 .valor__campo {
   padding: 0;
   border: none;
@@ -2668,11 +2710,42 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 2.5rem;
   font-weight: 600;
   letter-spacing: var(--tr-numero);
-  text-align: left;
 }
 
 .valor__campo:focus {
   outline: none;
+}
+
+/* Campo de dinheiro: o número e o cursor à DIREITA, porque é por lá que
+   os dígitos entram (os centavos primeiro, como nos apps de banco). */
+.dinheiro {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Valor grande solto na linha: uma cópia invisível do texto dá a largura,
+   e o campo se deita por cima dela, na mesma célula da grade. */
+.dinheiro-justo {
+  display: inline-grid;
+}
+
+.dinheiro-justo > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+/* Largura zero para a conta da grade (senão entra a largura padrão de
+   um campo, uns vinte caracteres) e esticado até a medida do texto. */
+.dinheiro-justo > input {
+  width: 0;
+  min-width: 100%;
+}
+
+/* 2px a mais: o espaço do cursor depois do último dígito. */
+.dinheiro-justo__medida {
+  padding-right: 2px;
+  visibility: hidden;
+  white-space: pre;
 }
 
 .atalhos-valor {
@@ -2841,13 +2914,13 @@ input[type='date']::-webkit-date-and-time-value {
 
 .icone-aro--ok {
   border-color: var(--ok-borda);
-  background-color: var(--ok-fundo);
+  background: var(--ok-fundo);
   color: var(--ok);
 }
 
 /* O dia aberto na tela, na lista dos últimos dias. */
 .extrato__item--atual {
-  background-color: var(--c-50);
+  background-color: var(--marca-rosa-nevoa);
 }
 
 .extrato__total-nota {
@@ -3322,7 +3395,7 @@ input[type='date']::-webkit-date-and-time-value {
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  color: var(--texto);
+  color: var(--marca-rosa-texto);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -3414,7 +3487,7 @@ input[type='date']::-webkit-date-and-time-value {
    ===================================================================== */
 
 /* Login: a FOTO de um lado, o formulário do outro. No celular a foto vira
-   o topo, e o formulário sobe por cima dela como uma folha, com a medalha
+   o topo, e o formulário sobe por cima dela como uma folha, com a logo
    no meio da borda.
 
    A FOTO é `frontend/public/login.jpg`: 1000px de largura e ~350 KB,
@@ -3459,24 +3532,15 @@ input[type='date']::-webkit-date-and-time-value {
   margin-bottom: 14px;
 }
 
-/* A medalha num círculo branco, com a sombra rosa da marca. */
+/* A logo sozinha, sem moldura: ela já é redonda e tem a própria borda. */
 .login__medalha {
   display: flex;
-  align-items: center;
-  justify-content: center;
   align-self: center;
-  width: 96px;
-  height: 96px;
-  margin-bottom: 14px;
-  border-radius: 50%;
-  background-color: var(--c-0);
-  box-shadow:
-    0 0 0 6px rgb(255 193 234 / 0.35),
-    0 14px 30px -14px rgb(212 0 85 / 0.5);
+  margin-bottom: 12px;
 }
 
 .login__medalha img {
-  width: 76px;
+  width: 104px;
   height: auto;
 }
 
@@ -3532,46 +3596,17 @@ input[type='date']::-webkit-date-and-time-value {
   cursor: pointer;
 }
 
-/* "Esqueci minha senha", colado embaixo da senha, à direita. */
-.login__form > .login__campo-senha {
-  margin-bottom: 2px;
-}
-
-.login__esqueci-linha {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-}
-
-.login__esqueci {
-  min-height: 44px;
-  padding: 0 2px;
-  border: none;
-  background: none;
-  color: var(--marca-rosa-texto);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 /* Só onde existe mouse: no toque, o sublinhado ficava preso. */
 @media (hover: hover) {
-  .login__ver-senha:hover,
-  .login__esqueci:hover {
+  .login__ver-senha:hover {
     text-decoration: underline;
   }
 }
 
 .login__entrar {
   min-height: 48px;
+  margin-top: 10px;
   font-size: 1rem;
-}
-
-.login__ajuda {
-  margin: 0 0 10px;
-  color: var(--c-700);
-  font-size: 0.9375rem;
 }
 
 .login__rodape {
@@ -3602,9 +3637,9 @@ input[type='date']::-webkit-date-and-time-value {
     background-color: var(--superficie);
   }
 
-  /* A medalha no meio da borda da folha, metade sobre a foto. */
+  /* A logo no meio da borda da folha, metade sobre a foto. */
   .login__medalha {
-    margin-top: -48px;
+    margin-top: -52px;
   }
 
   .login__rodape {
@@ -4350,7 +4385,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* Linhas de lista não encolhem — escurecem, como nas listas do iPhone. */
 :is(.extrato__item, .opcao, .perfil__item):active {
-  background-color: var(--c-100);
+  background-color: var(--marca-rosa-bruma);
   transition-duration: 60ms;
 }
 

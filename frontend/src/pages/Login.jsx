@@ -2,22 +2,19 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { mensagemDeErro } from '../services/api.js';
-import { Modal } from '../components/Modal.jsx';
 
 /**
  * Entrar.
  *
  * No computador, a tela se divide em duas: à esquerda, a FOTO da
- * confeitaria (ver `--login-foto` no CSS — enquanto não houver foto, o
- * painel fica no creme da marca); à direita, o formulário com a medalha.
+ * confeitaria (`--login-foto` no CSS); à direita, o formulário com a logo.
  * No celular a foto vira o topo, e o formulário sobe por cima dela como
- * uma folha, com a medalha no meio da borda.
+ * uma folha, com a logo no meio da borda.
  */
 export function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [verSenha, setVerSenha] = useState(false);
-  const [esqueci, setEsqueci] = useState(false);
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [semLogo, setSemLogo] = useState(false);
@@ -88,7 +85,7 @@ export function Login() {
             />
           </label>
 
-          <label className="campo login__campo-senha">
+          <label className="campo">
             <span className="campo__rotulo">Senha</span>
             {/* Mostrar a senha: no celular, com o teclado pequeno, é onde
                 mais se erra — e sem ver, ela só descobre depois do erro. */}
@@ -114,17 +111,6 @@ export function Login() {
             </span>
           </label>
 
-          <div className="login__esqueci-linha">
-            <button
-              type="button"
-              className="login__esqueci"
-              aria-haspopup="dialog"
-              onClick={() => setEsqueci(true)}
-            >
-              Esqueci minha senha
-            </button>
-          </div>
-
           {erro && (
             <p className="alerta alerta--erro" role="alert">
               {erro}
@@ -138,35 +124,6 @@ export function Login() {
 
         <p className="login__rodape">Delícia Doces · v1.0</p>
       </section>
-
-      {esqueci && <EsqueciASenha aoFechar={() => setEsqueci(false)} />}
     </main>
-  );
-}
-
-/**
- * Esqueci minha senha.
- *
- * Por enquanto, sem recuperação automática: mandar um link por e-mail
- * pede um lugar no banco para o código de recuperação (o modelo não tem)
- * e um serviço de envio de e-mail. Até lá, a janela diz o caminho que
- * existe — uma senha provisória criada por quem cuida do sistema, trocada
- * depois em Minha conta — em vez de um botão que não leva a lugar nenhum.
- */
-function EsqueciASenha({ aoFechar }) {
-  return (
-    <Modal aberto aoFechar={aoFechar} titulo="Esqueceu a senha?" largura={420}>
-      <p className="login__ajuda">
-        Sem problema. Peça a quem cuida do sistema para criar uma senha provisória para você.
-      </p>
-      <p className="login__ajuda">
-        Depois de entrar com ela, troque por uma senha sua em <strong>Minha conta</strong>.
-      </p>
-      <div className="modal__acoes">
-        <button type="button" className="botao botao--primario botao--auto" onClick={aoFechar}>
-          Entendi
-        </button>
-      </div>
-    </Modal>
   );
 }

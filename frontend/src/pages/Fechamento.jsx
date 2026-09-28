@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal } from '../components/Modal.jsx';
-import { Texto } from '../components/Campo.jsx';
+import { EntradaDinheiro, Texto } from '../components/Campo.jsx';
 import { diaPorExtenso, diasAtras, rotuloDoDia } from '../components/Extrato.jsx';
 import { IconeAtencao, IconeFechamento, IconeFiltros, IconeVisto } from '../components/Icones.jsx';
 import { fechamentos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { moeda, paraInput } from '../utils/formato.js';
+import { dinheiroParaCampo, lerDinheiro, moeda, paraInput } from '../utils/formato.js';
 
 /**
  * Fechar dia: a conferência da gaveta.
@@ -47,9 +47,7 @@ export function Fechamento() {
       setHistorico(h);
       // Se o dia já foi fechado, a tela abre com o que ela tinha contado.
       setContado(
-        p.fechamento?.saldoConferido != null
-          ? Number(p.fechamento.saldoConferido).toFixed(2).replace('.', ',')
-          : ''
+        p.fechamento?.saldoConferido != null ? dinheiroParaCampo(p.fechamento.saldoConferido) : ''
       );
       setObservacao(p.fechamento?.observacao ?? '');
     } catch (e) {
@@ -63,7 +61,7 @@ export function Fechamento() {
     carregar();
   }, [carregar]);
 
-  const numeroContado = contado === '' ? null : Number(contado.replace(',', '.'));
+  const numeroContado = contado === '' ? null : lerDinheiro(contado);
 
   /**
    * Diferença calculada na hora, no navegador.
@@ -76,13 +74,6 @@ export function Fechamento() {
     if (numeroContado === null || !previa || Number.isNaN(numeroContado)) return null;
     return Math.round((numeroContado - previa.saldoCalculado) * 100) / 100;
   }, [numeroContado, previa]);
-
-  /** Só dígitos e uma vírgula com dois decimais — o campo de valor do Início. */
-  function digitar(texto) {
-    const limpo = texto.replace(/\./g, ',').replace(/[^\d,]/g, '');
-    const [inteiro, ...resto] = limpo.split(',');
-    setContado(resto.length ? `${inteiro},${resto.join('').slice(0, 2)}` : inteiro);
-  }
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -207,16 +198,12 @@ export function Fechamento() {
                   <span className="valor__moeda" aria-hidden="true">
                     R$
                   </span>
-                  <input
+                  <EntradaDinheiro
                     id="campo-contado"
                     className="valor__campo"
-                    type="text"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    placeholder="0,00"
-                    size={Math.max(4, contado.length || 4)}
+                    justo
                     value={contado}
-                    onChange={(e) => digitar(e.target.value)}
+                    aoMudar={setContado}
                   />
                 </span>
               </div>

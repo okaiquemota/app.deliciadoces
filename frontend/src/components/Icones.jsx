@@ -179,13 +179,14 @@ export const IconeCaixa = (p) => (
   </Base>
 );
 
-/** Batedeira vista de frente: o que se faz na cozinha. */
+/**
+ * Chapéu de confeiteiro: o que se faz na cozinha. Antes era uma batedeira
+ * de perfil, que no tamanho do menu ninguém reconhecia.
+ */
 export const IconeProducao = (p) => (
   <Base {...p}>
-    <path d="M4 4.5h9a4.5 4.5 0 0 1 0 9H8.5" />
-    <path d="M8.5 13.5 7 20.5" />
-    <path d="M12.5 13.5 14 20.5" />
-    <path d="M5.5 20.5h11" />
+    <path d="M7 13.9A3.5 3.5 0 0 1 8.3 7.3a4 4 0 0 1 7.4 0A3.5 3.5 0 0 1 17 13.9V20H7Z" />
+    <path d="M7 16.5h10" />
   </Base>
 );
 

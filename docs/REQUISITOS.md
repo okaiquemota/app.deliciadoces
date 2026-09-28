@@ -121,18 +121,19 @@ Prioridade: **E** = essencial · **I** = importante · **D** = desejável
 
 ## 5. Requisitos Não Funcionais
 
-| ID    | Requisito                                                                                  | Critério de verificação                              |
-| ----- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| RNF01 | O sistema deve funcionar em celular, onde a cliente lança venda no balcão                  | Nenhuma tela rola lateralmente em 390px nem em 360px |
-| RNF02 | Alvos de toque devem ter no mínimo 44px de altura nos controles de uso constante           | Medição em navegador com ponteiro grosso             |
-| RNF03 | O contraste de texto deve atender WCAG AA (4,5:1 para texto normal)                        | Cálculo de razão de contraste da paleta              |
-| RNF04 | Registrar uma venda comum deve levar no máximo 3 toques além da escolha dos produtos       | Contagem no fluxo real                               |
-| RNF05 | O saldo de estoque nunca pode divergir do histórico de movimentações                       | Teste automatizado que soma o histórico e compara    |
-| RNF06 | Toda alteração de estoque deve ser atômica: movimentação e saldo mudam juntos ou nada muda | Uso de transação; teste de falha no meio             |
-| RNF07 | O preço de venda deve ser definido pelo servidor, nunca pelo cliente da API                | Teste que envia preço adulterado e confere o total   |
-| RNF08 | Senhas devem ser armazenadas como hash, nunca em texto                                     | Teste que inspeciona o campo gravado                 |
-| RNF09 | O sistema deve estar disponível pela internet, sem instalação                              | Publicado em URL pública                             |
-| RNF10 | O código deve seguir um padrão único entre os integrantes do grupo                         | ESLint e Prettier no monorepo, sem erro              |
+| ID    | Requisito                                                                                        | Critério de verificação                              |
+| ----- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| RNF01 | O sistema deve funcionar em celular, onde a cliente lança venda no balcão                        | Nenhuma tela rola lateralmente em 390px nem em 360px |
+| RNF02 | Alvos de toque devem ter no mínimo 44px de altura nos controles de uso constante                 | Medição em navegador com ponteiro grosso             |
+| RNF03 | O contraste de texto deve atender WCAG AA (4,5:1 para texto normal)                              | Cálculo de razão de contraste da paleta              |
+| RNF04 | Registrar uma venda comum deve levar no máximo 3 toques além da escolha dos produtos             | Contagem no fluxo real                               |
+| RNF05 | O saldo de estoque nunca pode divergir do histórico de movimentações                             | Teste automatizado que soma o histórico e compara    |
+| RNF06 | Toda alteração de estoque deve ser atômica: movimentação e saldo mudam juntos ou nada muda       | Uso de transação; teste de falha no meio             |
+| RNF07 | O preço de venda deve ser definido pelo servidor, nunca pelo cliente da API                      | Teste que envia preço adulterado e confere o total   |
+| RNF08 | Senhas devem ser armazenadas como hash, nunca em texto                                           | Teste que inspeciona o campo gravado                 |
+| RNF09 | O sistema deve estar disponível pela internet, sem instalação                                    | Publicado em URL pública                             |
+| RNF10 | O código deve seguir um padrão único entre os integrantes do grupo                               | ESLint e Prettier no monorepo, sem erro              |
+| RNF11 | Campos de dinheiro preenchem da direita para a esquerda, centavos primeiro, com teclado numérico | Digitar 1500 mostra 15,00 em todos os campos de R$   |
 
 ---
 
