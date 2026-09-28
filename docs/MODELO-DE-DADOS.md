@@ -255,7 +255,7 @@ Além das PKs e chaves únicas: `data` em `producoes`, `vendas`, `despesas` e `m
 
 | Enum               | Valores                                                                                  |
 | ------------------ | ---------------------------------------------------------------------------------------- |
-| `PapelUsuario`     | `ADMIN`, `OPERADOR`                                                                      |
+| `PapelUsuario`     | `ADMIN` (acesso completo), `OPERADOR` (balcão e cozinha — ver README, Papéis)            |
 | `UnidadeMedida`    | `G`, `KG`, `ML`, `L`, `UNIDADE`, `PACOTE`, `LATA`, `CAIXA`                               |
 | `FormaPagamento`   | `DINHEIRO`, `PIX`, `CARTAO_DEBITO`, `CARTAO_CREDITO`                                     |
 | `TipoCategoria`    | `CUSTO_OPERACIONAL`, `RETIRADA_PESSOAL`                                                  |

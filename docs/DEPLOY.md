@@ -74,18 +74,11 @@ Existe em produção uma conta extra, de identificador e senha curtos, criada pa
 
 **Ela precisa ser removida antes de a cliente lançar dado real.** É uma credencial fraca num endereço público — enquanto existir, quem descobrir o link entra no financeiro da confeitaria.
 
-Para listar e remover, no SQL Editor do Supabase:
+O jeito certo é pelo próprio sistema: entrando com a conta da Dalila, **Minha conta → Equipe → a conta de apresentação → Tirar acesso**. Ela deixa de entrar na hora, inclusive quem estiver com o sistema aberto.
 
-```sql
--- Ver quais contas existem
-SELECT nome, email, papel FROM usuarios;
+> ⚠️ **Não use `DELETE FROM usuarios WHERE email NOT LIKE '%@%'`**, que era a instrução antiga. Desde a tela Equipe, funcionárias podem entrar com usuário simples (sem `@`), e esse comando apagaria as contas delas junto.
 
--- Remover a de apresentação (a conta da cliente entra pelo e-mail completo
--- e não é afetada)
-DELETE FROM usuarios WHERE email NOT LIKE '%@%';
-```
-
-> Por que dá para entrar com um identificador que não é e-mail: a validação de e-mail vale no **cadastro**, onde o dado fica gravado. No **login** o campo serve apenas para localizar a conta, então aceita qualquer texto não vazio.
+> Por que dá para entrar com um identificador que não é e-mail: no **login** o campo serve apenas para localizar a conta, então aceita qualquer texto não vazio. E a tela **Equipe** cria conta com e-mail **ou** usuário simples (como `maria`), porque nem toda funcionária tem ou quer dar um e-mail.
 
 ### Senha da cliente
 

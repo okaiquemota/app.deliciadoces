@@ -25,10 +25,18 @@ function calcularTotais(itens, desconto = 0) {
 }
 
 export const vendaService = {
-  async listar({ inicio, fim, formaPagamento, incluirCanceladas = false, limite = 200 }) {
+  async listar({
+    inicio,
+    fim,
+    formaPagamento,
+    usuarioId,
+    incluirCanceladas = false,
+    limite = 200,
+  }) {
     return prisma.venda.findMany({
       where: {
         ...(incluirCanceladas ? {} : { cancelada: false }),
+        ...(usuarioId ? { usuarioId } : {}),
         ...(formaPagamento ? { formaPagamento } : {}),
         ...(inicio || fim
           ? { data: { ...(inicio ? { gte: inicio } : {}), ...(fim ? { lte: fim } : {}) } }
@@ -307,12 +315,14 @@ export const vendaService = {
 };
 
 export const despesaService = {
-  async listar({ inicio, fim, limite = 200 }) {
+  async listar({ inicio, fim, usuarioId, limite = 200 }) {
     const lista = await prisma.despesa.findMany({
-      where:
-        inicio || fim
+      where: {
+        ...(usuarioId ? { usuarioId } : {}),
+        ...(inicio || fim
           ? { data: { ...(inicio ? { gte: inicio } : {}), ...(fim ? { lte: fim } : {}) } }
-          : {},
+          : {}),
+      },
       include: COM_TIPO,
       orderBy: { data: 'desc' },
       take: limite,
@@ -336,6 +346,12 @@ export const despesaService = {
       data: { ...dados, categoriaId: categoria.id, usuarioId },
       include: COM_TIPO,
     });
+    return paraResposta(despesa);
+  },
+
+  async porId(id) {
+    const despesa = await prisma.despesa.findUnique({ where: { id }, include: COM_TIPO });
+    if (!despesa) throw AppError.naoEncontrado('Despesa não encontrada.');
     return paraResposta(despesa);
   },
 

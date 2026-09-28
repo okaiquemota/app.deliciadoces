@@ -2,11 +2,10 @@ import { Router } from 'express';
 import {
   authController,
   loginSchema,
-  registrarSchema,
   trocarSenhaSchema,
   atualizarPerfilSchema,
 } from '../controllers/authController.js';
-import { autenticar, autorizar } from '../middlewares/auth.js';
+import { autenticar } from '../middlewares/auth.js';
 import { validar } from '../middlewares/validate.js';
 
 const router = Router();
@@ -16,25 +15,12 @@ const router = Router();
  */
 router.post('/login', validar(loginSchema), authController.login);
 
-/**
- * POST /api/auth/registrar — restrita a ADMIN.
- *
- * Decisão: este é um sistema interno da confeitaria, não um SaaS com
- * cadastro aberto. Quem cria contas é a administração. A conta da Dalila
- * nasce do seed (`npm run db:seed`), resolvendo o problema do "ovo e da
- * galinha" sem deixar uma rota pública de criação de admin.
- *
- * Hoje a trava de papel é efetivamente um no-op, já que só existe ADMIN.
- * Ela fica no lugar porque é a regra correta e não custa nada: no dia em
- * que existir um OPERADOR, esta rota já está protegida.
+/*
+ * Criar conta não é daqui: é a tela Equipe, em `POST /api/usuarios`,
+ * restrita à administração. A conta da Dalila nasce do seed
+ * (`npm run db:seed`), o que resolve o "ovo e a galinha" sem deixar uma
+ * rota pública de criação de conta.
  */
-router.post(
-  '/registrar',
-  autenticar,
-  autorizar('ADMIN'),
-  validar(registrarSchema),
-  authController.registrar
-);
 
 /**
  * GET /api/auth/eu — o frontend chama ao abrir o app para saber se o

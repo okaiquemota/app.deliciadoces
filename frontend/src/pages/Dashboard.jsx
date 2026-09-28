@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { dashboard } from '../services/recursos.js';
+import { dashboard, despesas, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { moeda, saudacao } from '../utils/formato.js';
 import { VendaRapida } from '../components/VendaRapida.jsx';
@@ -84,6 +84,36 @@ const PEQUENAS = [
 ];
 
 /**
+ * O Início da funcionária: os mesmos três botões de lançar, sem o valor
+ * do dia — "quanto já vendeu hoje" é o total que a Dalila pediu para
+ * ficar só com ela.
+ *
+ * No lugar do dinheiro, QUANTOS lançamentos ela mesma fez hoje. Não é
+ * total do caixa (é só o dela, e sem valor), e faz o papel de recibo que
+ * o número tem para a Dalila: ela lança, o cartão responde.
+ *
+ * Retirada pessoal, Fechar dia e Resumo não aparecem: são da dona.
+ */
+const CONTAGEM_DO_BALCAO = {
+  venda: ['venda sua hoje', 'vendas suas hoje'],
+  entrada: ['entrada sua hoje', 'entradas suas hoje'],
+  saida: ['saída sua hoje', 'saídas suas hoje'],
+};
+
+/** Os lançamentos dela de hoje, contados por botão. O servidor já recorta. */
+async function contarMeusDeHoje() {
+  const [v, d] = await Promise.all([
+    vendas.listar({ limite: 1000 }),
+    despesas.listar({ limite: 1000 }),
+  ]);
+  return {
+    venda: v.filter((x) => x.itens.length > 0).length,
+    entrada: v.filter((x) => x.itens.length === 0).length,
+    saida: d.length,
+  };
+}
+
+/**
  * Verdadeiro acima do ponto em que a barra de navegação sai do rodapé e
  * vira coluna. O número vive aqui e no CSS, e os dois precisam bater —
  * está no mesmo comentário dos dois lados.
@@ -93,15 +123,25 @@ function usaHistorico() {
 }
 
 export function Dashboard() {
-  const { usuario } = useAuth();
+  const { usuario, admin } = useAuth();
   const navegar = useNavigate();
   const [aberto, setAberto] = useState(null);
   const [ultimos, setUltimos] = useState(null);
   const [hoje, setHoje] = useState(null);
+  const [meus, setMeus] = useState(null);
   const [largo, setLargo] = useState(usaHistorico);
   const [erro, setErro] = useState('');
 
   const carregar = useCallback(async () => {
+    if (!admin) {
+      try {
+        setMeus(await contarMeusDeHoje());
+        setErro('');
+      } catch (e) {
+        setErro(mensagemDeErro(e));
+      }
+      return;
+    }
     try {
       const inicio = new Date();
       inicio.setHours(0, 0, 0, 0);
@@ -115,7 +155,7 @@ export function Dashboard() {
     } catch (e) {
       setErro(mensagemDeErro(e));
     }
-  }, []);
+  }, [admin]);
 
   useEffect(() => {
     carregar();
@@ -147,14 +187,21 @@ export function Dashboard() {
    * Agora o botão é uma ficha: o que ela faz em cima, quanto já deu hoje
    * no meio, o detalhe embaixo.
    */
-  const dados = {
-    venda: hoje && {
-      valor: moeda(hoje.vendas),
-      detalhe: `${hoje.quantidadeVendas} ${hoje.quantidadeVendas === 1 ? 'venda' : 'vendas'} hoje`,
-    },
-    entrada: hoje && { valor: moeda(hoje.vendasAvulsas), detalhe: 'entrou hoje' },
-    saida: hoje && { valor: moeda(hoje.custos), detalhe: 'saiu hoje' },
-  };
+  const dados = !admin
+    ? Object.fromEntries(
+        Object.entries(CONTAGEM_DO_BALCAO).map(([id, [um, varios]]) => [
+          id,
+          meus && { valor: String(meus[id]), detalhe: meus[id] === 1 ? um : varios },
+        ])
+      )
+    : {
+        venda: hoje && {
+          valor: moeda(hoje.vendas),
+          detalhe: `${hoje.quantidadeVendas} ${hoje.quantidadeVendas === 1 ? 'venda' : 'vendas'} hoje`,
+        },
+        entrada: hoje && { valor: moeda(hoje.vendasAvulsas), detalhe: 'entrou hoje' },
+        saida: hoje && { valor: moeda(hoje.custos), detalhe: 'saiu hoje' },
+      };
 
   return (
     <section className="inicio">
@@ -176,7 +223,7 @@ export function Dashboard() {
         é o CSS, pelo nome do tamanho. Antes cada fileira era um `div` que
         montava a sua própria grade, com a sua própria contagem de colunas.
       */}
-      <div className="acoes">
+      <div className={admin ? 'acoes' : 'acoes acoes--balcao'}>
         <Cartao
           acao={PRINCIPAL}
           tamanho="grande"
@@ -188,14 +235,15 @@ export function Dashboard() {
           <Cartao key={a.id} acao={a} dado={dados[a.id]} onClick={() => setAberto(a.id)} />
         ))}
 
-        {PEQUENAS.map((a) => (
-          <Cartao
-            key={a.id}
-            acao={a}
-            tamanho="pequeno"
-            onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
-          />
-        ))}
+        {admin &&
+          PEQUENAS.map((a) => (
+            <Cartao
+              key={a.id}
+              acao={a}
+              tamanho="pequeno"
+              onClick={() => (a.rota ? navegar(a.rota) : setAberto(a.id))}
+            />
+          ))}
       </div>
 
       {/*
@@ -205,7 +253,7 @@ export function Dashboard() {
         falta — um espaço em branco faria a tela parecer quebrada no
         primeiro dia de uso.
       */}
-      {largo && (
+      {largo && admin && (
         <section className="recentes" aria-labelledby="recentes-titulo">
           <div className="recentes__cabeca">
             <h2 className="recentes__titulo" id="recentes-titulo">

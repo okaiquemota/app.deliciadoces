@@ -60,6 +60,14 @@ export const dashboard = {
   ultimos: () => dados(api.get('/dashboard/ultimos')),
 };
 
+/** Quem tem acesso ao sistema. Só a administração chega aqui. */
+export const equipe = {
+  listar: () => dados(api.get('/usuarios')),
+  criar: (corpo) => dados(api.post('/usuarios', corpo)),
+  alterar: (id, corpo) => dados(api.patch(`/usuarios/${id}`, corpo)),
+  redefinirSenha: (id, senha) => dados(api.patch(`/usuarios/${id}/senha`, { senha })),
+};
+
 export const fechamentos = {
   listar: (params) => dados(api.get('/fechamentos', { params })),
   previa: (data) => dados(api.get('/fechamentos/previa', { params: { data } })),

@@ -23,3 +23,13 @@ export function RotaProtegida() {
 
   return <Outlet />;
 }
+
+/**
+ * Telas do dinheiro do negócio (Fechar dia, Resumo): só a administração.
+ * Quem não é e chega pelo endereço digitado volta para o Início — sem
+ * isso, veria a tela vazia com o erro de permissão do servidor.
+ */
+export function SoAdmin() {
+  const { admin } = useAuth();
+  return admin ? <Outlet /> : <Navigate to="/dashboard" replace />;
+}

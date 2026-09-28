@@ -26,23 +26,22 @@ Controle de caixa (entradas e saídas), controle de estoque em dois níveis (ing
 
 ### 2.2 Fora do escopo, e por quê
 
-| Não incluído                          | Motivo                                                                                                        |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Contas a receber                      | A cliente não vende fiado: recebe tudo na entrega                                                             |
-| Parcelamento e sinal                  | Mesma razão                                                                                                   |
-| Emissão de nota fiscal                | Não solicitado; exigiria integração com SEFAZ                                                                 |
-| Cadastro de clientes                  | Ela não costuma anotar quem comprou                                                                           |
-| Multiusuário com permissões distintas | Só ela opera hoje. O campo `papel` existe no modelo, preparado, mas a regra de restrição não foi implementada |
-| Saldo exato por lote de validade      | Exigiria amarrar cada saída a uma entrada específica; o sistema estima — ver §6.2                             |
+| Não incluído                     | Motivo                                                                            |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| Contas a receber                 | A cliente não vende fiado: recebe tudo na entrega                                 |
+| Parcelamento e sinal             | Mesma razão                                                                       |
+| Emissão de nota fiscal           | Não solicitado; exigiria integração com SEFAZ                                     |
+| Cadastro de clientes             | Ela não costuma anotar quem comprou                                               |
+| Saldo exato por lote de validade | Exigiria amarrar cada saída a uma entrada específica; o sistema estima — ver §6.2 |
 
 ---
 
 ## 3. Atores
 
-| Ator              | Descrição                                                                                                         |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Administrador** | A Dalila. Acesso total: lança, edita, cancela e vê resultado financeiro                                           |
-| **Operador**      | Previsto no modelo para uso futuro: lançaria venda e estoque sem ver o resultado financeiro. **Não implementado** |
+| Ator              | Descrição                                                                                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Administrador** | A Dalila. Acesso total: lança, edita, cancela, vê o resultado financeiro e cuida da equipe                                                                                                             |
+| **Operador**      | Quem trabalha com ela — na tela, "Balcão e cozinha". Lança venda, entrada avulsa, saída, produção e estoque, e corrige os próprios lançamentos do dia. **Não vê** totais, fechamento, resumo nem custo |
 
 ---
 
@@ -117,23 +116,37 @@ Prioridade: **E** = essencial · **I** = importante · **D** = desejável
 | RF35 | O sistema deve apresentar o movimento diário do período em gráfico              | D      |
 | RF36 | O sistema deve apresentar a distribuição de vendas por forma de pagamento       | D      |
 
+### 4.7 Equipe e permissões
+
+Pedido da cliente: "Vai ter mais pessoas sim. [Restrição] somente na parte de vendas totais, fechamento, valores de entrada e saída — essa parte mais de valores."
+
+| ID   | Requisito                                                                                                                       | Prior. |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| RF38 | O sistema deve permitir à administração cadastrar pessoas da equipe, com e-mail ou usuário simples e uma senha para o 1º acesso | E      |
+| RF39 | O sistema deve oferecer dois acessos: completo (administração) e balcão e cozinha (operador)                                    | E      |
+| RF40 | O sistema deve impedir o operador de ver totais de venda, fechamento, resumo, lançamentos de outras pessoas e custos            | E      |
+| RF41 | O sistema deve permitir ao operador lançar venda, entrada avulsa e saída, e corrigir **só os próprios lançamentos do dia**      | E      |
+| RF42 | O sistema deve permitir à administração tirar e devolver o acesso de uma pessoa, valendo já na próxima ação dela                | E      |
+| RF43 | O sistema deve permitir à administração criar uma nova senha para quem esqueceu a sua                                           | I      |
+
 ---
 
 ## 5. Requisitos Não Funcionais
 
-| ID    | Requisito                                                                                        | Critério de verificação                              |
-| ----- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| RNF01 | O sistema deve funcionar em celular, onde a cliente lança venda no balcão                        | Nenhuma tela rola lateralmente em 390px nem em 360px |
-| RNF02 | Alvos de toque devem ter no mínimo 44px de altura nos controles de uso constante                 | Medição em navegador com ponteiro grosso             |
-| RNF03 | O contraste de texto deve atender WCAG AA (4,5:1 para texto normal)                              | Cálculo de razão de contraste da paleta              |
-| RNF04 | Registrar uma venda comum deve levar no máximo 3 toques além da escolha dos produtos             | Contagem no fluxo real                               |
-| RNF05 | O saldo de estoque nunca pode divergir do histórico de movimentações                             | Teste automatizado que soma o histórico e compara    |
-| RNF06 | Toda alteração de estoque deve ser atômica: movimentação e saldo mudam juntos ou nada muda       | Uso de transação; teste de falha no meio             |
-| RNF07 | O preço de venda deve ser definido pelo servidor, nunca pelo cliente da API                      | Teste que envia preço adulterado e confere o total   |
-| RNF08 | Senhas devem ser armazenadas como hash, nunca em texto                                           | Teste que inspeciona o campo gravado                 |
-| RNF09 | O sistema deve estar disponível pela internet, sem instalação                                    | Publicado em URL pública                             |
-| RNF10 | O código deve seguir um padrão único entre os integrantes do grupo                               | ESLint e Prettier no monorepo, sem erro              |
-| RNF11 | Campos de dinheiro preenchem da direita para a esquerda, centavos primeiro, com teclado numérico | Digitar 1500 mostra 15,00 em todos os campos de R$   |
+| ID    | Requisito                                                                                        | Critério de verificação                                    |
+| ----- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| RNF01 | O sistema deve funcionar em celular, onde a cliente lança venda no balcão                        | Nenhuma tela rola lateralmente em 390px nem em 360px       |
+| RNF02 | Alvos de toque devem ter no mínimo 44px de altura nos controles de uso constante                 | Medição em navegador com ponteiro grosso                   |
+| RNF03 | O contraste de texto deve atender WCAG AA (4,5:1 para texto normal)                              | Cálculo de razão de contraste da paleta                    |
+| RNF04 | Registrar uma venda comum deve levar no máximo 3 toques além da escolha dos produtos             | Contagem no fluxo real                                     |
+| RNF05 | O saldo de estoque nunca pode divergir do histórico de movimentações                             | Teste automatizado que soma o histórico e compara          |
+| RNF06 | Toda alteração de estoque deve ser atômica: movimentação e saldo mudam juntos ou nada muda       | Uso de transação; teste de falha no meio                   |
+| RNF07 | O preço de venda deve ser definido pelo servidor, nunca pelo cliente da API                      | Teste que envia preço adulterado e confere o total         |
+| RNF08 | Senhas devem ser armazenadas como hash, nunca em texto                                           | Teste que inspeciona o campo gravado                       |
+| RNF09 | O sistema deve estar disponível pela internet, sem instalação                                    | Publicado em URL pública                                   |
+| RNF10 | O código deve seguir um padrão único entre os integrantes do grupo                               | ESLint e Prettier no monorepo, sem erro                    |
+| RNF11 | Campos de dinheiro preenchem da direita para a esquerda, centavos primeiro, com teclado numérico | Digitar 1500 mostra 15,00 em todos os campos de R$         |
+| RNF12 | Permissão é conferida no servidor a cada requisição, com papel e acesso lidos do banco           | Teste que muda o papel e tira o acesso com a sessão aberta |
 
 ---
 
@@ -158,6 +171,12 @@ Prioridade: **E** = essencial · **I** = importante · **D** = desejável
 | RN15 | Cadastro não é excluído, é inativado, para não quebrar o histórico                                                             |
 | RN16 | O ingrediente mais antigo é usado primeiro: é por essa regra que o sistema estima a validade do que sobrou no estoque          |
 | RN17 | O ajuste de contagem guarda o sinal: a contagem que achou menos aparece como saída no histórico, não como entrada              |
+| RN18 | Retirada pessoal só a administração lança, e só ela converte uma saída em retirada                                             |
+| RN19 | O cadastro do doce (preço e receita) é da administração. O operador cadastra ingrediente, mas o custo só chega pelo "Comprei"  |
+| RN20 | Lançamento de operador é sempre de agora: a data enviada é ignorada, para ninguém lançar num dia já fechado                    |
+| RN21 | "Do dia" é o dia de Brasília. Lançamento de outro dia já entrou num fechamento, e só a administração o corrige                 |
+| RN22 | Ninguém é apagado da equipe: quem sai perde o acesso, e o histórico continua dizendo quem lançou cada coisa                    |
+| RN23 | A administração não tira o próprio acesso nem troca a própria senha pela Equipe (a senha dela se troca pedindo a atual)        |
 
 ### 6.1 Sobre RN09 — por que só dinheiro vivo
 
@@ -181,35 +200,37 @@ Uma venda pode levar o estoque a negativo, porque a produção nem sempre é lan
 
 Cada requisito, onde ele vive no código.
 
-| Requisito       | Rota da API                                                  | Tela                                             | Teste                                            |
-| --------------- | ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------ |
-| RF01, RF03      | `POST /api/auth/login`                                       | Login                                            | —                                                |
-| RF02            | `PATCH /api/auth/senha`                                      | Minha conta                                      | `tests/senha.test.js`                            |
-| RF04, RF09      | `POST` e `PUT /api/vendas`                                   | Início → Venda; Caixa                            | `tests/caixa.test.js`                            |
-| RF05, RF06      | `POST /api/vendas` (campo `valor`)                           | Início → Entrada avulsa                          | `tests/caixa.test.js`                            |
-| RF07, RF08      | `POST /api/despesas`                                         | Início → Saída / Retirada pessoal                | `tests/caixa.test.js`, `tests/dashboard.test.js` |
-| RF10, RF11      | `PATCH /api/vendas/:id/cancelar` e `/reabrir`                | Caixa                                            | `tests/caixa.test.js`                            |
-| RF12            | `GET /api/vendas`, `GET /api/despesas`                       | Caixa (extrato)                                  | `tests/periodo.test.js`                          |
-| RF13, RF14      | `/api/insumos`, `/api/produtos`                              | Estoque (ingredientes); Produção (doces)         | `tests/edicao.test.js`                           |
-| RF15–RF17       | `POST /api/estoque/movimentacoes`                            | Estoque → Comprei / Ajustar; Produção → Ajustar  | `tests/estoque.test.js`                          |
-| RF18            | (efeito de `POST /api/vendas`)                               | —                                                | `tests/caixa.test.js`                            |
-| RF19            | `GET /api/estoque/movimentacoes`                             | Kardex                                           | `tests/estoque.test.js`                          |
-| RF37            | `GET /api/estoque/movimentacoes` (`insumoId`/`produtoId`)    | Kardex → escolher um item                        | `tests/estoque.test.js`                          |
-| RF20            | `GET /api/estoque/alertas`                                   | Contadores de Estoque e Produção no menu         | `tests/validade.test.js`                         |
-| RF21, RF22      | `GET /api/insumos` (campo `validade`)                        | Estoque → linha e detalhe do ingrediente         | `tests/validade.test.js`                         |
-| RF23            | `POST /api/estoque/recalcular`                               | —                                                | `tests/estoque.test.js`                          |
-| RF24–RF26       | `POST /api/producoes`, `PUT /api/produtos/:id/ficha-tecnica` | Produção → Registrar lote; Editar doce (receita) | `tests/producao.test.js`                         |
-| (desfazer lote) | `DELETE /api/producoes/:id`                                  | Kardex → lote → Excluir lote                     | `tests/producao.test.js`                         |
-| RF27            | `GET /api/producoes/previsao`                                | Produção                                         | `tests/producao.test.js`                         |
-| RF28–RF32       | `/api/fechamentos`                                           | Fechamento                                       | `tests/fechamento.test.js`                       |
-| RF33–RF36       | `GET /api/dashboard`                                         | Resumo (gráfico com tabela dos números)          | `tests/dashboard.test.js`                        |
+| Requisito       | Rota da API                                                  | Tela                                              | Teste                                            |
+| --------------- | ------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------ |
+| RF01, RF03      | `POST /api/auth/login`                                       | Login                                             | —                                                |
+| RF02            | `PATCH /api/auth/senha`                                      | Minha conta                                       | `tests/senha.test.js`                            |
+| RF04, RF09      | `POST` e `PUT /api/vendas`                                   | Início → Venda; Caixa                             | `tests/caixa.test.js`                            |
+| RF05, RF06      | `POST /api/vendas` (campo `valor`)                           | Início → Entrada avulsa                           | `tests/caixa.test.js`                            |
+| RF07, RF08      | `POST /api/despesas`                                         | Início → Saída / Retirada pessoal                 | `tests/caixa.test.js`, `tests/dashboard.test.js` |
+| RF10, RF11      | `PATCH /api/vendas/:id/cancelar` e `/reabrir`                | Caixa                                             | `tests/caixa.test.js`                            |
+| RF12            | `GET /api/vendas`, `GET /api/despesas`                       | Caixa (extrato)                                   | `tests/periodo.test.js`                          |
+| RF13, RF14      | `/api/insumos`, `/api/produtos`                              | Estoque (ingredientes); Produção (doces)          | `tests/edicao.test.js`                           |
+| RF15–RF17       | `POST /api/estoque/movimentacoes`                            | Estoque → Comprei / Ajustar; Produção → Ajustar   | `tests/estoque.test.js`                          |
+| RF18            | (efeito de `POST /api/vendas`)                               | —                                                 | `tests/caixa.test.js`                            |
+| RF19            | `GET /api/estoque/movimentacoes`                             | Kardex                                            | `tests/estoque.test.js`                          |
+| RF37            | `GET /api/estoque/movimentacoes` (`insumoId`/`produtoId`)    | Kardex → escolher um item                         | `tests/estoque.test.js`                          |
+| RF20            | `GET /api/estoque/alertas`                                   | Contadores de Estoque e Produção no menu          | `tests/validade.test.js`                         |
+| RF21, RF22      | `GET /api/insumos` (campo `validade`)                        | Estoque → linha e detalhe do ingrediente          | `tests/validade.test.js`                         |
+| RF23            | `POST /api/estoque/recalcular`                               | —                                                 | `tests/estoque.test.js`                          |
+| RF24–RF26       | `POST /api/producoes`, `PUT /api/produtos/:id/ficha-tecnica` | Produção → Registrar lote; Editar doce (receita)  | `tests/producao.test.js`                         |
+| (desfazer lote) | `DELETE /api/producoes/:id`                                  | Kardex → lote → Excluir lote                      | `tests/producao.test.js`                         |
+| RF27            | `GET /api/producoes/previsao`                                | Produção                                          | `tests/producao.test.js`                         |
+| RF28–RF32       | `/api/fechamentos`                                           | Fechamento                                        | `tests/fechamento.test.js`                       |
+| RF33–RF36       | `GET /api/dashboard`                                         | Resumo (gráfico com tabela dos números)           | `tests/dashboard.test.js`                        |
+| RF38, RF42–RF43 | `/api/usuarios`                                              | Minha conta → Equipe                              | `tests/permissoes.test.js`                       |
+| RF39–RF41       | Todas as rotas (`autorizar`, `ocultarCustos`, controllers)   | Menu, Início, Caixa, Produção e Estoque por papel | `tests/permissoes.test.js`                       |
 
 ---
 
 ## 8. Validação dos requisitos
 
-A suíte automatizada tem **146 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade.
+A suíte automatizada tem **175 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade — e nas permissões. Os de permissão sobem a API de verdade e entram com as duas contas: o que decide o acesso é a trava na rota, e testar só o serviço a deixaria de fora.
 
-Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro calcular o saldo do kardex ignorando o que ficou fora do período deixar a edição de um cadastro preencher os valores padrão (o que zerava o custo médio do ingrediente) e pesar como custo zero o estoque de custo desconhecido na média de uma compra nova. Todas foram detectadas.
+Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro calcular o saldo do kardex ignorando o que ficou fora do período deixar a edição de um cadastro preencher os valores padrão (o que zerava o custo médio do ingrediente) e pesar como custo zero o estoque de custo desconhecido na média de uma compra nova. Nas permissões: tirar a trava de papel das rotas de dinheiro, deixar de esconder o custo, deixar o operador mexer em lançamento alheio ou de outro dia, ler o papel do token em vez do banco, abrir o recorte do caixa, aceitar a data enviada pelo operador e aceitar custo digitado à mão ou retirada vinda dele. Todas foram detectadas.
 
 Os requisitos não funcionais de interface (RNF01 a RNF04) foram verificados por medição em navegador nas resoluções 360×800, 390×844 e 1280×800.

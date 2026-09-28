@@ -70,12 +70,15 @@ export function CabecaComNovo({ titulo, oQue, aoNovo }) {
       <p className="cabeca__titulo" aria-hidden="true">
         {titulo}
       </p>
-      <button type="button" className="cabeca__novo" onClick={aoNovo}>
-        <IconeMais tamanho={18} />
-        {/* No celular o botão diz só "Novo"; o resto continua para o
-            leitor de tela, que precisa saber novo O QUÊ. */}
-        Novo<span className="cabeca__novo-resto"> {oQue}</span>
-      </button>
+      {/* Sem `aoNovo`, sem botão: quem não pode cadastrar não vê o convite. */}
+      {aoNovo && (
+        <button type="button" className="cabeca__novo" onClick={aoNovo}>
+          <IconeMais tamanho={18} />
+          {/* No celular o botão diz só "Novo"; o resto continua para o
+              leitor de tela, que precisa saber novo O QUÊ. */}
+          Novo<span className="cabeca__novo-resto"> {oQue}</span>
+        </button>
+      )}
     </div>
   );
 }

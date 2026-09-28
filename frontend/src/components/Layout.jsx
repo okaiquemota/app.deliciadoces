@@ -90,11 +90,30 @@ const GRUPOS = [
         titulo: 'Fechamento de caixa',
         Icone: IconeFechamento,
         soDesktop: true,
+        soAdmin: true,
       },
-      { para: '/resumo', rotulo: 'Resumo', titulo: 'Resumo', Icone: IconeResumo, soDesktop: true },
+      {
+        para: '/resumo',
+        rotulo: 'Resumo',
+        titulo: 'Resumo',
+        Icone: IconeResumo,
+        soDesktop: true,
+        soAdmin: true,
+      },
     ],
   },
 ];
+
+/**
+ * O menu de quem está logado. `soAdmin` é o dinheiro do negócio — fechar
+ * o dia e o resumo —, que a funcionária não vê; um grupo que fica sem
+ * item nenhum sai junto com o cabeçalho dele.
+ */
+function gruposDe(admin) {
+  return GRUPOS.map((g) => ({ ...g, itens: g.itens.filter((i) => admin || !i.soAdmin) })).filter(
+    (g) => g.itens.length
+  );
+}
 
 const SECOES = GRUPOS.flatMap((g) => g.itens);
 
@@ -125,7 +144,7 @@ function guardarMenuRecolhido(recolhido) {
 }
 
 export function Layout() {
-  const { usuario, sair } = useAuth();
+  const { usuario, admin, sair } = useAuth();
   const { pathname } = useLocation();
 
   /**
@@ -311,7 +330,7 @@ export function Layout() {
               }}
             />
           )}
-          {GRUPOS.map(({ grupo, itens }) => (
+          {gruposDe(admin).map(({ grupo, itens }) => (
             <Fragment key={grupo}>
               <span className="nav__grupo" aria-hidden="true">
                 {grupo}

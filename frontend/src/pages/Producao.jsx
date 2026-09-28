@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Dinheiro, Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { Dado, Total, normalizar } from '../components/Extrato.jsx';
@@ -39,6 +40,9 @@ import {
  * que JÁ aconteceu — lotes, vendas, perdas — mora no Kardex.
  */
 export function Producao() {
+  // O cadastro do doce (preço e receita) e o dinheiro parado na vitrine
+  // são da administração. A funcionária vê os doces, produz e ajusta.
+  const { admin } = useAuth();
   const [catalogo, setCatalogo] = useState(null);
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState('');
@@ -103,7 +107,11 @@ export function Producao() {
 
   return (
     <section className="extrato">
-      <CabecaComNovo titulo="Produção" oQue="doce" aoNovo={() => setEditando({})} />
+      <CabecaComNovo
+        titulo="Produção"
+        oQue="doce"
+        aoNovo={admin ? () => setEditando({}) : undefined}
+      />
 
       <input
         type="search"
@@ -125,14 +133,14 @@ export function Producao() {
         </p>
       )}
 
-      <div className="extrato__resumo">
+      <div className={admin ? 'extrato__resumo' : 'extrato__resumo extrato__resumo--dois'}>
         <Total rotulo="Doces" valor={todos.length} />
         <Total
           rotulo="Acabando"
           valor={quantosAcabando}
           tom={quantosAcabando ? 'alerta' : undefined}
         />
-        <Total rotulo="Valor à venda" valor={moeda(valorAVenda)} />
+        {admin && <Total rotulo="Valor à venda" valor={moeda(valorAVenda)} />}
       </div>
 
       <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
@@ -141,13 +149,15 @@ export function Producao() {
         ) : todos.length === 0 ? (
           <div className="extrato__vazio">
             <p>Nenhum doce cadastrado ainda.</p>
-            <button
-              type="button"
-              className="botao botao--primario botao--auto"
-              onClick={() => setEditando({})}
-            >
-              Cadastrar o primeiro
-            </button>
+            {admin && (
+              <button
+                type="button"
+                className="botao botao--primario botao--auto"
+                onClick={() => setEditando({})}
+              >
+                Cadastrar o primeiro
+              </button>
+            )}
           </div>
         ) : visiveis.length === 0 ? (
           <p className="extrato__vazio">Nada encontrado para “{busca.trim()}”.</p>
@@ -173,7 +183,7 @@ export function Producao() {
           aoFechar={() => setAberto(null)}
           aoProduzir={doDetalhe(setProduzindo)}
           aoAjustar={doDetalhe(setAjustando)}
-          aoEditar={doDetalhe(setEditando)}
+          aoEditar={admin ? doDetalhe(setEditando) : undefined}
         />
       )}
       {produzindo && (
@@ -245,6 +255,7 @@ function LinhaDoce({ doce: p, aoAbrir, aoProduzir }) {
  * tabela nunca respondia: quanto sobra de cada doce vendido.
  */
 function DetalheDoce({ doce: p, aoFechar, aoProduzir, aoAjustar, aoEditar }) {
+  const { admin } = useAuth();
   // `null` enquanto a receita carrega.
   const [ficha, setFicha] = useState(null);
 
@@ -285,7 +296,11 @@ function DetalheDoce({ doce: p, aoFechar, aoProduzir, aoAjustar, aoEditar }) {
 
       <dl className="lancamento__dados">
         <Dado rotulo="Preço">{moeda(preco)}</Dado>
-        <Dado rotulo="Valor à venda">{moeda(Math.max(Number(p.quantidadeAtual), 0) * preco)}</Dado>
+        {admin && (
+          <Dado rotulo="Valor à venda">
+            {moeda(Math.max(Number(p.quantidadeAtual), 0) * preco)}
+          </Dado>
+        )}
         <Dado rotulo="Avisa com menos de">
           {minimo > 0 ? quantidade(minimo, p.unidade) : 'Sem aviso'}
         </Dado>
@@ -331,9 +346,11 @@ function DetalheDoce({ doce: p, aoFechar, aoProduzir, aoAjustar, aoEditar }) {
         <button type="button" className="botao botao--auto" onClick={aoAjustar}>
           Ajustar
         </button>
-        <button type="button" className="botao botao--auto" onClick={aoEditar}>
-          Editar
-        </button>
+        {aoEditar && (
+          <button type="button" className="botao botao--auto" onClick={aoEditar}>
+            Editar
+          </button>
+        )}
         <button type="button" className="botao botao--primario botao--auto" onClick={aoProduzir}>
           Produzir
         </button>

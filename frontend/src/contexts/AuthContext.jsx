@@ -70,8 +70,21 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }, []);
 
+  /**
+   * `admin`: a Dalila. Quem não é vê o sistema do balcão — lança, mas não
+   * vê o dinheiro do negócio. Aqui é só o que a TELA mostra; quem barra
+   * de verdade é o servidor, que confere o papel a cada chamada.
+   */
   const valor = useMemo(
-    () => ({ usuario, autenticado: Boolean(usuario), carregando, entrar, sair, atualizarSessao }),
+    () => ({
+      usuario,
+      admin: usuario?.papel === 'ADMIN',
+      autenticado: Boolean(usuario),
+      carregando,
+      entrar,
+      sair,
+      atualizarSessao,
+    }),
     [usuario, carregando, entrar, sair, atualizarSessao]
   );
 

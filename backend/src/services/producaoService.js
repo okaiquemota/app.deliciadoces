@@ -121,6 +121,12 @@ export const producaoService = {
     });
   },
 
+  async porId(id) {
+    const producao = await prisma.producao.findUnique({ where: { id } });
+    if (!producao) throw AppError.naoEncontrado('Produção não encontrada.');
+    return producao;
+  },
+
   /** Desfaz o lote: devolve o insumo e tira o doce pronto. */
   async excluir(id) {
     const producao = await prisma.producao.findUnique({ where: { id } });
