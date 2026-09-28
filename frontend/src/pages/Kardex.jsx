@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Modal } from '../components/Modal.jsx';
 import {
   IconeAjuste,
@@ -11,7 +11,9 @@ import {
   IconeVisto,
 } from '../components/Icones.jsx';
 import {
+  Dado,
   EscolherPeriodo,
+  Total,
   hora,
   intervalo,
   normalizar,
@@ -218,11 +220,15 @@ function textoDeBusca(a) {
 // ============================================================ página
 
 export function Kardex() {
-  const [periodo, setPeriodo] = useState('7dias');
+  // Vindo do "Ver no Kardex" de um ingrediente ou de um doce, a tela já
+  // abre no kardex daquele item — e no mês, que é o que conta a história
+  // dele; a semana mostraria só o fim.
+  const { state } = useLocation();
+  const [periodo, setPeriodo] = useState(state?.item ? 'mes' : '7dias');
   const [datas, setDatas] = useState(() => intervalo('mes'));
   const [tipos, setTipos] = useState([]);
   const [busca, setBusca] = useState('');
-  const [item, setItem] = useState(null);
+  const [item, setItem] = useState(state?.item ?? null);
   const [escolhendoPeriodo, setEscolhendoPeriodo] = useState(false);
   const [escolhendoItem, setEscolhendoItem] = useState(false);
 
@@ -479,7 +485,7 @@ function Resumo({ visiveis, doItem, atual }) {
     const saiu = visiveis.reduce((s, a) => s + Math.max(-a.delta, 0), 0);
     return (
       <div className="extrato__resumo">
-        <Total rotulo="Entrou" valor={quantidade(entrou, doItem.unidade)} entrada />
+        <Total rotulo="Entrou" valor={quantidade(entrou, doItem.unidade)} tom="entrada" />
         <Total rotulo="Saiu" valor={quantidade(saiu, doItem.unidade)} />
         <Total
           rotulo="Tem agora"
@@ -495,21 +501,6 @@ function Resumo({ visiveis, doItem, atual }) {
       <Total rotulo="Lotes" valor={quantos('producao')} />
       <Total rotulo="Vendas" valor={quantos('venda')} />
       <Total rotulo="Perdas" valor={quantos('perda')} />
-    </div>
-  );
-}
-
-function Total({ rotulo, valor, entrada }) {
-  return (
-    <div className="extrato__total">
-      <span className="extrato__total-rotulo">{rotulo}</span>
-      <span
-        className={
-          entrada ? 'extrato__total-valor extrato__total-valor--entrada' : 'extrato__total-valor'
-        }
-      >
-        {valor}
-      </span>
     </div>
   );
 }
@@ -758,15 +749,6 @@ function Detalhe({ a, doItem, aoFechar, aoMudar, aoVerItem }) {
         )}
       </div>
     </Modal>
-  );
-}
-
-function Dado({ rotulo, children }) {
-  return (
-    <div>
-      <dt>{rotulo}</dt>
-      <dd>{children}</dd>
-    </div>
   );
 }
 

@@ -1,51 +1,58 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Tabela } from '../components/Tabela.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Linha, Selecao, Texto } from '../components/Campo.jsx';
+import { Dado, Total, normalizar } from '../components/Extrato.jsx';
 import {
   AjusteEstoque,
-  SaldoComAlerta,
+  CabecaComNovo,
+  LinhaItem,
+  LinkKardex,
+  SecaoItens,
   avisarEstoqueMudou,
+  comPontos,
+  estaAcabando,
   lerNumero,
   paraCampo,
-  quantosAcabando,
 } from '../components/EstoqueComum.jsx';
 import { insumos, producoes, produtos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
+import { corDoDoce, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
 
 /**
  * Produção: os DOCES. A pergunta desta tela é "o que eu tenho para
  * vender?" — quantos de cada doce estão prontos, o que está acabando, e
  * o lote que ela acabou de fazer.
  *
- * O material (ingredientes e embalagens) fica no Estoque. Antes o doce
- * ficava espalhado: o saldo e o cadastro lá, o lote aqui.
+ * No desenho do Caixa, do Kardex e do Estoque: título grande, busca, o
+ * resumo cinza e a lista lisa, com o que está acabando no alto. Cada doce
+ * leva a cor que tem na Venda — é por ela que ela acha o doce antes de
+ * ler o nome, e a cor é a mesma nas duas telas.
  *
- * Uma lista só: o catálogo com o que tem pronto, e na própria linha o que
- * se faz com cada doce — produzir, ajustar (perdeu, contagem) e editar,
- * com a receita dentro. O que JÁ aconteceu (os lotes feitos, as vendas,
- * as perdas) mora no Kardex, junto com o material: é lá que se confere e
- * se desfaz um lote.
+ * Na linha, só o gesto do dia: **Produzir**. Ajustar, Editar (com a
+ * receita) e o histórico ficam no detalhe, que abre ao tocar no doce. O
+ * que JÁ aconteceu — lotes, vendas, perdas — mora no Kardex.
  */
 export function Producao() {
-  const [catalogo, setCatalogo] = useState([]);
-  const [carregando, setCarregando] = useState(true);
+  const [catalogo, setCatalogo] = useState(null);
+  const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
+  const [busca, setBusca] = useState('');
 
+  const [aberto, setAberto] = useState(null);
   const [produzindo, setProduzindo] = useState(null);
   const [editando, setEditando] = useState(null);
   const [ajustando, setAjustando] = useState(null);
 
   const carregar = useCallback(async () => {
+    setAtualizando(true);
     try {
       setCatalogo(await produtos.listar());
       setErro('');
     } catch (e) {
       setErro(mensagemDeErro(e));
     } finally {
-      setCarregando(false);
+      setAtualizando(false);
     }
   }, []);
 
@@ -53,44 +60,129 @@ export function Producao() {
     carregar();
   }, [carregar]);
 
-  /** Fecha a janela, avisa e recarrega o que o lançamento mudou. */
-  const concluir = (fechar, mensagem) => () => {
+  /** Fecha a janela, avisa o que aconteceu e recarrega. */
+  const concluir = (fechar) => (mensagem) => {
     fechar(null);
     setAviso(mensagem);
     carregar();
     avisarEstoqueMudou();
   };
 
+  /** Do detalhe para uma ação: fecha o detalhe e abre a janela dela. */
+  const doDetalhe = (abrir) => () => {
+    abrir(aberto);
+    setAberto(null);
+  };
+
+  const todos = catalogo ?? [];
+  const termo = normalizar(busca.trim());
+  const visiveis = todos.filter((p) => !termo || normalizar(p.nome).includes(termo));
+  const acabando = visiveis.filter(estaAcabando);
+  const prontos = visiveis.filter((p) => !estaAcabando(p));
+
+  const quantosAcabando = todos.filter(estaAcabando).length;
+  const valorAVenda = todos.reduce(
+    (s, p) => s + Math.max(Number(p.quantidadeAtual), 0) * Number(p.precoVenda),
+    0
+  );
+
+  const linha = (p) => (
+    <LinhaDoce
+      key={p.id}
+      doce={p}
+      aoAbrir={() => setAberto(p)}
+      aoProduzir={() => setProduzindo(p)}
+    />
+  );
+
   return (
-    <section>
-      {erro && <p className="alerta alerta--erro">{erro}</p>}
+    <section className="extrato">
+      <CabecaComNovo titulo="Produção" oQue="doce" aoNovo={() => setEditando({})} />
+
+      <input
+        type="search"
+        className="campo__entrada extrato__busca"
+        placeholder="Buscar"
+        aria-label="Buscar doce"
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+      />
+
+      {erro && (
+        <p className="alerta alerta--erro" role="alert">
+          {erro}
+        </p>
+      )}
       {aviso && (
         <p className="alerta alerta--ok" role="status">
           {aviso}
         </p>
       )}
 
-      <ListaDoces
-        catalogo={catalogo}
-        carregando={carregando}
-        aoProduzir={(doce) => setProduzindo({ produtoId: doce?.id })}
-        aoAjustar={setAjustando}
-        aoEditar={setEditando}
-      />
+      <div className="extrato__resumo">
+        <Total rotulo="Doces" valor={todos.length} />
+        <Total
+          rotulo="Acabando"
+          valor={quantosAcabando}
+          tom={quantosAcabando ? 'alerta' : undefined}
+        />
+        <Total rotulo="Valor à venda" valor={moeda(valorAVenda)} />
+      </div>
 
+      <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
+        {catalogo === null ? (
+          <p className="extrato__vazio">Carregando...</p>
+        ) : todos.length === 0 ? (
+          <div className="extrato__vazio">
+            <p>Nenhum doce cadastrado ainda.</p>
+            <button
+              type="button"
+              className="botao botao--primario botao--auto"
+              onClick={() => setEditando({})}
+            >
+              Cadastrar o primeiro
+            </button>
+          </div>
+        ) : visiveis.length === 0 ? (
+          <p className="extrato__vazio">Nada encontrado para “{busca.trim()}”.</p>
+        ) : (
+          <div className="extrato__troca">
+            {acabando.length > 0 && (
+              <SecaoItens titulo="Acabando" conta={acabando.length}>
+                {acabando.map(linha)}
+              </SecaoItens>
+            )}
+            {prontos.length > 0 && (
+              <SecaoItens titulo="Prontos para vender" conta={prontos.length}>
+                {prontos.map(linha)}
+              </SecaoItens>
+            )}
+          </div>
+        )}
+      </div>
+
+      {aberto && (
+        <DetalheDoce
+          doce={aberto}
+          aoFechar={() => setAberto(null)}
+          aoProduzir={doDetalhe(setProduzindo)}
+          aoAjustar={doDetalhe(setAjustando)}
+          aoEditar={doDetalhe(setEditando)}
+        />
+      )}
       {produzindo && (
         <FormularioLote
-          catalogo={catalogo}
-          produtoInicial={produzindo.produtoId}
+          catalogo={todos}
+          produtoInicial={produzindo.id}
           aoFechar={() => setProduzindo(null)}
-          aoSalvar={concluir(setProduzindo, 'Lote registrado.')}
+          aoSalvar={concluir(setProduzindo)}
         />
       )}
       {editando && (
         <FormularioDoce
           doce={editando}
           aoFechar={() => setEditando(null)}
-          aoSalvar={concluir(setEditando, editando.id ? 'Doce alterado.' : 'Doce cadastrado.')}
+          aoSalvar={concluir(setEditando)}
         />
       )}
       {ajustando && (
@@ -98,7 +190,7 @@ export function Producao() {
           alvo={ajustando}
           tipoAlvo="produto"
           aoFechar={() => setAjustando(null)}
-          aoSalvar={concluir(setAjustando, 'Estoque do doce ajustado.')}
+          aoSalvar={() => concluir(setAjustando)(`Estoque de ${ajustando.nome} ajustado.`)}
         />
       )}
     </section>
@@ -107,73 +199,140 @@ export function Producao() {
 
 // ============================================================ doces
 
-function ListaDoces({ catalogo, carregando, aoProduzir, aoAjustar, aoEditar }) {
-  const acabando = quantosAcabando(catalogo);
+/** Um doce na lista: a cor dele, o preço, a receita e quantos tem prontos. */
+function LinhaDoce({ doce: p, aoAbrir, aoProduzir }) {
+  const acabando = estaAcabando(p);
+  const minimo = Number(p.estoqueMinimo);
+  const partes = [
+    moeda(p.precoVenda),
+    p.rendimentoReceita ? `receita rende ${p.rendimentoReceita}` : 'sem receita',
+  ];
+  if (acabando) {
+    partes.unshift(
+      <span key="acabando" className="fechamento__falta">
+        acabando
+      </span>
+    );
+  }
 
   return (
-    <>
-      <div className="barra-acoes">
-        <span className="barra-acoes__resumo">
-          {catalogo.length} doce(s)
-          {acabando > 0 && <span className="fechamento__falta"> · {acabando} acabando</span>}
-        </span>
-        <span className="acoes-linha">
-          <button className="botao botao--auto" onClick={() => aoEditar({})}>
-            + Novo doce
-          </button>
-          <button
-            className="botao botao--primario botao--auto"
-            onClick={() => aoProduzir(null)}
-            disabled={!catalogo.length}
-          >
-            Registrar lote
-          </button>
-        </span>
+    <LinhaItem
+      marca={<span className="item-cor" style={{ backgroundColor: corDoDoce(p.nome) }} />}
+      tom={acabando ? 'alerta' : undefined}
+      titulo={p.nome}
+      detalhe={comPontos(partes)}
+      valor={quantidade(p.quantidadeAtual, p.unidade)}
+      alerta={acabando}
+      sub={minimo > 0 ? `mín. ${quantidade(minimo, p.unidade)}` : null}
+      aoAbrir={aoAbrir}
+      acao={{ rotulo: 'Produzir', aoTocar: aoProduzir }}
+    />
+  );
+}
+
+/**
+ * O detalhe de um doce: quantos tem, em números grandes, e o que se sabe
+ * dele — preço, aviso, a receita e quanto ela custa.
+ *
+ * O custo pela receita sai do custo médio dos ingredientes (o que ela
+ * paga no Comprei). Ao lado do preço, ele responde a pergunta que a
+ * tabela nunca respondia: quanto sobra de cada doce vendido.
+ */
+function DetalheDoce({ doce: p, aoFechar, aoProduzir, aoAjustar, aoEditar }) {
+  // `null` enquanto a receita carrega.
+  const [ficha, setFicha] = useState(null);
+
+  useEffect(() => {
+    let vivo = true;
+    produtos
+      .porId(p.id)
+      .then((d) => vivo && setFicha(d.fichaTecnica ?? []))
+      .catch(() => vivo && setFicha([]));
+    return () => {
+      vivo = false;
+    };
+  }, [p.id]);
+
+  const acabando = estaAcabando(p);
+  const preco = Number(p.precoVenda);
+  const minimo = Number(p.estoqueMinimo);
+  const rende = Number(p.rendimentoReceita);
+  const custoReceita = (ficha ?? []).reduce(
+    (s, i) => s + Number(i.quantidade) * Number(i.insumo?.custoUnitario ?? 0),
+    0
+  );
+  const custoPorDoce = rende > 0 && custoReceita > 0 ? custoReceita / rende : null;
+  const sobra = custoPorDoce === null ? null : preco - custoPorDoce;
+
+  return (
+    <Modal aberto aoFechar={aoFechar} titulo={p.nome} largura={480}>
+      <div className="lancamento">
+        <p
+          className={acabando ? 'lancamento__valor lancamento__valor--alerta' : 'lancamento__valor'}
+        >
+          {quantidade(p.quantidadeAtual, p.unidade)}
+        </p>
+        <p className="lancamento__quando">
+          {acabando ? 'prontos — está acabando' : 'prontos para vender'}
+        </p>
       </div>
 
-      <Tabela
-        carregando={carregando}
-        dados={catalogo}
-        vazio="Nenhum doce cadastrado ainda. Comece pelo + Novo doce."
-        colunas={[
-          { chave: 'nome', titulo: 'Doce' },
-          {
-            chave: 'quantidadeAtual',
-            titulo: 'Prontos',
-            render: (p) => <SaldoComAlerta item={p} />,
-          },
-          {
-            chave: 'precoVenda',
-            titulo: 'Preço',
-            alinhar: 'right',
-            render: (p) => moeda(p.precoVenda),
-          },
-          {
-            chave: 'rendimentoReceita',
-            titulo: 'Receita',
-            render: (p) => (p.rendimentoReceita ? `rende ${p.rendimentoReceita}` : '—'),
-          },
-          {
-            chave: 'acoes',
-            titulo: '',
-            alinhar: 'right',
-            render: (p) => (
-              <span className="acoes-linha">
-                <button className="botao botao--texto" onClick={() => aoProduzir(p)}>
-                  Produzir
-                </button>
-                <button className="botao botao--texto" onClick={() => aoAjustar(p)}>
-                  Ajustar
-                </button>
-                <button className="botao botao--texto" onClick={() => aoEditar(p)}>
-                  Editar
-                </button>
+      <dl className="lancamento__dados">
+        <Dado rotulo="Preço">{moeda(preco)}</Dado>
+        <Dado rotulo="Valor à venda">{moeda(Math.max(Number(p.quantidadeAtual), 0) * preco)}</Dado>
+        <Dado rotulo="Avisa com menos de">
+          {minimo > 0 ? quantidade(minimo, p.unidade) : 'Sem aviso'}
+        </Dado>
+        <Dado rotulo="Receita">
+          {ficha === null ? (
+            'Carregando...'
+          ) : ficha.length ? (
+            <>
+              <span className="lancamento__item">
+                rende {rende} {rende === 1 ? 'doce' : 'doces'}
               </span>
-            ),
-          },
-        ]}
-      />
-    </>
+              {ficha.map((i) => (
+                <span key={i.insumoId} className="lancamento__item lancamento__nota">
+                  {quantidade(i.quantidade, i.insumo?.unidade)} de {i.insumo?.nome}
+                </span>
+              ))}
+            </>
+          ) : (
+            'Sem receita'
+          )}
+        </Dado>
+        {sobra !== null && (
+          <Dado rotulo="Custo pela receita">
+            {moeda(custoPorDoce)} por doce
+            <span
+              className={
+                sobra < 0
+                  ? 'lancamento__item lancamento__nota fechamento__falta'
+                  : 'lancamento__item lancamento__nota'
+              }
+            >
+              {sobra < 0
+                ? `custa ${moeda(-sobra)} a mais que o preço`
+                : `sobra ${moeda(sobra)} de cada`}
+            </span>
+          </Dado>
+        )}
+      </dl>
+
+      <LinkKardex item={{ lado: 'produto', id: p.id, nome: p.nome, unidade: p.unidade }} />
+
+      <div className="modal__acoes">
+        <button type="button" className="botao botao--auto" onClick={aoAjustar}>
+          Ajustar
+        </button>
+        <button type="button" className="botao botao--auto" onClick={aoEditar}>
+          Editar
+        </button>
+        <button type="button" className="botao botao--primario botao--auto" onClick={aoProduzir}>
+          Produzir
+        </button>
+      </div>
+    </Modal>
   );
 }
 
@@ -254,7 +413,7 @@ function FormularioDoce({ doce, aoFechar, aoSalvar }) {
         rendimentoReceita: itensValidos.length ? rende : null,
         itens: itensValidos,
       });
-      aoSalvar();
+      aoSalvar(edicao ? 'Doce alterado.' : `${corpo.nome} cadastrado.`);
     } catch (err) {
       setErro(mensagemDeErro(err));
       setSalvando(false);
@@ -447,7 +606,9 @@ function FormularioLote({ catalogo, produtoInicial, aoFechar, aoSalvar }) {
                 .map((m) => ({ insumoId: m.insumoId, quantidade: lerNumero(m.quantidade) })),
             }),
       });
-      aoSalvar();
+      aoSalvar(
+        `Lote registrado: ${doce.nome} agora tem ${quantidade(Number(doce.quantidadeAtual) + n, doce.unidade)}.`
+      );
     } catch (err) {
       setErro(mensagemDeErro(err));
       setSalvando(false);

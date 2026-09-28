@@ -1,14 +1,16 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Modal } from './Modal.jsx';
 import { Texto } from './Campo.jsx';
 import { Segmentado } from './Segmentado.jsx';
+import { IconeMais, IconeSeta } from './Icones.jsx';
 import { estoque } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { quantidade, UNIDADE_CURTA } from '../utils/formato.js';
 
 /**
- * Peças comuns ao Estoque (o material) e à Produção (os doces): o saldo
- * com aviso de "acabando" e a janela de Ajustar. As duas telas tratam de
+ * Peças comuns ao Estoque (o material) e à Produção (os doces): a lista,
+ * o aviso de "acabando" e a janela de Ajustar. As duas telas tratam de
  * estoque, cada uma do seu lado, e uma perda de farinha se registra do
  * mesmo jeito que uma de brigadeiro. O histórico dos dois lados mora no
  * Kardex.
@@ -38,23 +40,110 @@ export function lerNumero(texto) {
 /** Número de volta para o campo: "1,5". */
 export const paraCampo = (n) => String(Number(n)).replace('.', ',');
 
-/** Saldo com a etiqueta "acabando" quando está no mínimo ou abaixo. */
-export function SaldoComAlerta({ item }) {
-  const baixo =
-    Number(item.estoqueMinimo) > 0 && Number(item.quantidadeAtual) <= Number(item.estoqueMinimo);
+/**
+ * No mínimo ou abaixo — o "acabando". A mesma régua do número no menu
+ * (ver `estoqueService.alertas`): sem mínimo cadastrado, nunca avisa.
+ */
+export const estaAcabando = (item) =>
+  Number(item.estoqueMinimo) > 0 && Number(item.quantidadeAtual) <= Number(item.estoqueMinimo);
+
+/** Junta pedaços de texto (ou de marcação) com " · " entre eles. */
+export function comPontos(partes) {
+  return partes.flatMap((p, n) => (n ? [' · ', p] : [p]));
+}
+
+/* ---------------------------------------------------------------------
+   A lista das duas telas, no desenho do extrato do Caixa e do Kardex.
+
+   Antes eram tabelas: seis colunas que no celular rolavam para o lado, e
+   três botões de texto em cada linha. Agora cada item é uma linha do
+   extrato — o círculo, o nome, o que importa sobre ele, a quantidade — e
+   do lado UM botão, o do gesto de toda semana (Comprei, Produzir). O
+   resto mora no detalhe, que abre ao tocar na linha.
+   --------------------------------------------------------------------- */
+
+/** O título grande da tela, com o botão de cadastrar do lado. */
+export function CabecaComNovo({ titulo, oQue, aoNovo }) {
   return (
-    <span className={baixo ? 'saldo saldo--baixo' : 'saldo'}>
-      {quantidade(item.quantidadeAtual, item.unidade)}
-      {baixo && <span className="etiqueta etiqueta--alerta">acabando</span>}
-    </span>
+    <div className="cabeca cabeca--com-acao">
+      {/* O título da página para o leitor de tela é o `h1` da casca. */}
+      <p className="cabeca__titulo" aria-hidden="true">
+        {titulo}
+      </p>
+      <button type="button" className="cabeca__novo" onClick={aoNovo}>
+        <IconeMais tamanho={18} />
+        {/* No celular o botão diz só "Novo"; o resto continua para o
+            leitor de tela, que precisa saber novo O QUÊ. */}
+        Novo<span className="cabeca__novo-resto"> {oQue}</span>
+      </button>
+    </div>
   );
 }
 
-/** Quantos da lista estão no mínimo ou abaixo — o "3 acabando" do topo. */
-export const quantosAcabando = (lista) =>
-  lista.filter(
-    (i) => Number(i.estoqueMinimo) > 0 && Number(i.quantidadeAtual) <= Number(i.estoqueMinimo)
-  ).length;
+/** Um grupo da lista ("Pede atenção", "Em dia"), com o cabeçalho que gruda. */
+export function SecaoItens({ titulo, conta, children }) {
+  return (
+    <section className="extrato__dia">
+      <h2 className="extrato__dia-titulo">
+        <span>{titulo}</span>
+        <span className="extrato__dia-saldo">{conta}</span>
+      </h2>
+      <ul className="extrato__itens">{children}</ul>
+    </section>
+  );
+}
+
+/**
+ * Uma linha: tocar nela abre o detalhe; o botão do lado faz o gesto mais
+ * comum sem passar por ele.
+ *
+ * `tom` pinta o círculo: 'alerta' (vermelho: vencido, acabando) ou
+ * 'aviso' (âmbar: vencendo). É o que ela vê de longe, antes de ler.
+ *
+ * A quantidade muda de `key` quando muda de valor: depois de uma compra,
+ * o número novo sobe no lugar, e ela vê que contou.
+ */
+export function LinhaItem({ marca, tom, titulo, detalhe, valor, alerta, sub, aoAbrir, acao }) {
+  return (
+    <li className="item-linha">
+      <button type="button" className="extrato__item" onClick={aoAbrir}>
+        <span className={tom ? `icone-aro icone-aro--${tom}` : 'icone-aro'}>{marca}</span>
+        <span className="extrato__textos">
+          <span className="extrato__titulo">{titulo}</span>
+          <span className="extrato__detalhe">{detalhe}</span>
+        </span>
+        <span className="extrato__lado">
+          <span
+            key={valor}
+            className={
+              alerta
+                ? 'extrato__valor item-linha__valor extrato__valor--alerta'
+                : 'extrato__valor item-linha__valor'
+            }
+          >
+            {valor}
+          </span>
+          {sub && <span className="extrato__hora">{sub}</span>}
+        </span>
+      </button>
+      <button type="button" className="item-linha__acao" onClick={acao.aoTocar}>
+        <IconeMais tamanho={18} />
+        <span className="item-linha__acao-rotulo">{acao.rotulo}</span>
+        <span className="so-leitor"> {titulo}</span>
+      </button>
+    </li>
+  );
+}
+
+/** "Ver no Kardex": abre o kardex daquele item, no mês. */
+export function LinkKardex({ item }) {
+  return (
+    <Link to="/kardex" state={{ item }} className="detalhe__kardex">
+      Ver entradas e saídas no Kardex
+      <IconeSeta tamanho={16} />
+    </Link>
+  );
+}
 
 const MODOS_AJUSTE = [
   { id: 'perda', rotulo: 'Perdi' },
