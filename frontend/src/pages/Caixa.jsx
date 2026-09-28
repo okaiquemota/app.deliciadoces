@@ -215,6 +215,10 @@ export function Caixa() {
   const [escolhendoPeriodo, setEscolhendoPeriodo] = useState(false);
 
   const [lancamentos, setLancamentos] = useState(null);
+  // Conta as cargas da lista. Vai na `key` do conteúdo dela: a cada carga
+  // nova, a lista entra de novo com a animação — o sinal de que o que se
+  // vê já é o período escolhido, e não o anterior.
+  const [carga, setCarga] = useState(0);
   const [cortado, setCortado] = useState(false);
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState('');
@@ -232,6 +236,7 @@ export function Caixa() {
         despesas.listar({ ...faixa, limite: LIMITE }),
       ]);
       setLancamentos([...v.map(daVenda), ...d.map(daDespesa)].sort((a, b) => b.data - a.data));
+      setCarga((n) => n + 1);
       setCortado(v.length >= LIMITE || d.length >= LIMITE);
       setErro('');
     } catch (e) {
@@ -305,7 +310,7 @@ export function Caixa() {
       {/* O título à vista, grande, como o "Extrato" dos apps de banco. Para
           o leitor de tela o título da página é o `h1` da casca; este fica
           escondido dele para não ser lido duas vezes. */}
-      <p className="extrato__cabeca" aria-hidden="true">
+      <p className="cabeca__titulo" aria-hidden="true">
         Caixa
       </p>
 
@@ -392,27 +397,34 @@ export function Caixa() {
                 : 'Nada lançado neste período.'}
           </p>
         ) : (
-          dias.map((dia) => (
-            // Sem nome acessível de propósito: nomeada, cada seção vira um
-            // marco de navegação, e uma semana seriam sete no meio dos do app.
-            // O título do dia já é cabeçalho — é por ele que se pula.
-            <section key={dia.chave} className="extrato__dia">
-              <h2 className="extrato__dia-titulo">
-                <span>{rotuloDoDia(dia.chave)}</span>
-                <span className="extrato__dia-saldo">
-                  Saldo do dia{' '}
-                  {dia.saldo === 0 ? moeda(0) : comSinal(Math.sign(dia.saldo), Math.abs(dia.saldo))}
-                </span>
-              </h2>
-              <ul className="extrato__itens">
-                {dia.itens.map((l) => (
-                  <li key={l.chave}>
-                    <Lancamento l={l} aoAbrir={() => setAberto(l)} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))
+          // Muda de `key` a cada carga e a cada chip: a lista entra de novo,
+          // suave. A busca fica de fora — animar a cada letra digitada
+          // seria a lista piscando enquanto ela escreve.
+          <div key={`${carga}|${tipos.join()}`} className="extrato__troca">
+            {dias.map((dia) => (
+              // Sem nome acessível de propósito: nomeada, cada seção vira um
+              // marco de navegação, e uma semana seriam sete no meio dos do app.
+              // O título do dia já é cabeçalho — é por ele que se pula.
+              <section key={dia.chave} className="extrato__dia">
+                <h2 className="extrato__dia-titulo">
+                  <span>{rotuloDoDia(dia.chave)}</span>
+                  <span className="extrato__dia-saldo">
+                    Saldo do dia{' '}
+                    {dia.saldo === 0
+                      ? moeda(0)
+                      : comSinal(Math.sign(dia.saldo), Math.abs(dia.saldo))}
+                  </span>
+                </h2>
+                <ul className="extrato__itens">
+                  {dia.itens.map((l) => (
+                    <li key={l.chave}>
+                      <Lancamento l={l} aoAbrir={() => setAberto(l)} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
         )}
         {cortado && (
           <p className="extrato__vazio">
@@ -562,7 +574,7 @@ function Lancamento({ l, aoAbrir }) {
       className={l.cancelada ? 'extrato__item extrato__item--cancelado' : 'extrato__item'}
       onClick={aoAbrir}
     >
-      <span className="extrato__icone">
+      <span className="extrato__icone icone-aro">
         <Icone tamanho={22} />
       </span>
       <span className="extrato__textos">

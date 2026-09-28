@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Marca } from './Marca.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -127,6 +127,54 @@ export function Layout() {
     };
   }, [pathname]);
 
+  /**
+   * O marcador do item ativo é UM elemento que desliza de um item para o
+   * outro — no computador, a pastilha cinza da barra lateral; no celular,
+   * o traço na borda de cima da barra. Com um marcador por item, trocar
+   * de tela seria um apagar e acender; deslizando, o olho acompanha para
+   * onde foi.
+   *
+   * A posição é medida no próprio item, e não calculada: no computador os
+   * itens têm cabeçalhos de grupo entre eles, no celular dividem a largura
+   * — medir serve os dois arranjos sem conta nenhuma. Sem item ativo à
+   * vista (Minha conta; Fechar dia no celular), o marcador some.
+   */
+  const refNav = useRef(null);
+  const [marca, setMarca] = useState(null);
+  const [marcaPronta, setMarcaPronta] = useState(false);
+
+  useLayoutEffect(() => {
+    let vivo = true;
+    const medir = () => {
+      if (!vivo) return;
+      const ativo = refNav.current?.querySelector('.nav__item--ativo');
+      if (!ativo || !ativo.offsetWidth) return setMarca(null);
+      setMarca({
+        x: ativo.offsetLeft,
+        y: ativo.offsetTop,
+        w: ativo.offsetWidth,
+        h: ativo.offsetHeight,
+      });
+    };
+    medir();
+    // A fonte do sistema chega depois do primeiro desenho e muda a altura
+    // dos itens: mede de novo quando ela estiver pronta.
+    document.fonts?.ready.then(medir);
+    window.addEventListener('resize', medir);
+    return () => {
+      vivo = false;
+      window.removeEventListener('resize', medir);
+    };
+  }, [pathname]);
+
+  // Na primeira medida o marcador só aparece no lugar; deslizar do canto
+  // da tela até o item ao abrir o sistema seria movimento sem motivo.
+  useEffect(() => {
+    if (!marca || marcaPronta) return undefined;
+    const quadro = requestAnimationFrame(() => setMarcaPronta(true));
+    return () => cancelAnimationFrame(quadro);
+  }, [marca, marcaPronta]);
+
   const primeiroNome = usuario?.nome?.split(' ')[0] ?? '';
 
   const secao = SECOES.find((s) => s.para === pathname);
@@ -158,7 +206,19 @@ export function Layout() {
       </header>
 
       <div className="app__lado">
-        <nav className="nav" aria-label="Seções do sistema">
+        <nav className="nav" aria-label="Seções do sistema" ref={refNav}>
+          {marca && (
+            <span
+              className={marcaPronta ? 'nav__marca nav__marca--desliza' : 'nav__marca'}
+              aria-hidden="true"
+              style={{
+                '--marca-x': `${marca.x}px`,
+                '--marca-y': `${marca.y}px`,
+                '--marca-w': `${marca.w}px`,
+                '--marca-h': `${marca.h}px`,
+              }}
+            />
+          )}
           {GRUPOS.map(({ grupo, itens }) => (
             <Fragment key={grupo}>
               <span className="nav__grupo" aria-hidden="true">
