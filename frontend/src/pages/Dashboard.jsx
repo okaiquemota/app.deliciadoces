@@ -14,6 +14,8 @@ import {
   IconeRetirada,
   IconeFechamento,
   IconeResumo,
+  IconeOlho,
+  IconeOlhoFechado,
 } from '../components/Icones.jsx';
 
 /**
@@ -48,9 +50,8 @@ import {
  * entrada e saída dividem a linha seguinte; retirada, fechar dia e resumo
  * ficam na fileira menor, que é tarefa de fim de expediente.
  *
- * A cor segue a mesma ordem: Venda no preto da marca, Entrada e Saída no
- * rosa cheio com contorno preto, e as tarefas de fim de dia em branco com
- * contorno fino.
+ * A cor segue a mesma ordem: Venda é o único cartão escuro, no preto da
+ * marca; os outros vêm no creme → rosa da casa.
  */
 const PRINCIPAL = { id: 'venda', rotulo: 'Venda', Icone: IconeVenda };
 
@@ -113,6 +114,35 @@ async function contarMeusDeHoje() {
 }
 
 /**
+ * O olho do Início: esconde os valores em dinheiro, como no app do banco.
+ *
+ * A tela fica aberta no balcão, virada para quem está comprando, e o
+ * total do dia não é da conta de ninguém. Só a Dalila vê o botão — no
+ * Início da funcionária não há dinheiro para esconder.
+ *
+ * Fica guardado neste navegador, como o menu recolhido: escondeu, continua
+ * escondido até ela abrir de novo. Sem `localStorage` (janela anônima),
+ * vale até recarregar.
+ */
+const CHAVE_OCULTOS = 'delicia:valores-ocultos';
+
+function lerOcultos() {
+  try {
+    return localStorage.getItem(CHAVE_OCULTOS) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function guardarOcultos(ocultos) {
+  try {
+    localStorage.setItem(CHAVE_OCULTOS, ocultos ? '1' : '0');
+  } catch {
+    // Sem onde guardar, vale só até recarregar a página.
+  }
+}
+
+/**
  * Verdadeiro acima do ponto em que a barra de navegação sai do rodapé e
  * vira coluna. O número vive aqui e no CSS, e os dois precisam bater —
  * está no mesmo comentário dos dois lados.
@@ -129,7 +159,13 @@ export function Dashboard() {
   const [hoje, setHoje] = useState(null);
   const [meus, setMeus] = useState(null);
   const [largo, setLargo] = useState(usaHistorico);
+  const [ocultos, setOcultos] = useState(lerOcultos);
   const [erro, setErro] = useState('');
+
+  function alternarOcultos() {
+    setOcultos(!ocultos);
+    guardarOcultos(!ocultos);
+  }
 
   const carregar = useCallback(async () => {
     if (!admin) {
@@ -196,10 +232,15 @@ export function Dashboard() {
     : {
         venda: hoje && {
           valor: moeda(hoje.vendas),
+          oculto: ocultos,
           detalhe: `${hoje.quantidadeVendas} ${hoje.quantidadeVendas === 1 ? 'venda' : 'vendas'} hoje`,
         },
-        entrada: hoje && { valor: moeda(hoje.vendasAvulsas), detalhe: 'entrou hoje' },
-        saida: hoje && { valor: moeda(hoje.custos), detalhe: 'saiu hoje' },
+        entrada: hoje && {
+          valor: moeda(hoje.vendasAvulsas),
+          oculto: ocultos,
+          detalhe: 'entrou hoje',
+        },
+        saida: hoje && { valor: moeda(hoje.custos), oculto: ocultos, detalhe: 'saiu hoje' },
       };
 
   return (
@@ -209,11 +250,24 @@ export function Dashboard() {
       {/* O mesmo cabeçalho do Caixa: título grande, e aqui a data embaixo.
           O título da página para o leitor de tela é o `h1` da casca; este
           fica escondido dele para não ser lido duas vezes. */}
-      <header className="cabeca">
-        <p className="cabeca__titulo" aria-hidden="true">
-          {saudacao()}, <span className="cabeca__nome">{usuario?.nome?.split(' ')[0]}</span>
-        </p>
-        <p className="cabeca__sub">{DIA_LONGO.format(new Date())}</p>
+      <header className="cabeca cabeca--com-acao">
+        <div className="cabeca__textos">
+          <p className="cabeca__titulo" aria-hidden="true">
+            {saudacao()}, <span className="cabeca__nome">{usuario?.nome?.split(' ')[0]}</span>
+          </p>
+          <p className="cabeca__sub">{DIA_LONGO.format(new Date())}</p>
+        </div>
+        {admin && (
+          <button
+            type="button"
+            className="botao-olho"
+            onClick={alternarOcultos}
+            aria-label={ocultos ? 'Mostrar valores' : 'Esconder valores'}
+            title={ocultos ? 'Mostrar valores' : 'Esconder valores'}
+          >
+            {ocultos ? <IconeOlhoFechado tamanho={22} /> : <IconeOlho tamanho={22} />}
+          </button>
+        )}
       </header>
 
       {/*
@@ -264,7 +318,7 @@ export function Dashboard() {
           </div>
           <div className="recentes__lista">
             {HISTORICO.map(({ chave, ...tipo }) => (
-              <Registro key={chave} {...tipo} dado={ultimos?.[chave]} />
+              <Registro key={chave} {...tipo} dado={ultimos?.[chave]} oculto={ocultos} />
             ))}
           </div>
         </section>
@@ -310,8 +364,8 @@ function Cartao({ acao, tamanho = 'medio', dado, onClick }) {
           {/* `key` no valor: quando ela lança e o número muda, o elemento
               é outro e a animação de entrada roda de novo — o cartão
               "responde" ao lançamento. */}
-          <span key={dado.valor} className="cartao-acao__valor">
-            {dado.valor}
+          <span key={dado.oculto ? 'oculto' : dado.valor} className="cartao-acao__valor">
+            {dado.oculto ? <ValorOculto /> : dado.valor}
           </span>
           <span className="cartao-acao__rodape">{dado.detalhe}</span>
         </>
@@ -329,7 +383,7 @@ function Cartao({ acao, tamanho = 'medio', dado, onClick }) {
  * Passado um dia a informação vira outra — aí a data absoluta é que
  * serve, e é o que a função devolve.
  */
-function Registro({ rotulo, Icone, sinal, dado }) {
+function Registro({ rotulo, Icone, sinal, dado, oculto }) {
   return (
     <div className={dado ? 'recente' : 'recente recente--vazio'}>
       <span className="icone-aro">
@@ -343,10 +397,26 @@ function Registro({ rotulo, Icone, sinal, dado }) {
       </span>
       {dado && (
         <span className={sinal > 0 ? 'recente__valor recente__valor--entrada' : 'recente__valor'}>
-          {`${sinal > 0 ? '+' : '\u2212'}\u00a0${moeda(dado.valor)}`}
+          {`${sinal > 0 ? '+' : '\u2212'}\u00a0`}
+          {oculto ? <ValorOculto /> : moeda(dado.valor)}
         </span>
       )}
     </div>
+  );
+}
+
+/**
+ * O valor escondido pelo olho: bolinhas no lugar dos números. O leitor de
+ * tela ouve "valor escondido", e não "bolinha, bolinha, bolinha".
+ */
+function ValorOculto() {
+  return (
+    <>
+      <span className="valor-oculto" aria-hidden="true">
+        R$&nbsp;••••
+      </span>
+      <span className="so-leitor">valor escondido</span>
+    </>
   );
 }
 

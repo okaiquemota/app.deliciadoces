@@ -1125,6 +1125,44 @@ input[type='date']::-webkit-date-and-time-value {
   text-transform: uppercase;
 }
 
+/* O título e a linha de apoio, quando a cabeça tem um botão ao lado. */
+.cabeca__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* O olho do Início, que esconde e mostra os valores — como no app do
+   banco. Redondo e discreto: é um ajuste, não uma ação da tela. */
+.botao-olho {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--borda);
+  border-radius: 50%;
+  background: var(--superficie);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .botao-olho:hover {
+    border-color: var(--marca-rosa-claro);
+    background: var(--marca-rosa-nevoa);
+    color: var(--marca-rosa-texto);
+  }
+}
+
+/* O valor escondido: bolinhas no lugar dos números, no mesmo tamanho. */
+.valor-oculto {
+  letter-spacing: 0.08em;
+}
+
 /* Ícone num círculo com aro, como no extrato do banco: nas linhas do
    Caixa, do Kardex e do Estoque, nos cartões e nos últimos lançamentos do
    Início. O círculo é da casa (creme → rosa, ícone rosa); os estados
@@ -2165,10 +2203,10 @@ input[type='date']::-webkit-date-and-time-value {
 /* =====================================================================
    TELA INICIAL — no mesmo desenho do Caixa
 
-   Fundo branco, título grande, e os cartões BRANCOS com contorno fino —
-   a cor fica nos ícones, e num cartão só: o da Venda, em preto. O ícone
-   de cada ação vai num círculo com aro, o mesmo das linhas do extrato:
-   as duas telas que ela mais usa falam a mesma língua.
+   Fundo branco, título grande, e os cartões no creme → rosa da casa —
+   menos o da Venda, em preto. O ícone de cada ação vai num círculo com
+   aro, o mesmo das linhas do extrato: as duas telas que ela mais usa
+   falam a mesma língua.
    ===================================================================== */
 
 /* Grade de 6 colunas: o tamanho do botão é quantas colunas ele ocupa —
@@ -2194,9 +2232,9 @@ input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
   min-height: var(--altura, 92px);
   padding: 16px;
-  border: 1px solid var(--borda);
+  border: none;
   border-radius: var(--r-3);
-  background: var(--superficie);
+  background: var(--degrade-suave);
   color: var(--texto);
   font-family: inherit;
   text-align: left;
@@ -2205,24 +2243,16 @@ input[type='date']::-webkit-date-and-time-value {
 
 @media (hover: hover) {
   .cartao-acao:hover {
-    border-color: var(--marca-rosa-claro);
-    background: var(--marca-rosa-nevoa);
+    background: var(--degrade-suave-forte);
   }
 
   .cartao-acao--grande:hover {
-    border-color: transparent;
     background: var(--c-800);
   }
 }
 
 .cartao-acao__selo {
   margin-bottom: auto;
-}
-
-/* No cartão branco, o miolo do círculo também é branco: o degradê do
-   selo, sobre branco, era a cor que sobrava na tela. */
-.cartao-acao .icone-aro {
-  background: var(--superficie);
 }
 
 .cartao-acao__rotulo {
@@ -2253,7 +2283,6 @@ input[type='date']::-webkit-date-and-time-value {
 .cartao-acao--grande {
   grid-column: span 6;
   --altura: 120px;
-  border-color: transparent;
   background: var(--c-900);
   color: var(--c-0);
 }
@@ -2281,43 +2310,12 @@ input[type='date']::-webkit-date-and-time-value {
   grid-column: span 3;
 }
 
-/* Entrada e Saída, as duas ações logo abaixo da Venda: rosa cheio, o
-   degradê dos botões de ação. A letra branca fica com 4,9:1 ou mais em
-   qualquer ponto do degradê. */
-.cartao-acao--medio {
-  border-color: transparent;
-  background: var(--degrade-acao);
-}
-
-.cartao-acao--medio :is(.cartao-acao__rotulo, .cartao-acao__valor, .cartao-acao__rodape) {
-  color: var(--c-0);
-}
-
-.cartao-acao--medio .icone-aro {
-  border-color: rgb(255 255 255 / 0.5);
-  background: rgb(255 255 255 / 0.16);
-  color: var(--c-0);
-}
-
-@media (hover: hover) {
-  .cartao-acao--medio:hover {
-    border-color: transparent;
-    background: var(--degrade-acao-forte);
-  }
-
-  .cartao-acao--pequeno:hover {
-    border-color: var(--c-900);
-  }
-}
-
 /* Os três de fim de expediente não têm número: o ícone e o rótulo,
    centrados. No celular um terço da largura não comporta ícone e
    rótulo lado a lado — "Retirada pessoal" quebraria em três linhas. */
-/* As três tarefas de fim de dia: brancas, com contorno preto. */
 .cartao-acao--pequeno {
   grid-column: span 2;
   --altura: 68px;
-  border: 2px solid var(--c-900);
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -4544,7 +4542,8 @@ input[type='date']::-webkit-date-and-time-value {
 .nav__item,
 .extrato__item,
 .opcao,
-.perfil__item {
+.perfil__item,
+.botao-olho {
   transition-duration: 200ms;
   transition-property: background-color, border-color, color, box-shadow, transform, opacity;
   transition-timing-function: var(--curva-entra);
@@ -4563,7 +4562,8 @@ input[type='date']::-webkit-date-and-time-value {
     .doce__passo,
     .seletor-periodo__item,
     .item-linha__acao,
-    .cabeca__novo
+    .cabeca__novo,
+    .botao-olho
   ):active:not(:disabled) {
   transform: scale(0.96);
   transition-duration: 80ms;
