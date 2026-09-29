@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Texto } from '../components/Campo.jsx';
@@ -24,10 +24,9 @@ import { data as formatarData } from '../utils/formato.js';
  * página de perfil do Mercado Livre. Uma lista com ícone, o valor, uma
  * legenda dizendo o que ele é, e a seta indicando que a linha abre.
  *
- * O resto segue as outras telas: largura toda a partir da mesma margem,
- * sem título visível no topo (o nome da seção está no menu e no `h1`
- * do leitor de tela), e cartões com o título em versalete, como os do
- * Resumo e do Fechamento.
+ * O resto segue as outras telas: fundo branco, o título grande no alto,
+ * e cada grupo com o título em negrito e a lista lisa embaixo, com o
+ * ícone no círculo da casa — o desenho do Caixa, do Estoque e do Resumo.
  *
  * Formulário aberto o tempo todo convida a mexer sem querer, e obriga a
  * ler seis campos para achar o nome. Aqui ela vê os três dados de relance
@@ -55,6 +54,14 @@ export function MinhaConta() {
 
   return (
     <section className="perfil">
+      {/* O mesmo cabeçalho das outras telas. O título da página para o
+          leitor de tela é o `h1` da casca; este fica escondido dele. */}
+      <header className="cabeca">
+        <p className="cabeca__titulo" aria-hidden="true">
+          Minha conta
+        </p>
+      </header>
+
       {/* A confirmação aparece na página, depois que a janela fecha: é
           aqui que ela vê o valor novo já no lugar. */}
       {aviso && (
@@ -89,9 +96,12 @@ export function MinhaConta() {
 }
 
 function Grupo({ titulo, children }) {
+  const id = useId();
   return (
-    <section className="cartao perfil__grupo">
-      <h2 className="cartao__subtitulo">{titulo}</h2>
+    <section className="perfil__grupo" aria-labelledby={id}>
+      <h2 className="bloco__titulo" id={id}>
+        {titulo}
+      </h2>
       {children}
     </section>
   );
@@ -108,7 +118,7 @@ function Item({ Icone, valor, rotulo, onClick, apagado = false, leitor = ', alte
       className={apagado ? 'perfil__item perfil__item--apagado' : 'perfil__item'}
       onClick={onClick}
     >
-      <span className="perfil__icone">
+      <span className="icone-aro">
         <Icone tamanho={22} />
       </span>
       <span className="perfil__textos">
