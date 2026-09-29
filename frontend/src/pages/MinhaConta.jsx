@@ -70,21 +70,38 @@ export function MinhaConta() {
         </p>
       )}
 
-      <Grupo titulo="Informações pessoais">
-        <Item Icone={IconeNome} valor={usuario?.nome} rotulo="Nome" onClick={() => abrir('nome')} />
-        <Item
-          Icone={IconeEmail}
-          valor={usuario?.email}
-          rotulo={usuario?.email?.includes('@') ? 'E-mail de acesso' : 'Usuário de acesso'}
-          onClick={() => abrir('email')}
-        />
-      </Grupo>
+      {/* No computador, duas colunas: a própria conta à esquerda e a
+          Equipe à direita — com a lista da Equipe rolando por dentro
+          quando crescer, como a lista do Caixa. A página não rola. */}
+      <div className="perfil__colunas">
+        <div className="perfil__coluna">
+          <Grupo titulo="Informações pessoais">
+            <Item
+              Icone={IconeNome}
+              valor={usuario?.nome}
+              rotulo="Nome"
+              onClick={() => abrir('nome')}
+            />
+            <Item
+              Icone={IconeEmail}
+              valor={usuario?.email}
+              rotulo={usuario?.email?.includes('@') ? 'E-mail de acesso' : 'Usuário de acesso'}
+              onClick={() => abrir('email')}
+            />
+          </Grupo>
 
-      <Grupo titulo="Segurança">
-        <Item Icone={IconeSenha} valor="••••••••" rotulo="Senha" onClick={() => abrir('senha')} />
-      </Grupo>
+          <Grupo titulo="Segurança">
+            <Item
+              Icone={IconeSenha}
+              valor="••••••••"
+              rotulo="Senha"
+              onClick={() => abrir('senha')}
+            />
+          </Grupo>
+        </div>
 
-      {admin && <Equipe aoAviso={setAviso} />}
+        {admin && <Equipe aoAviso={setAviso} />}
+      </div>
 
       {/* Montadas só enquanto abertas: cada abertura começa com o
           formulário limpo, sem resto da tentativa anterior. */}
@@ -95,14 +112,22 @@ export function MinhaConta() {
   );
 }
 
-function Grupo({ titulo, children }) {
+/**
+ * Um grupo da conta. `rodape` fica fora da parte que rola: na Equipe, o
+ * "Adicionar pessoa" continua à vista mesmo com a lista comprida.
+ */
+function Grupo({ titulo, children, rodape = null, rolavel = false }) {
   const id = useId();
   return (
-    <section className="perfil__grupo" aria-labelledby={id}>
+    <section
+      className={rolavel ? 'perfil__grupo perfil__grupo--rolavel' : 'perfil__grupo'}
+      aria-labelledby={id}
+    >
       <h2 className="bloco__titulo" id={id}>
         {titulo}
       </h2>
-      {children}
+      {rolavel ? <div className="perfil__lista">{children}</div> : children}
+      {rodape}
     </section>
   );
 }
@@ -428,7 +453,19 @@ function Equipe({ aoAviso }) {
   const fechar = () => setAberta(null);
 
   return (
-    <Grupo titulo="Equipe">
+    <Grupo
+      titulo="Equipe"
+      rolavel
+      rodape={
+        <Item
+          Icone={IconeMais}
+          valor="Adicionar pessoa"
+          rotulo="Dar acesso a alguém da equipe"
+          leitor=""
+          onClick={() => abrir('nova')}
+        />
+      }
+    >
       {erro && (
         <p className="alerta alerta--erro perfil__alerta" role="alert">
           {erro}
@@ -448,13 +485,6 @@ function Equipe({ aoAviso }) {
           onClick={() => abrir(p)}
         />
       ))}
-      <Item
-        Icone={IconeMais}
-        valor="Adicionar pessoa"
-        rotulo="Dar acesso a alguém da equipe"
-        leitor=""
-        onClick={() => abrir('nova')}
-      />
 
       {aberta === 'nova' && <NovaPessoa aoFechar={fechar} aoConcluir={concluir} />}
       {aberta && aberta !== 'nova' && (

@@ -107,31 +107,35 @@ export function Fechamento() {
 
   return (
     <section className="pagina-lisa">
-      <header className="cabeca">
-        {/* O título da página para o leitor de tela é o `h1` da casca. */}
-        <p className="cabeca__titulo" aria-hidden="true">
-          Fechar dia
-        </p>
-        <p className="cabeca__sub">{diaPorExtenso(dia)}</p>
-      </header>
+      {/* Título e dia numa fileira só no computador, como no Resumo: é a
+          linha que faz a tela caber na altura, sem rolar. */}
+      <div className="pagina-lisa__topo">
+        <header className="cabeca">
+          {/* O título da página para o leitor de tela é o `h1` da casca. */}
+          <p className="cabeca__titulo" aria-hidden="true">
+            Fechar dia
+          </p>
+          <p className="cabeca__sub">{diaPorExtenso(dia)}</p>
+        </header>
 
-      <div className="extrato__chips" role="group" aria-label="Dia">
-        <button
-          type="button"
-          className="chip"
-          aria-haspopup="dialog"
-          onClick={() => setEscolhendoDia(true)}
-        >
-          <IconeFiltros tamanho={18} />
-          <span className="so-leitor">Dia: </span>
-          {rotuloDoDia(dia)}
-        </button>
-        {previa?.fechamento && (
-          <span className="selo selo--ok">
-            <IconeVisto tamanho={16} />
-            Dia fechado
-          </span>
-        )}
+        <div className="extrato__chips" role="group" aria-label="Dia">
+          <button
+            type="button"
+            className="chip"
+            aria-haspopup="dialog"
+            onClick={() => setEscolhendoDia(true)}
+          >
+            <IconeFiltros tamanho={18} />
+            <span className="so-leitor">Dia: </span>
+            {rotuloDoDia(dia)}
+          </button>
+          {previa?.fechamento && (
+            <span className="selo selo--ok">
+              <IconeVisto tamanho={16} />
+              Dia fechado
+            </span>
+          )}
+        </div>
       </div>
 
       {erro && (
