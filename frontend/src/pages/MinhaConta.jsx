@@ -326,11 +326,11 @@ function EditarSenha({ aoFechar, aoConcluir }) {
         <Texto
           rotulo="Nova senha"
           type="password"
-          placeholder="Mínimo 6 caracteres"
+          placeholder="Mínimo 8 caracteres"
           value={form.senhaNova}
           onChange={campo('senhaNova')}
           autoComplete="new-password"
-          minLength={6}
+          minLength={8}
           required
         />
         <Texto
@@ -372,6 +372,9 @@ const O_QUE_FAZ = {
     'Lança venda, entrada, saída, produção e estoque, e corrige o que lançou no dia. Não vê totais, fechamento, resumo nem custos.',
   ADMIN: 'Vê e mexe em tudo, inclusive no dinheiro e na equipe.',
 };
+
+/** Mesmo mínimo do servidor. Senha curta um robô acha em horas. */
+const SENHA_MINIMA = 8;
 
 /** Mesma regra do servidor: um e-mail, ou um usuário curto e sem espaço. */
 const LOGIN_VALIDO = (v) =>
@@ -489,7 +492,8 @@ function NovaPessoa({ aoFechar, aoConcluir }) {
     if (!LOGIN_VALIDO(login)) {
       return setErro('Para entrar, use um e-mail ou um usuário sem espaço, como maria.');
     }
-    if (form.senha.length < 6) return setErro('A senha precisa ter ao menos 6 caracteres.');
+    if (form.senha.length < SENHA_MINIMA)
+      return setErro('A senha precisa ter ao menos 8 caracteres.');
 
     setSalvando(true);
     setErro('');
@@ -530,7 +534,7 @@ function NovaPessoa({ aoFechar, aoConcluir }) {
         />
         <Texto
           rotulo="Senha para o primeiro acesso"
-          dica="Mínimo 6 caracteres. Depois a pessoa troca na Minha conta."
+          dica="Mínimo 8 caracteres. Depois a pessoa troca na Minha conta."
           type="text"
           autoCapitalize="none"
           spellCheck={false}
@@ -586,7 +590,8 @@ function Pessoa({ pessoa, propria, aoFechar, aoConcluir }) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (senha.length < 6) return setErro('A senha precisa ter ao menos 6 caracteres.');
+            if (senha.length < SENHA_MINIMA)
+              return setErro('A senha precisa ter ao menos 8 caracteres.');
             executar(
               () => equipe.redefinirSenha(pessoa.id, senha),
               `Senha de ${pessoa.nome} trocada. Passe a nova para a pessoa.`
@@ -599,7 +604,7 @@ function Pessoa({ pessoa, propria, aoFechar, aoConcluir }) {
           </p>
           <Texto
             rotulo="Nova senha"
-            dica="Mínimo 6 caracteres."
+            dica="Mínimo 8 caracteres."
             type="text"
             autoCapitalize="none"
             spellCheck={false}

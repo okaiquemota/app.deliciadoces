@@ -5,6 +5,7 @@ import { env, emProducao } from './config/env.js';
 import rotas from './routes/index.js';
 import { prisma } from './lib/prisma.js';
 import { errorHandler, rotaNaoEncontrada } from './middlewares/errorHandler.js';
+import { limitarRequisicoes } from './middlewares/limites.js';
 
 /**
  * Montagem da aplicação Express.
@@ -15,8 +16,40 @@ import { errorHandler, rotaNaoEncontrada } from './middlewares/errorHandler.js';
  */
 const app = express();
 
+// Não anunciar o framework: o "X-Powered-By: Express" só ajuda quem
+// procura falha conhecida de uma versão específica.
+app.disable('x-powered-by');
+
+// Na Vercel a requisição chega por um proxy, que põe o IP de quem chamou
+// em `X-Forwarded-For` (e sobrescreve o que o cliente mandar ali). Sem
+// isto, `req.ip` seria o do proxy, e o limite de tentativas contaria todo
+// mundo como uma pessoa só.
+app.set('trust proxy', 1);
+
+/**
+ * Cabeçalhos de segurança de toda resposta da API. É JSON, nunca página:
+ * - nada de cache: é dado financeiro, não pode sobrar num proxy ou no
+ *   disco de um computador compartilhado;
+ * - não abre dentro de outro site (clickjacking) e não carrega nada;
+ * - o navegador não "adivinha" outro tipo de conteúdo.
+ * Os da página em si estão no `vercel.json`.
+ */
+app.use((_req, res, next) => {
+  res.set({
+    'Cache-Control': 'no-store',
+    'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+  });
+  next();
+});
+
 // Log de requisições — formato enxuto em dev, padrão Apache em produção
 app.use(morgan(emProducao ? 'combined' : 'dev'));
+
+// Teto de chamadas por aparelho (ver `limites.js`).
+app.use('/api', limitarRequisicoes);
 
 // Libera o frontend a consumir a API a partir de outra origem/porta
 app.use(cors({ origin: env.corsOrigin, credentials: true }));

@@ -8,6 +8,26 @@ import { diaDoCliente, filtrosPeriodo, limiteDaListagem, limitesDoDia } from '..
 import { AppError } from '../utils/AppError.js';
 import { ehAdmin } from '../middlewares/auth.js';
 import { exigirProprioDeHoje, semDataSeNaoAdmin } from '../utils/permissao.js';
+import { FORMAS_PAGAMENTO } from './schemas.js';
+
+/**
+ * Filtro de lista vindo da URL que não existe vira 400. Sem isto, um
+ * `?tipo=qualquer` chegava ao banco como valor fora do enum e voltava 500.
+ */
+function opcaoDaQuery(valor, opcoes, nome) {
+  if (valor === undefined || valor === '') return undefined;
+  if (!opcoes.includes(valor)) throw new AppError(`Filtro de ${nome} inválido.`, 400);
+  return valor;
+}
+
+const TIPOS_MOVIMENTACAO = [
+  'ENTRADA_COMPRA',
+  'ENTRADA_PRODUCAO',
+  'SAIDA_PRODUCAO',
+  'SAIDA_VENDA',
+  'PERDA',
+  'AJUSTE',
+];
 
 /**
  * Controllers: traduzem HTTP <-> serviço. Nenhuma regra de negócio aqui.
@@ -90,7 +110,7 @@ export const estoqueController = {
         ...filtrosPeriodo(req.query),
         insumoId: req.query.insumoId,
         produtoId: req.query.produtoId,
-        tipo: req.query.tipo,
+        tipo: opcaoDaQuery(req.query.tipo, TIPOS_MOVIMENTACAO, 'tipo'),
         // Teto mais alto que o das outras listas: cada doce vendido é uma
         // linha, e um mês de Kardex passa fácil de mil.
         limite: limiteDaListagem(req.query, 200, 3000),
@@ -115,7 +135,7 @@ export const vendaController = {
     res.json(
       await vendaService.listar({
         ...recorteDoCaixa(req),
-        formaPagamento: req.query.formaPagamento,
+        formaPagamento: opcaoDaQuery(req.query.formaPagamento, FORMAS_PAGAMENTO, 'pagamento'),
         incluirCanceladas: req.query.incluirCanceladas === 'true',
         limite: limiteDaListagem(req.query),
       })
@@ -192,9 +212,11 @@ export const producaoController = {
     );
   },
   async previsao(req, res) {
-    res.json(
-      await producaoService.previsaoInsumos(req.query.produtoId, Number(req.query.quantidade))
-    );
+    const quantidade = Number(req.query.quantidade);
+    if (!req.query.produtoId || !(quantidade > 0)) {
+      throw new AppError('Informe o doce e uma quantidade maior que zero.', 400);
+    }
+    res.json(await producaoService.previsaoInsumos(req.query.produtoId, quantidade));
   },
   async registrar(req, res) {
     res.status(201).json(await producaoService.registrar(req.body, req.usuario.id));

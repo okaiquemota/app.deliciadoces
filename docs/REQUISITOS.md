@@ -133,20 +133,24 @@ Pedido da cliente: "Vai ter mais pessoas sim. [Restrição] somente na parte de 
 
 ## 5. Requisitos Não Funcionais
 
-| ID    | Requisito                                                                                        | Critério de verificação                                    |
-| ----- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| RNF01 | O sistema deve funcionar em celular, onde a cliente lança venda no balcão                        | Nenhuma tela rola lateralmente em 390px nem em 360px       |
-| RNF02 | Alvos de toque devem ter no mínimo 44px de altura nos controles de uso constante                 | Medição em navegador com ponteiro grosso                   |
-| RNF03 | O contraste de texto deve atender WCAG AA (4,5:1 para texto normal)                              | Cálculo de razão de contraste da paleta                    |
-| RNF04 | Registrar uma venda comum deve levar no máximo 3 toques além da escolha dos produtos             | Contagem no fluxo real                                     |
-| RNF05 | O saldo de estoque nunca pode divergir do histórico de movimentações                             | Teste automatizado que soma o histórico e compara          |
-| RNF06 | Toda alteração de estoque deve ser atômica: movimentação e saldo mudam juntos ou nada muda       | Uso de transação; teste de falha no meio                   |
-| RNF07 | O preço de venda deve ser definido pelo servidor, nunca pelo cliente da API                      | Teste que envia preço adulterado e confere o total         |
-| RNF08 | Senhas devem ser armazenadas como hash, nunca em texto                                           | Teste que inspeciona o campo gravado                       |
-| RNF09 | O sistema deve estar disponível pela internet, sem instalação                                    | Publicado em URL pública                                   |
-| RNF10 | O código deve seguir um padrão único entre os integrantes do grupo                               | ESLint e Prettier no monorepo, sem erro                    |
-| RNF11 | Campos de dinheiro preenchem da direita para a esquerda, centavos primeiro, com teclado numérico | Digitar 1500 mostra 15,00 em todos os campos de R$         |
-| RNF12 | Permissão é conferida no servidor a cada requisição, com papel e acesso lidos do banco           | Teste que muda o papel e tira o acesso com a sessão aberta |
+| ID    | Requisito                                                                                        | Critério de verificação                                           |
+| ----- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| RNF01 | O sistema deve funcionar em celular, onde a cliente lança venda no balcão                        | Nenhuma tela rola lateralmente em 390px nem em 360px              |
+| RNF02 | Alvos de toque devem ter no mínimo 44px de altura nos controles de uso constante                 | Medição em navegador com ponteiro grosso                          |
+| RNF03 | O contraste de texto deve atender WCAG AA (4,5:1 para texto normal)                              | Cálculo de razão de contraste da paleta                           |
+| RNF04 | Registrar uma venda comum deve levar no máximo 3 toques além da escolha dos produtos             | Contagem no fluxo real                                            |
+| RNF05 | O saldo de estoque nunca pode divergir do histórico de movimentações                             | Teste automatizado que soma o histórico e compara                 |
+| RNF06 | Toda alteração de estoque deve ser atômica: movimentação e saldo mudam juntos ou nada muda       | Uso de transação; teste de falha no meio                          |
+| RNF07 | O preço de venda deve ser definido pelo servidor, nunca pelo cliente da API                      | Teste que envia preço adulterado e confere o total                |
+| RNF08 | Senhas devem ser armazenadas como hash, nunca em texto                                           | Teste que inspeciona o campo gravado                              |
+| RNF09 | O sistema deve estar disponível pela internet, sem instalação                                    | Publicado em URL pública                                          |
+| RNF10 | O código deve seguir um padrão único entre os integrantes do grupo                               | ESLint e Prettier no monorepo, sem erro                           |
+| RNF11 | Campos de dinheiro preenchem da direita para a esquerda, centavos primeiro, com teclado numérico | Digitar 1500 mostra 15,00 em todos os campos de R$                |
+| RNF12 | Permissão é conferida no servidor a cada requisição, com papel e acesso lidos do banco           | Teste que muda o papel e tira o acesso com a sessão aberta        |
+| RNF13 | Senha errada demais trava o login: 5 por login e aparelho, 20 por aparelho, em 15 minutos        | Teste que erra 5 vezes e confere que a 6ª, mesmo certa, é barrada |
+| RNF14 | Senha nova tem no mínimo 8 caracteres                                                            | Teste que tenta criar e trocar com 7                              |
+| RNF15 | Endereço malformado na API responde 400, nunca erro interno                                      | Teste com data, filtro e parâmetro repetido inválidos             |
+| RNF16 | A página só carrega recursos do próprio sistema e não abre dentro de outro site                  | Navegação por todas as telas sem bloqueio no console              |
 
 ---
 
@@ -229,8 +233,8 @@ Cada requisito, onde ele vive no código.
 
 ## 8. Validação dos requisitos
 
-A suíte automatizada tem **175 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade — e nas permissões. Os de permissão sobem a API de verdade e entram com as duas contas: o que decide o acesso é a trava na rota, e testar só o serviço a deixaria de fora.
+A suíte automatizada tem **191 testes**, concentrados nas regras onde um erro corrompe dado em silêncio — estoque, caixa, produção, fechamento e validade — e nas permissões. Os de permissão sobem a API de verdade e entram com as duas contas: o que decide o acesso é a trava na rota, e testar só o serviço a deixaria de fora.
 
-Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro calcular o saldo do kardex ignorando o que ficou fora do período deixar a edição de um cadastro preencher os valores padrão (o que zerava o custo médio do ingrediente) e pesar como custo zero o estoque de custo desconhecido na média de uma compra nova. Nas permissões: tirar a trava de papel das rotas de dinheiro, deixar de esconder o custo, deixar o operador mexer em lançamento alheio ou de outro dia, ler o papel do token em vez do banco, abrir o recorte do caixa, aceitar a data enviada pelo operador e aceitar custo digitado à mão ou retirada vinda dele. Todas foram detectadas.
+Para conferir que os testes pegam erro de verdade e não apenas acompanham o código, foram introduzidas **sabotagens propositais** no comportamento e verificado que a suíte falha em cada uma. Entre elas: inverter a direção da movimentação de estoque, aceitar preço vindo do cliente, cancelar venda sem devolver o estoque, somar Pix no fechamento de gaveta, abrir o dia pelo saldo calculado em vez do contado, tratar lote que vence hoje como já vencido, gravar o ajuste sem sinal, estimar a validade com o mais novo saindo primeiro calcular o saldo do kardex ignorando o que ficou fora do período deixar a edição de um cadastro preencher os valores padrão (o que zerava o custo médio do ingrediente) e pesar como custo zero o estoque de custo desconhecido na média de uma compra nova. Nas permissões: tirar a trava de papel das rotas de dinheiro, deixar de esconder o custo, deixar o operador mexer em lançamento alheio ou de outro dia, ler o papel do token em vez do banco, abrir o recorte do caixa, aceitar a data enviada pelo operador e aceitar custo digitado à mão ou retirada vinda dele. Na segurança: tirar o limite de tentativas do login, tirar o teto de requisições, voltar a anunciar o framework, aceitar token de outro algoritmo, deixar passar data inválida e parâmetro repetido na URL. Todas foram detectadas.
 
 Os requisitos não funcionais de interface (RNF01 a RNF04) foram verificados por medição em navegador nas resoluções 360×800, 390×844 e 1280×800.

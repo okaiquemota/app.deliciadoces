@@ -32,7 +32,7 @@ export async function autenticar(req, _res, next) {
 
   let payload;
   try {
-    payload = jwt.verify(token, env.jwt.secret);
+    payload = jwt.verify(token, env.jwt.secret, { algorithms: ['HS256'] });
   } catch (erro) {
     if (erro.name === 'TokenExpiredError') {
       return next(AppError.naoAutorizado('Sessão expirada. Faça login novamente.'));

@@ -36,5 +36,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^16.5.0",
     "prettier": "^3.9.8"
+  },
+  "overrides": {
+    "mysql2": "^3.24.4",
+    "deepmerge-ts": "^8.0.2"
   }
 }

@@ -318,7 +318,7 @@ Rodando na **raiz** do projeto:
 npm test
 ```
 
-175 testes cobrindo onde um erro corrompe dado em vez de só quebrar tela: direção das movimentações, transação, estorno na edição de venda, custo médio, ficha técnica opcional, a separação entre lucro e saldo de caixa — e as permissões, testadas pela API de verdade com as duas contas logadas.
+191 testes cobrindo onde um erro corrompe dado em vez de só quebrar tela: direção das movimentações, transação, estorno na edição de venda, custo médio, ficha técnica opcional, a separação entre lucro e saldo de caixa — e as permissões e as travas de segurança, testadas pela API de verdade.
 
 Rodam contra um **PostgreSQL de verdade**, não contra simulação. O que está sendo verificado é justamente o comportamento transacional — saldo e razão mudando juntos — e um banco falso apenas confirmaria a nossa suposição em vez do comportamento real.
 
@@ -401,6 +401,11 @@ O fluxo é o padrão JWT:
 - **Não existe cadastro público.** Este é um sistema interno: quem cria contas é o `ADMIN`, na tela **Minha conta → Equipe**. O primeiro administrador nasce do `seed`.
 - Ninguém é apagado: quem sai da equipe **perde o acesso**, e o histórico continua dizendo quem lançou cada coisa.
 - A proteção de rotas no React é apenas conveniência visual — **quem protege os dados de verdade é o backend**.
+- **Limite de tentativas no login:** 5 senhas erradas seguidas travam aquele login naquele aparelho por 15 min, e 20 erros em qualquer login travam o aparelho. Toda a API tem teto de 300 chamadas por minuto por aparelho (`middlewares/limites.js`).
+- **Senha mínima de 8 caracteres** ao criar e ao trocar senha.
+- **Token com algoritmo fixo** (HS256): um token assinado com outro algoritmo é recusado.
+- **URL malformada responde 400**, e não erro interno: data, filtro de tipo ou forma de pagamento inválidos, parâmetro repetido.
+- **Cabeçalhos de segurança:** a API não anuncia o framework, não deixa resposta em cache e não abre dentro de outro site. A página tem política de conteúdo (CSP) que só aceita o que vem do próprio sistema (`vercel.json`).
 
 ---
 

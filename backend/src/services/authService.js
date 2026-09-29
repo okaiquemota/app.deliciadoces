@@ -29,7 +29,9 @@ function gerarToken(usuario) {
       papel: usuario.papel,
     },
     env.jwt.secret,
-    { expiresIn: env.jwt.expiresIn }
+    // O algoritmo é fixado aqui e na conferência (`autenticar`): um token
+    // que diga usar outro é recusado, em vez de a biblioteca decidir.
+    { expiresIn: env.jwt.expiresIn, algorithm: 'HS256' }
   );
 }
 
