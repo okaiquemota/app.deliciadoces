@@ -90,31 +90,35 @@ export function Resumo() {
   }, [carregar]);
 
   return (
-    <section className="pagina-lisa">
-      <header className="cabeca">
-        {/* O título da página para o leitor de tela é o `h1` da casca. */}
-        <p className="cabeca__titulo" aria-hidden="true">
-          Resumo
-        </p>
-        <p className="cabeca__sub">
-          {resumo
-            ? `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`
-            : 'Carregando...'}
-        </p>
-      </header>
+    <section className="pagina-lisa pagina-resumo">
+      {/* Título e período numa fileira só no computador: a linha que isso
+          devolve é o que faz a tela caber na altura, sem rolar. */}
+      <div className="pagina-lisa__topo">
+        <header className="cabeca">
+          {/* O título da página para o leitor de tela é o `h1` da casca. */}
+          <p className="cabeca__titulo" aria-hidden="true">
+            Resumo
+          </p>
+          <p className="cabeca__sub">
+            {resumo
+              ? `De ${formatarData(resumo.periodo.inicio)} a ${formatarData(resumo.periodo.fim)}`
+              : 'Carregando...'}
+          </p>
+        </header>
 
-      <div className="extrato__chips" role="group" aria-label="Período">
-        {PERIODOS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className="chip"
-            aria-pressed={periodo === p.id}
-            onClick={() => setPeriodo(p.id)}
-          >
-            {p.rotulo}
-          </button>
-        ))}
+        <div className="extrato__chips" role="group" aria-label="Período">
+          {PERIODOS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="chip"
+              aria-pressed={periodo === p.id}
+              onClick={() => setPeriodo(p.id)}
+            >
+              {p.rotulo}
+            </button>
+          ))}
+        </div>
       </div>
 
       {erro && (
@@ -129,33 +133,38 @@ export function Resumo() {
         // Recarregando, a tela fica onde estava, apagada — sem esqueleto
         // nem salto: o número novo entra no lugar do velho.
         <div className={atualizando ? 'resumo conteudo--atualizando' : 'resumo'}>
-          <div className="resumo__lucro">
-            <p className="resumo__rotulo">Lucro</p>
-            <p
-              className={
-                resumo.lucro < 0 ? 'resumo__numero resumo__numero--negativo' : 'resumo__numero'
-              }
-            >
-              {moeda(resumo.lucro)}
-            </p>
-            <p className="resumo__explica">
-              Vendas menos os custos do negócio. A retirada pessoal não entra na conta.
-            </p>
-          </div>
+          <div className="resumo__numeros">
+            <div className="resumo__lucro">
+              <p className="resumo__rotulo">Lucro</p>
+              <p
+                className={
+                  resumo.lucro < 0 ? 'resumo__numero resumo__numero--negativo' : 'resumo__numero'
+                }
+              >
+                {moeda(resumo.lucro)}
+              </p>
+              <p className="resumo__explica">
+                Vendas menos os custos do negócio. A retirada pessoal não entra na conta.
+              </p>
+            </div>
 
-          <div className="extrato__resumo">
-            <Total
-              rotulo="Vendas"
-              valor={moeda(resumo.vendas)}
-              tom="entrada"
-              nota={`${resumo.quantidadeVendas} ${resumo.quantidadeVendas === 1 ? 'venda' : 'vendas'}`}
-            />
-            <Total rotulo="Custos do negócio" valor={moeda(resumo.custos)} />
-            <Total rotulo="Retirada pessoal" valor={moeda(resumo.retiradas)} />
+            <div className="extrato__resumo">
+              <Total
+                rotulo="Vendas"
+                valor={moeda(resumo.vendas)}
+                tom="entrada"
+                nota={`${resumo.quantidadeVendas} ${resumo.quantidadeVendas === 1 ? 'venda' : 'vendas'}`}
+              />
+              <Total rotulo="Custos do negócio" valor={moeda(resumo.custos)} />
+              <Total rotulo="Retirada pessoal" valor={moeda(resumo.retiradas)} />
+            </div>
           </div>
 
           <div className="resumo__grade">
-            <section className="resumo__bloco" aria-labelledby="titulo-movimento">
+            <section
+              className="resumo__bloco resumo__bloco--grafico"
+              aria-labelledby="titulo-movimento"
+            >
               <div className="bloco__cabeca">
                 <h2 className="bloco__titulo" id="titulo-movimento">
                   Movimento por dia
@@ -313,61 +322,65 @@ function GraficoDias({ serie }) {
 
   return (
     <>
-      <div className="grafico">
-        <div className="grafico__eixo" aria-hidden="true">
-          {marcas.map((m) => (
-            <span key={m}>{moedaCurta(m)}</span>
-          ))}
-        </div>
-
-        <div className="grafico__area">
-          <div className="grafico__grade" aria-hidden="true">
+      {/* A caixa é o que dá a altura ao gráfico no computador: ele ocupa o
+          que sobra da tela (ver `.grafico__caixa` no CSS). */}
+      <div className="grafico__caixa">
+        <div className="grafico">
+          <div className="grafico__eixo" aria-hidden="true">
             {marcas.map((m) => (
-              <span key={m} />
+              <span key={m}>{moedaCurta(m)}</span>
             ))}
           </div>
 
-          <div className={denso ? 'grafico__dias grafico__dias--denso' : 'grafico__dias'}>
-            {serie.map((d, i) => (
-              <button
-                key={d.dia}
-                type="button"
-                className={ativo === i ? 'grafico__dia grafico__dia--ativo' : 'grafico__dia'}
-                aria-label={`${rotuloCurto(d.dia)}: vendas ${moeda(d.vendas)}, custos ${moeda(d.despesas)}`}
-                onPointerEnter={() => setAtivo(i)}
-                onPointerLeave={() => setAtivo(null)}
-                onFocus={() => setAtivo(i)}
-                onBlur={() => setAtivo(null)}
-                onClick={() => setAtivo(i)}
-              >
-                <span className="grafico__barras">
-                  <span
-                    className="grafico__barra grafico__barra--venda"
-                    style={{ height: `${(d.vendas / teto) * 100}%` }}
-                  />
-                  <span
-                    className="grafico__barra grafico__barra--custo"
-                    style={{ height: `${(d.despesas / teto) * 100}%` }}
-                  />
-                </span>
-                <span className="grafico__rotulo" aria-hidden="true">
-                  {mostraRotulo(i) ? rotuloCurto(d.dia) : ''}
-                </span>
-                {ativo === i && (
-                  <span className={`grafico__dica grafico__dica--${lado(i)}`} aria-hidden="true">
-                    <span className="grafico__dica-dia">{rotuloCurto(d.dia)}</span>
-                    <span className="grafico__dica-linha">
-                      <i className="grafico__traco grafico__traco--venda" />
-                      <strong>{moeda(d.vendas)}</strong> vendas
-                    </span>
-                    <span className="grafico__dica-linha">
-                      <i className="grafico__traco grafico__traco--custo" />
-                      <strong>{moeda(d.despesas)}</strong> custos
-                    </span>
+          <div className="grafico__area">
+            <div className="grafico__grade" aria-hidden="true">
+              {marcas.map((m) => (
+                <span key={m} />
+              ))}
+            </div>
+
+            <div className={denso ? 'grafico__dias grafico__dias--denso' : 'grafico__dias'}>
+              {serie.map((d, i) => (
+                <button
+                  key={d.dia}
+                  type="button"
+                  className={ativo === i ? 'grafico__dia grafico__dia--ativo' : 'grafico__dia'}
+                  aria-label={`${rotuloCurto(d.dia)}: vendas ${moeda(d.vendas)}, custos ${moeda(d.despesas)}`}
+                  onPointerEnter={() => setAtivo(i)}
+                  onPointerLeave={() => setAtivo(null)}
+                  onFocus={() => setAtivo(i)}
+                  onBlur={() => setAtivo(null)}
+                  onClick={() => setAtivo(i)}
+                >
+                  <span className="grafico__barras">
+                    <span
+                      className="grafico__barra grafico__barra--venda"
+                      style={{ height: `${(d.vendas / teto) * 100}%` }}
+                    />
+                    <span
+                      className="grafico__barra grafico__barra--custo"
+                      style={{ height: `${(d.despesas / teto) * 100}%` }}
+                    />
                   </span>
-                )}
-              </button>
-            ))}
+                  <span className="grafico__rotulo" aria-hidden="true">
+                    {mostraRotulo(i) ? rotuloCurto(d.dia) : ''}
+                  </span>
+                  {ativo === i && (
+                    <span className={`grafico__dica grafico__dica--${lado(i)}`} aria-hidden="true">
+                      <span className="grafico__dica-dia">{rotuloCurto(d.dia)}</span>
+                      <span className="grafico__dica-linha">
+                        <i className="grafico__traco grafico__traco--venda" />
+                        <strong>{moeda(d.vendas)}</strong> vendas
+                      </span>
+                      <span className="grafico__dica-linha">
+                        <i className="grafico__traco grafico__traco--custo" />
+                        <strong>{moeda(d.despesas)}</strong> custos
+                      </span>
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

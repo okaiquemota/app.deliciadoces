@@ -903,45 +903,56 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 0.8125rem;
 }
 
-/* ---------- Minha conta, no desenho da página de perfil do Mercado Livre
+/* ---------- Minha conta, no desenho das outras telas
 
-   A tela MOSTRA os dados; cada um se edita numa janela à parte. Uma linha
-   por dado com ícone, valor, legenda e seta.
+   Mesma moldura do Caixa, do Estoque e do Resumo: fundo branco, título
+   grande, e cada grupo (Informações pessoais, Segurança, Equipe) com o
+   título em negrito e a lista LISA embaixo — sem cartão, sem fio. Cada
+   linha é um dado com o ícone no círculo da casa, o valor, a legenda e a
+   seta; tocar abre a janela que edita.
 
-   Moldura igual à das outras telas: largura toda a partir da mesma
-   margem, cartão `.cartao` e título em versalete (`.cartao__subtitulo`).
-   O cartão perde o respiro interno só para as linhas irem de borda a
-   borda — senão o realce de passar o mouse pararia a 20px da borda. O
-   texto continua alinhado nos mesmos 20px dos outros cartões.
-
-   O fio entre as linhas começa e termina nesses 20px, como na
-   referência — de ponta a ponta é o que faz lista parecer tabela. */
+   Antes eram cartões brancos sobre fundo cinza, e a tela destoava de
+   todas as outras. */
 
 .perfil {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 22px;
 }
 
-.cartao.perfil__grupo {
-  padding: 0;
-  overflow: hidden;
+.perfil__colunas,
+.perfil__coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
-.perfil__grupo > .cartao__subtitulo {
-  margin: 0;
-  padding: 18px 20px 4px;
+.perfil__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perfil__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perfil__grupo > .bloco__titulo {
+  margin-bottom: 6px;
 }
 
 .perfil__item {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  width: 100%;
-  min-height: 64px;
-  padding: 14px 20px;
+  gap: 14px;
+  width: calc(100% + 24px);
+  min-height: 70px;
+  margin: 0 -12px;
+  padding: 10px 12px;
   border: none;
+  border-radius: 14px;
   background: none;
   color: var(--texto);
   font-family: inherit;
@@ -950,30 +961,12 @@ input[type='date']::-webkit-date-and-time-value {
   transition: background-color 90ms ease-out;
 }
 
-.perfil__item:hover {
-  background-color: var(--marca-rosa-nevoa);
-}
-
-/* Dentro de um cartão com `overflow: hidden`, o anel de foco padrão (para
-   fora) seria cortado pela borda. Aqui ele vai para dentro. */
-.perfil__item:focus-visible {
-  outline-offset: -3px;
-}
-
-.perfil__item + .perfil__item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 20px;
-  left: 20px;
-  height: 1px;
-  background-color: var(--borda);
-}
-
-.perfil__icone {
-  display: flex;
-  flex: 0 0 auto;
-  color: var(--marca-rosa-texto);
+/* Só onde existe mouse: no toque, o realce ficaria preso na linha tocada
+   depois que a janela fecha. */
+@media (hover: hover) {
+  .perfil__item:hover {
+    background-color: var(--marca-rosa-nevoa);
+  }
 }
 
 .perfil__textos {
@@ -987,6 +980,7 @@ input[type='date']::-webkit-date-and-time-value {
 .perfil__valor {
   overflow: hidden;
   font-size: 1rem;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1004,14 +998,18 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* Na Equipe, quem está sem acesso fica apagado na lista: continua ali
    (o histórico é dela), mas não disputa o olho com quem trabalha hoje. */
-.perfil__item--apagado .perfil__valor,
-.perfil__item--apagado .perfil__icone {
+.perfil__item--apagado .perfil__valor {
   color: var(--texto-suave);
+}
+
+.perfil__item--apagado .icone-aro {
+  opacity: 0.55;
+  filter: grayscale(1);
 }
 
 .perfil__carregando,
 .alerta.perfil__alerta {
-  margin: 8px 20px 12px;
+  margin: 4px 0 8px;
 }
 
 .perfil__carregando {
@@ -1059,12 +1057,13 @@ input[type='date']::-webkit-date-and-time-value {
    rola. No celular a tela inteira rola (ver o bloco do celular).
    ===================================================================== */
 
-/* Início, Caixa, Kardex, Estoque e Produção são brancos inteiros, como a
-   referência de extrato. A lista lisa e os blocos cinza-claro sobre o
-   cinza das outras telas pareceriam desbotados. */
+/* Todas as telas são brancas inteiras, como a referência de extrato: a
+   lista lisa e os blocos cinza-claro sobre cinza pareceriam desbotados.
+   O cinza do `body` só aparece atrás do login. */
 .app__conteudo:has(> .extrato),
 .app__conteudo:has(> .inicio),
-.app__conteudo:has(> .pagina-lisa) {
+.app__conteudo:has(> .pagina-lisa),
+.app__conteudo:has(> .perfil) {
   background-color: var(--superficie);
 }
 
@@ -3507,6 +3506,104 @@ input[type='date']::-webkit-date-and-time-value {
     align-items: start;
     gap: 40px;
   }
+
+  /* O Resumo e o Fechar dia CABEM na tela, como o Início e o Caixa: a
+     página não rola. O que devolve a altura que faltava num notebook de
+     768px: título e filtro numa fileira só (nas duas telas) e, no
+     Resumo, o lucro ao lado dos totais (e não em cima) e o gráfico sem
+     altura fixa — ele ocupa o que sobra, e é ele que cresce ou encolhe
+     com a janela. Numa janela baixa demais para o mínimo de tudo, a
+     página volta a rolar, em vez de cortar. */
+  .pagina-resumo {
+    height: 100%;
+  }
+
+  .pagina-lisa__topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 24px;
+  }
+
+  .pagina-resumo > .resumo {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .resumo__numeros {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .resumo__numeros > .resumo__lucro {
+    flex: 0 0 auto;
+    max-width: 34%;
+  }
+
+  .resumo__numeros > .extrato__resumo {
+    flex: 1 1 auto;
+  }
+
+  .pagina-resumo .resumo__grade {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+    margin-top: 0;
+  }
+
+  .resumo__bloco--grafico {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .pagina-resumo .resumo__lado {
+    gap: 22px;
+  }
+
+  /* A altura do gráfico sai do espaço que sobrou (unidade de contêiner),
+     menos a faixa dos rótulos dos dias. */
+  .grafico__caixa {
+    flex: 1 1 auto;
+    min-height: 150px;
+    container-type: size;
+  }
+
+  .grafico__caixa > .grafico {
+    --grafico-altura: max(110px, calc(100cqh - 28px));
+  }
+
+  /* Minha conta: a própria conta à esquerda, a Equipe à direita. A linha
+     da grade tem a altura que sobra, e a lista da Equipe rola dentro dela
+     — o respiro lateral da lista é devolvido para o realce de passar o
+     mouse não ser cortado pela rolagem. */
+  .perfil {
+    height: 100%;
+  }
+
+  .perfil__colunas {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 40px;
+    min-height: 0;
+  }
+
+  .perfil__grupo--rolavel {
+    max-height: 100%;
+    min-height: 0;
+  }
+
+  .perfil__grupo--rolavel > .perfil__lista {
+    min-height: 0;
+    margin: 0 -12px;
+    padding: 0 12px;
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 560px) {
@@ -3826,21 +3923,6 @@ input[type='date']::-webkit-date-and-time-value {
   .nav__item--so-desktop,
   .app__versao {
     display: none;
-  }
-
-  /* No celular os cartões têm 16px de respiro; as linhas acompanham. */
-  .perfil__grupo > .cartao__subtitulo {
-    padding: 16px 16px 4px;
-  }
-
-  .perfil__item {
-    gap: 14px;
-    padding: 14px 16px;
-  }
-
-  .perfil__item + .perfil__item::before {
-    right: 16px;
-    left: 16px;
   }
 
   /* No celular os botões da janela ocupam a largura toda, lado a lado. */

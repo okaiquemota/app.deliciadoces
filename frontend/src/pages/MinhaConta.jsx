@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Texto } from '../components/Campo.jsx';
@@ -24,10 +24,9 @@ import { data as formatarData } from '../utils/formato.js';
  * página de perfil do Mercado Livre. Uma lista com ícone, o valor, uma
  * legenda dizendo o que ele é, e a seta indicando que a linha abre.
  *
- * O resto segue as outras telas: largura toda a partir da mesma margem,
- * sem título visível no topo (o nome da seção está no menu e no `h1`
- * do leitor de tela), e cartões com o título em versalete, como os do
- * Resumo e do Fechamento.
+ * O resto segue as outras telas: fundo branco, o título grande no alto,
+ * e cada grupo com o título em negrito e a lista lisa embaixo, com o
+ * ícone no círculo da casa — o desenho do Caixa, do Estoque e do Resumo.
  *
  * Formulário aberto o tempo todo convida a mexer sem querer, e obriga a
  * ler seis campos para achar o nome. Aqui ela vê os três dados de relance
@@ -55,6 +54,14 @@ export function MinhaConta() {
 
   return (
     <section className="perfil">
+      {/* O mesmo cabeçalho das outras telas. O título da página para o
+          leitor de tela é o `h1` da casca; este fica escondido dele. */}
+      <header className="cabeca">
+        <p className="cabeca__titulo" aria-hidden="true">
+          Minha conta
+        </p>
+      </header>
+
       {/* A confirmação aparece na página, depois que a janela fecha: é
           aqui que ela vê o valor novo já no lugar. */}
       {aviso && (
@@ -63,21 +70,38 @@ export function MinhaConta() {
         </p>
       )}
 
-      <Grupo titulo="Informações pessoais">
-        <Item Icone={IconeNome} valor={usuario?.nome} rotulo="Nome" onClick={() => abrir('nome')} />
-        <Item
-          Icone={IconeEmail}
-          valor={usuario?.email}
-          rotulo={usuario?.email?.includes('@') ? 'E-mail de acesso' : 'Usuário de acesso'}
-          onClick={() => abrir('email')}
-        />
-      </Grupo>
+      {/* No computador, duas colunas: a própria conta à esquerda e a
+          Equipe à direita — com a lista da Equipe rolando por dentro
+          quando crescer, como a lista do Caixa. A página não rola. */}
+      <div className="perfil__colunas">
+        <div className="perfil__coluna">
+          <Grupo titulo="Informações pessoais">
+            <Item
+              Icone={IconeNome}
+              valor={usuario?.nome}
+              rotulo="Nome"
+              onClick={() => abrir('nome')}
+            />
+            <Item
+              Icone={IconeEmail}
+              valor={usuario?.email}
+              rotulo={usuario?.email?.includes('@') ? 'E-mail de acesso' : 'Usuário de acesso'}
+              onClick={() => abrir('email')}
+            />
+          </Grupo>
 
-      <Grupo titulo="Segurança">
-        <Item Icone={IconeSenha} valor="••••••••" rotulo="Senha" onClick={() => abrir('senha')} />
-      </Grupo>
+          <Grupo titulo="Segurança">
+            <Item
+              Icone={IconeSenha}
+              valor="••••••••"
+              rotulo="Senha"
+              onClick={() => abrir('senha')}
+            />
+          </Grupo>
+        </div>
 
-      {admin && <Equipe aoAviso={setAviso} />}
+        {admin && <Equipe aoAviso={setAviso} />}
+      </div>
 
       {/* Montadas só enquanto abertas: cada abertura começa com o
           formulário limpo, sem resto da tentativa anterior. */}
@@ -88,11 +112,22 @@ export function MinhaConta() {
   );
 }
 
-function Grupo({ titulo, children }) {
+/**
+ * Um grupo da conta. `rodape` fica fora da parte que rola: na Equipe, o
+ * "Adicionar pessoa" continua à vista mesmo com a lista comprida.
+ */
+function Grupo({ titulo, children, rodape = null, rolavel = false }) {
+  const id = useId();
   return (
-    <section className="cartao perfil__grupo">
-      <h2 className="cartao__subtitulo">{titulo}</h2>
-      {children}
+    <section
+      className={rolavel ? 'perfil__grupo perfil__grupo--rolavel' : 'perfil__grupo'}
+      aria-labelledby={id}
+    >
+      <h2 className="bloco__titulo" id={id}>
+        {titulo}
+      </h2>
+      {rolavel ? <div className="perfil__lista">{children}</div> : children}
+      {rodape}
     </section>
   );
 }
@@ -108,7 +143,7 @@ function Item({ Icone, valor, rotulo, onClick, apagado = false, leitor = ', alte
       className={apagado ? 'perfil__item perfil__item--apagado' : 'perfil__item'}
       onClick={onClick}
     >
-      <span className="perfil__icone">
+      <span className="icone-aro">
         <Icone tamanho={22} />
       </span>
       <span className="perfil__textos">
@@ -418,7 +453,19 @@ function Equipe({ aoAviso }) {
   const fechar = () => setAberta(null);
 
   return (
-    <Grupo titulo="Equipe">
+    <Grupo
+      titulo="Equipe"
+      rolavel
+      rodape={
+        <Item
+          Icone={IconeMais}
+          valor="Adicionar pessoa"
+          rotulo="Dar acesso a alguém da equipe"
+          leitor=""
+          onClick={() => abrir('nova')}
+        />
+      }
+    >
       {erro && (
         <p className="alerta alerta--erro perfil__alerta" role="alert">
           {erro}
@@ -438,13 +485,6 @@ function Equipe({ aoAviso }) {
           onClick={() => abrir(p)}
         />
       ))}
-      <Item
-        Icone={IconeMais}
-        valor="Adicionar pessoa"
-        rotulo="Dar acesso a alguém da equipe"
-        leitor=""
-        onClick={() => abrir('nova')}
-      />
 
       {aberta === 'nova' && <NovaPessoa aoFechar={fechar} aoConcluir={concluir} />}
       {aberta && aberta !== 'nova' && (
