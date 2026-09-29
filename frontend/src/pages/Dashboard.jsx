@@ -48,10 +48,9 @@ import {
  * entrada e saída dividem a linha seguinte; retirada, fechar dia e resumo
  * ficam na fileira menor, que é tarefa de fim de expediente.
  *
- * Os cartões são brancos com contorno fino, e só o de Venda é escuro, no
- * preto da marca. Antes todos vinham num degradê creme → rosa, e a tela
- * inteira ficava colorida sem que nenhuma cor dissesse nada; agora a
- * única mancha forte é a do botão que ela mais usa.
+ * O de Venda é o único escuro, no preto da marca: a mancha forte da tela
+ * é a do botão que ela mais usa. Os outros vão num degradê leve, do
+ * branco ao rosa, com o rosa no canto sem texto.
  */
 const PRINCIPAL = { id: 'venda', rotulo: 'Venda', Icone: IconeVenda };
 

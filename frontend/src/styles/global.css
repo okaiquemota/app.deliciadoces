@@ -116,6 +116,14 @@
      rosa é fazer, preto é escolher. */
   --degrade-acao: linear-gradient(135deg, #c8004f 0%, #e0005a 100%);
   --degrade-acao-forte: linear-gradient(135deg, #b8004a 0%, #d40055 100%);
+  /* Os cartões do Início (menos Venda): branco no canto de baixo à
+     esquerda, onde fica o texto cinza, e rosa no de cima à direita, onde
+     não há texto. Até o meio fica claro o bastante para o cinza manter
+     4,6:1; o rosa forte só pega o canto vazio. O "forte" é o passar do
+     mouse. */
+  --degrade-cartao: linear-gradient(to top right, #ffffff 30%, #fff3f9 55%, #ffdcef 100%);
+  --degrade-cartao-forte: linear-gradient(to top right, #fff8fc 30%, #ffedf7 55%, #ffcfe8 100%);
+  --borda-rosa: #ffdcef;
   --sombra-acao: 0 6px 16px -8px rgb(212 0 85 / 0.55);
 
   --erro: #b3261e;
@@ -2194,9 +2202,9 @@ input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
   min-height: var(--altura, 92px);
   padding: 16px;
-  border: 1px solid var(--borda);
+  border: 1px solid var(--borda-rosa);
   border-radius: var(--r-3);
-  background: var(--superficie);
+  background: var(--degrade-cartao);
   color: var(--texto);
   font-family: inherit;
   text-align: left;
@@ -2206,7 +2214,7 @@ input[type='date']::-webkit-date-and-time-value {
 @media (hover: hover) {
   .cartao-acao:hover {
     border-color: var(--marca-rosa-claro);
-    background: var(--marca-rosa-nevoa);
+    background: var(--degrade-cartao-forte);
   }
 
   .cartao-acao--grande:hover {
@@ -2219,8 +2227,8 @@ input[type='date']::-webkit-date-and-time-value {
   margin-bottom: auto;
 }
 
-/* No cartão branco, o miolo do círculo também é branco: o degradê do
-   selo, sobre branco, era a cor que sobrava na tela. */
+/* O miolo do círculo é branco: sobre o degradê do cartão, ele se
+   destaca sem somar mais uma cor. */
 .cartao-acao .icone-aro {
   background: var(--superficie);
 }
@@ -2313,8 +2321,10 @@ input[type='date']::-webkit-date-and-time-value {
    No computador não há teto: os cartões vão até o pé da janela, e a
    folga de baixo é a mesma das laterais em qualquer tamanho de tela (ou
    de zoom). Para o cartão alto não virar vão, o valor cresce junto com a
-   altura da janela, e a fileira das tarefas fica na altura própria —
-   quem ganha o espaço são os cartões com número. */
+   altura da janela — e a fileira das tarefas cresce também, na mesma
+   proporção (0,42 de uma fileira, nunca menos de 74px). Com altura fixa,
+   num monitor grande ela virava uma tira fina embaixo de dois cartões
+   enormes. */
 .inicio {
   display: flex;
   flex-direction: column;
@@ -2344,7 +2354,7 @@ input[type='date']::-webkit-date-and-time-value {
 @media (min-width: 901px) {
   .acoes {
     max-height: none;
-    grid-template-rows: 1fr 1fr auto;
+    grid-template-rows: 1fr 1fr minmax(74px, 0.42fr);
   }
 
   .acoes.acoes--balcao {
@@ -2396,7 +2406,20 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--pequeno .cartao-acao__rotulo {
+    font-size: clamp(0.9375rem, 0.6rem + 0.8vh, 1.25rem);
     text-align: left;
+  }
+
+  /* O ícone e o rótulo crescem com a fileira, para o cartão alto não
+     virar um vão com um ícone pequeno num canto. */
+  .cartao-acao--pequeno .cartao-acao__selo {
+    width: clamp(46px, 1.5rem + 3.5vh, 68px);
+    height: clamp(46px, 1.5rem + 3.5vh, 68px);
+  }
+
+  .cartao-acao--pequeno .cartao-acao__selo .icone {
+    width: 46%;
+    height: 46%;
   }
 }
 
