@@ -24,7 +24,9 @@ const identificador = z
   });
 
 const nome = z.string().trim().min(2, 'Informe o nome.');
-const senha = z.string().min(6, 'A senha precisa ter ao menos 6 caracteres.');
+// 8, e não 6: com 6 caracteres, um robô sem freio acha a senha em horas.
+// Quem já tem senha menor continua entrando; a regra vale ao criar e trocar.
+const senha = z.string().min(8, 'A senha precisa ter ao menos 8 caracteres.');
 const papel = z.enum(['ADMIN', 'OPERADOR']);
 
 export const novaPessoaSchema = z.object({

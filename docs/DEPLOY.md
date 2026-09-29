@@ -150,6 +150,27 @@ Como esta aplicação não usa a API do Supabase (fala com o Postgres via Prisma
 
 Para revisar: **Supabase → Advisors → Security**. O esperado é zero erro. Avisos do tipo "RLS enabled, no policy" são o comportamento desejado aqui, não um problema.
 
+## Região da API
+
+O `vercel.json` fixa as funções em **`gru1` (São Paulo)**, a mesma região do banco no Supabase (`sa-east-1`). Sem isso a Vercel usava `iad1` (Washington), e cada consulta ao banco atravessava o continente — e desde que a permissão passou a ser conferida no banco a cada requisição, toda chamada faz ao menos uma consulta. Se o banco mudar de região, esta linha muda junto.
+
+## Limite de tentativas e o Firewall da Vercel
+
+A API já freia quem erra senha demais e quem chama demais (`backend/src/middlewares/limites.js`). A contagem mora na memória de cada instância da função, então um ataque espalhado por várias instâncias é **freado, não barrado**.
+
+O bloqueio forte é uma regra no **Firewall da Vercel**, que vale antes de a requisição chegar à função:
+
+1. Vercel → projeto `app-deliciadoces` → **Firewall** → **Configure** → **New Rule**.
+2. Se: **Request Path** igual a `/api/auth/login`.
+3. Então: **Rate Limit**, por IP, 10 requisições a cada 60 segundos, ação **Deny** (ou **Challenge**).
+4. **Save** e **Review Changes** → **Publish**.
+
+> A regra de Rate Limit depende do plano da Vercel. Se a opção não aparecer em **Then**, o freio da própria API continua valendo sozinho.
+
+## Cabeçalhos de segurança da página
+
+Estão no `vercel.json`, em `headers`. O principal é a política de conteúdo (CSP): a página só carrega script, estilo, fonte e imagem do próprio sistema e só conversa com a própria API. Se algum dia entrar um recurso de fora (uma fonte do Google, um script de analytics), ele precisa ser liberado ali — senão o navegador bloqueia em silêncio, e o erro aparece no console como "Refused to load".
+
 ---
 
 ## Quando der problema

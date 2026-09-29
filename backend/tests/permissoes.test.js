@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import app from '../src/app.js';
 import { prisma } from '../src/lib/prisma.js';
 import { semCustos } from '../src/middlewares/ocultarCustos.js';
+import { zerarLimites } from '../src/middlewares/limites.js';
 import { limparTudo, criarInsumo, criarProduto } from './apoio.js';
 
 /**
@@ -51,6 +52,8 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  // O teto de requisições conta por aparelho, e aqui tudo sai do mesmo.
+  zerarLimites();
   await limparTudo();
   await prisma.usuario.deleteMany({ where: { email: { in: CONTAS } } });
   const senhaHash = await bcrypt.hash('senha-teste', 10);

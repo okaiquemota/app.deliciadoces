@@ -3,6 +3,7 @@ import authRoutes from './authRoutes.js';
 import { autenticar, autorizar } from '../middlewares/auth.js';
 import { ocultarCustos } from '../middlewares/ocultarCustos.js';
 import { validar } from '../middlewares/validate.js';
+import { AppError } from '../utils/AppError.js';
 import {
   insumoController,
   produtoController,
@@ -55,6 +56,18 @@ router.use('/auth', authRoutes);
 // A partir daqui, ninguém passa sem token
 router.use(autenticar);
 router.use(ocultarCustos);
+
+/**
+ * Cada parâmetro da URL é UM texto. Repetido (`?tipo=a&tipo=b`), o
+ * Express entrega uma lista, que nenhum filtro espera e que chegava ao
+ * banco como erro 500.
+ */
+router.use((req, _res, next) => {
+  const repetido = Object.entries(req.query).find(([, v]) => typeof v !== 'string');
+  if (repetido)
+    return next(new AppError(`O parâmetro "${repetido[0]}" veio mais de uma vez.`, 400));
+  return next();
+});
 
 // ---------------------------------------------------------------- insumos
 router

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { authService } from '../services/authService.js';
+import { tentativasDeLogin } from '../middlewares/limites.js';
 
 /**
  * Schemas de entrada das rotas de autenticação.
@@ -25,7 +26,7 @@ export const loginSchema = z.object({
 export const trocarSenhaSchema = z
   .object({
     senhaAtual: z.string().min(1, 'Informe a senha atual.'),
-    senhaNova: z.string().min(6, 'A nova senha precisa ter ao menos 6 caracteres.'),
+    senhaNova: z.string().min(8, 'A nova senha precisa ter ao menos 8 caracteres.'),
   })
   .refine((d) => d.senhaAtual !== d.senhaNova, {
     message: 'A nova senha precisa ser diferente da atual.',
@@ -61,8 +62,21 @@ export const atualizarPerfilSchema = z
   });
 
 export const authController = {
+  /**
+   * Cada senha errada conta; errou demais, espera (ver `limites.js`). A
+   * conferência vem ANTES de testar a senha: travado, nem a senha certa
+   * entra — senão o robô saberia que acertou pela resposta diferente.
+   */
   async login(req, res) {
-    const resultado = await authService.login(req.body);
+    tentativasDeLogin.conferir(req, res);
+    let resultado;
+    try {
+      resultado = await authService.login(req.body);
+    } catch (erro) {
+      if (erro.statusCode === 401) tentativasDeLogin.falhou(req);
+      throw erro;
+    }
+    tentativasDeLogin.acertou(req);
     res.json(resultado);
   },
 

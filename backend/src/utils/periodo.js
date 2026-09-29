@@ -1,3 +1,5 @@
+import { AppError } from './AppError.js';
+
 /**
  * Período vindo da URL (`?inicio=...&fim=...`), no horário da cliente.
  *
@@ -26,10 +28,23 @@ function paraInstante(valor, hora) {
   return SO_DATA.test(texto) ? new Date(`${texto}T${hora}${FUSO_CLIENTE}`) : new Date(texto);
 }
 
+/**
+ * Data da URL que não é data ("?inicio=abc") vira 400 aqui. Antes ela
+ * chegava ao banco como data inválida e voltava como erro 500 — um erro
+ * do sistema para o que era só um endereço mal digitado.
+ */
+function instanteDaQuery(valor, hora) {
+  const instante = paraInstante(valor, hora);
+  if (Number.isNaN(instante.getTime())) {
+    throw new AppError('Data inválida no período. Use o formato 2026-09-28.', 400);
+  }
+  return instante;
+}
+
 export function filtrosPeriodo(query) {
   return {
-    inicio: query.inicio ? paraInstante(query.inicio, '00:00:00.000') : undefined,
-    fim: query.fim ? paraInstante(query.fim, '23:59:59.999') : undefined,
+    inicio: query.inicio ? instanteDaQuery(query.inicio, '00:00:00.000') : undefined,
+    fim: query.fim ? instanteDaQuery(query.fim, '23:59:59.999') : undefined,
   };
 }
 
