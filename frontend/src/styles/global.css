@@ -1125,6 +1125,44 @@ input[type='date']::-webkit-date-and-time-value {
   text-transform: uppercase;
 }
 
+/* O título e a linha de apoio, quando a cabeça tem um botão ao lado. */
+.cabeca__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* O olho do Início, que esconde e mostra os valores — como no app do
+   banco. Redondo e discreto: é um ajuste, não uma ação da tela. */
+.botao-olho {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--borda);
+  border-radius: 50%;
+  background: var(--superficie);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .botao-olho:hover {
+    border-color: var(--marca-rosa-claro);
+    background: var(--marca-rosa-nevoa);
+    color: var(--marca-rosa-texto);
+  }
+}
+
+/* O valor escondido: bolinhas no lugar dos números, no mesmo tamanho. */
+.valor-oculto {
+  letter-spacing: 0.08em;
+}
+
 /* Ícone num círculo com aro, como no extrato do banco: nas linhas do
    Caixa, do Kardex e do Estoque, nos cartões e nos últimos lançamentos do
    Início. O círculo é da casa (creme → rosa, ícone rosa); os estados
@@ -2165,10 +2203,10 @@ input[type='date']::-webkit-date-and-time-value {
 /* =====================================================================
    TELA INICIAL — no mesmo desenho do Caixa
 
-   Fundo branco, título grande, e os cartões BRANCOS com contorno fino —
-   a cor fica nos ícones, e num cartão só: o da Venda, em preto. O ícone
-   de cada ação vai num círculo com aro, o mesmo das linhas do extrato:
-   as duas telas que ela mais usa falam a mesma língua.
+   Fundo branco, título grande, e os cartões no creme → rosa da casa —
+   menos o da Venda, em preto. O ícone de cada ação vai num círculo com
+   aro, o mesmo das linhas do extrato: as duas telas que ela mais usa
+   falam a mesma língua.
    ===================================================================== */
 
 /* Grade de 6 colunas: o tamanho do botão é quantas colunas ele ocupa —
@@ -2194,9 +2232,9 @@ input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
   min-height: var(--altura, 92px);
   padding: 16px;
-  border: 1px solid var(--borda);
+  border: none;
   border-radius: var(--r-3);
-  background: var(--superficie);
+  background: var(--degrade-suave);
   color: var(--texto);
   font-family: inherit;
   text-align: left;
@@ -2205,24 +2243,16 @@ input[type='date']::-webkit-date-and-time-value {
 
 @media (hover: hover) {
   .cartao-acao:hover {
-    border-color: var(--marca-rosa-claro);
-    background: var(--marca-rosa-nevoa);
+    background: var(--degrade-suave-forte);
   }
 
   .cartao-acao--grande:hover {
-    border-color: transparent;
     background: var(--c-800);
   }
 }
 
 .cartao-acao__selo {
   margin-bottom: auto;
-}
-
-/* No cartão branco, o miolo do círculo também é branco: o degradê do
-   selo, sobre branco, era a cor que sobrava na tela. */
-.cartao-acao .icone-aro {
-  background: var(--superficie);
 }
 
 .cartao-acao__rotulo {
@@ -2253,7 +2283,6 @@ input[type='date']::-webkit-date-and-time-value {
 .cartao-acao--grande {
   grid-column: span 6;
   --altura: 120px;
-  border-color: transparent;
   background: var(--c-900);
   color: var(--c-0);
 }
@@ -2313,8 +2342,10 @@ input[type='date']::-webkit-date-and-time-value {
    No computador não há teto: os cartões vão até o pé da janela, e a
    folga de baixo é a mesma das laterais em qualquer tamanho de tela (ou
    de zoom). Para o cartão alto não virar vão, o valor cresce junto com a
-   altura da janela, e a fileira das tarefas fica na altura própria —
-   quem ganha o espaço são os cartões com número. */
+   altura da janela — e a fileira das tarefas cresce também, na mesma
+   proporção (0,42 de uma fileira, nunca menos de 74px). Com altura fixa,
+   num monitor grande ela virava uma tira fina embaixo de dois cartões
+   enormes. */
 .inicio {
   display: flex;
   flex-direction: column;
@@ -2344,7 +2375,7 @@ input[type='date']::-webkit-date-and-time-value {
 @media (min-width: 901px) {
   .acoes {
     max-height: none;
-    grid-template-rows: 1fr 1fr auto;
+    grid-template-rows: 1fr 1fr minmax(74px, 0.42fr);
   }
 
   .acoes.acoes--balcao {
@@ -2396,7 +2427,20 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--pequeno .cartao-acao__rotulo {
+    font-size: clamp(0.9375rem, 0.6rem + 0.8vh, 1.25rem);
     text-align: left;
+  }
+
+  /* O ícone e o rótulo crescem com a fileira, para o cartão alto não
+     virar um vão com um ícone pequeno num canto. */
+  .cartao-acao--pequeno .cartao-acao__selo {
+    width: clamp(46px, 1.5rem + 3.5vh, 68px);
+    height: clamp(46px, 1.5rem + 3.5vh, 68px);
+  }
+
+  .cartao-acao--pequeno .cartao-acao__selo .icone {
+    width: 46%;
+    height: 46%;
   }
 }
 
@@ -4498,7 +4542,8 @@ input[type='date']::-webkit-date-and-time-value {
 .nav__item,
 .extrato__item,
 .opcao,
-.perfil__item {
+.perfil__item,
+.botao-olho {
   transition-duration: 200ms;
   transition-property: background-color, border-color, color, box-shadow, transform, opacity;
   transition-timing-function: var(--curva-entra);
@@ -4517,7 +4562,8 @@ input[type='date']::-webkit-date-and-time-value {
     .doce__passo,
     .seletor-periodo__item,
     .item-linha__acao,
-    .cabeca__novo
+    .cabeca__novo,
+    .botao-olho
   ):active:not(:disabled) {
   transform: scale(0.96);
   transition-duration: 80ms;
