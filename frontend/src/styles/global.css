@@ -2281,12 +2281,11 @@ input[type='date']::-webkit-date-and-time-value {
   grid-column: span 3;
 }
 
-/* Entrada e Saída, as duas ações logo abaixo da Venda: rosa cheio (o
-   degradê dos botões de ação) com contorno preto. A letra branca fica
-   com 4,9:1 ou mais em qualquer ponto do degradê. As três tarefas de
-   fim de dia continuam brancas. */
+/* Entrada e Saída, as duas ações logo abaixo da Venda: rosa cheio, o
+   degradê dos botões de ação. A letra branca fica com 4,9:1 ou mais em
+   qualquer ponto do degradê. */
 .cartao-acao--medio {
-  border: 2px solid var(--c-900);
+  border-color: transparent;
   background: var(--degrade-acao);
 }
 
@@ -2302,17 +2301,23 @@ input[type='date']::-webkit-date-and-time-value {
 
 @media (hover: hover) {
   .cartao-acao--medio:hover {
-    border-color: var(--c-900);
+    border-color: transparent;
     background: var(--degrade-acao-forte);
+  }
+
+  .cartao-acao--pequeno:hover {
+    border-color: var(--c-900);
   }
 }
 
 /* Os três de fim de expediente não têm número: o ícone e o rótulo,
    centrados. No celular um terço da largura não comporta ícone e
    rótulo lado a lado — "Retirada pessoal" quebraria em três linhas. */
+/* As três tarefas de fim de dia: brancas, com contorno preto. */
 .cartao-acao--pequeno {
   grid-column: span 2;
   --altura: 68px;
+  border: 2px solid var(--c-900);
   align-items: center;
   justify-content: center;
   gap: 8px;
