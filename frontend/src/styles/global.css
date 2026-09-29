@@ -2165,10 +2165,10 @@ input[type='date']::-webkit-date-and-time-value {
 /* =====================================================================
    TELA INICIAL — no mesmo desenho do Caixa
 
-   Fundo branco, título grande, e os blocos em cinza-claro sem borda —
-   o mesmo bloco do resumo do Caixa. O ícone de cada ação vai num círculo
-   com aro, o mesmo das linhas do extrato: as duas telas que ela mais usa
-   falam a mesma língua.
+   Fundo branco, título grande, e os cartões BRANCOS com contorno fino —
+   a cor fica nos ícones, e num cartão só: o da Venda, em preto. O ícone
+   de cada ação vai num círculo com aro, o mesmo das linhas do extrato:
+   as duas telas que ela mais usa falam a mesma língua.
    ===================================================================== */
 
 /* Grade de 6 colunas: o tamanho do botão é quantas colunas ele ocupa —
@@ -2194,9 +2194,9 @@ input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
   min-height: var(--altura, 92px);
   padding: 16px;
-  border: none;
+  border: 1px solid var(--borda);
   border-radius: var(--r-3);
-  background: var(--degrade-suave);
+  background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
   text-align: left;
@@ -2205,16 +2205,24 @@ input[type='date']::-webkit-date-and-time-value {
 
 @media (hover: hover) {
   .cartao-acao:hover {
-    background: var(--degrade-suave-forte);
+    border-color: var(--marca-rosa-claro);
+    background: var(--marca-rosa-nevoa);
   }
 
   .cartao-acao--grande:hover {
-    background: var(--degrade-selo);
+    border-color: transparent;
+    background: var(--c-800);
   }
 }
 
 .cartao-acao__selo {
   margin-bottom: auto;
+}
+
+/* No cartão branco, o miolo do círculo também é branco: o degradê do
+   selo, sobre branco, era a cor que sobrava na tela. */
+.cartao-acao .icone-aro {
+  background: var(--superficie);
 }
 
 .cartao-acao__rotulo {
@@ -2237,18 +2245,32 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 0.8125rem;
 }
 
-/* Venda ocupa a linha: é o que ela repete dez vezes por dia, e o tamanho
-   é a hierarquia inteira — nenhum botão é preenchido de cor. Todos os
-   cartões vêm no creme → rosa da casa; o de Venda, um tom acima, com o
-   ícone no rosa vivo. */
+/* Venda ocupa a linha: é o que ela repete dez vezes por dia. Além do
+   tamanho, é o único cartão escuro — o preto da marca, com o ícone no
+   rosa cheio —, e o olho acha o botão principal sem procurar. O preto é
+   o `--c-900` do texto, e não o #010200 puro, que ao lado do branco
+   vibra. Letra branca sobre ele: 16:1. */
 .cartao-acao--grande {
   grid-column: span 6;
   --altura: 120px;
-  background: var(--degrade-suave-forte);
+  border-color: transparent;
+  background: var(--c-900);
+  color: var(--c-0);
 }
 
-.cartao-acao--grande .cartao-acao__selo {
-  color: var(--marca-rosa);
+.cartao-acao--grande .cartao-acao__rotulo,
+.cartao-acao--grande .cartao-acao__valor {
+  color: var(--c-0);
+}
+
+.cartao-acao--grande .cartao-acao__rodape {
+  color: var(--c-300);
+}
+
+.cartao-acao--grande .icone-aro {
+  border-color: transparent;
+  background: var(--degrade-acao);
+  color: var(--c-0);
 }
 
 .cartao-acao--grande .cartao-acao__valor {
