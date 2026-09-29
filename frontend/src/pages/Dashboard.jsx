@@ -48,10 +48,10 @@ import {
  * entrada e saída dividem a linha seguinte; retirada, fechar dia e resumo
  * ficam na fileira menor, que é tarefa de fim de expediente.
  *
- * Nenhum cartão é preenchido de cor. A primeira versão destacava Venda
- * com fundo vinho, mas a referência resolve isso só com a largura — e com
- * um cartão colorido no meio de cinco brancos, a cor vira o assunto da
- * tela em vez de ser a marca aparecendo discretamente.
+ * Os cartões são brancos com contorno fino, e só o de Venda é escuro, no
+ * preto da marca. Antes todos vinham num degradê creme → rosa, e a tela
+ * inteira ficava colorida sem que nenhuma cor dissesse nada; agora a
+ * única mancha forte é a do botão que ela mais usa.
  */
 const PRINCIPAL = { id: 'venda', rotulo: 'Venda', Icone: IconeVenda };
 
