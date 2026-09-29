@@ -116,14 +116,6 @@
      rosa é fazer, preto é escolher. */
   --degrade-acao: linear-gradient(135deg, #c8004f 0%, #e0005a 100%);
   --degrade-acao-forte: linear-gradient(135deg, #b8004a 0%, #d40055 100%);
-  /* Os cartões do Início (menos Venda): branco no canto de baixo à
-     esquerda, onde fica o texto cinza, e rosa no de cima à direita, onde
-     não há texto. Até o meio fica claro o bastante para o cinza manter
-     4,6:1; o rosa forte só pega o canto vazio. O "forte" é o passar do
-     mouse. */
-  --degrade-cartao: linear-gradient(to top right, #ffffff 30%, #fff3f9 55%, #ffdcef 100%);
-  --degrade-cartao-forte: linear-gradient(to top right, #fff8fc 30%, #ffedf7 55%, #ffcfe8 100%);
-  --borda-rosa: #ffdcef;
   --sombra-acao: 0 6px 16px -8px rgb(212 0 85 / 0.55);
 
   --erro: #b3261e;
@@ -2202,9 +2194,9 @@ input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
   min-height: var(--altura, 92px);
   padding: 16px;
-  border: 1px solid var(--borda-rosa);
+  border: 1px solid var(--borda);
   border-radius: var(--r-3);
-  background: var(--degrade-cartao);
+  background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
   text-align: left;
@@ -2214,7 +2206,7 @@ input[type='date']::-webkit-date-and-time-value {
 @media (hover: hover) {
   .cartao-acao:hover {
     border-color: var(--marca-rosa-claro);
-    background: var(--degrade-cartao-forte);
+    background: var(--marca-rosa-nevoa);
   }
 
   .cartao-acao--grande:hover {
@@ -2227,8 +2219,8 @@ input[type='date']::-webkit-date-and-time-value {
   margin-bottom: auto;
 }
 
-/* O miolo do círculo é branco: sobre o degradê do cartão, ele se
-   destaca sem somar mais uma cor. */
+/* No cartão branco, o miolo do círculo também é branco: o degradê do
+   selo, sobre branco, era a cor que sobrava na tela. */
 .cartao-acao .icone-aro {
   background: var(--superficie);
 }
@@ -2287,6 +2279,32 @@ input[type='date']::-webkit-date-and-time-value {
 
 .cartao-acao--medio {
   grid-column: span 3;
+}
+
+/* Entrada e Saída, as duas ações logo abaixo da Venda: rosa cheio (o
+   degradê dos botões de ação) com contorno preto. A letra branca fica
+   com 4,9:1 ou mais em qualquer ponto do degradê. As três tarefas de
+   fim de dia continuam brancas. */
+.cartao-acao--medio {
+  border: 2px solid var(--c-900);
+  background: var(--degrade-acao);
+}
+
+.cartao-acao--medio :is(.cartao-acao__rotulo, .cartao-acao__valor, .cartao-acao__rodape) {
+  color: var(--c-0);
+}
+
+.cartao-acao--medio .icone-aro {
+  border-color: rgb(255 255 255 / 0.5);
+  background: rgb(255 255 255 / 0.16);
+  color: var(--c-0);
+}
+
+@media (hover: hover) {
+  .cartao-acao--medio:hover {
+    border-color: var(--c-900);
+    background: var(--degrade-acao-forte);
+  }
 }
 
 /* Os três de fim de expediente não têm número: o ícone e o rótulo,

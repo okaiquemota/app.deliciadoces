@@ -48,9 +48,9 @@ import {
  * entrada e saída dividem a linha seguinte; retirada, fechar dia e resumo
  * ficam na fileira menor, que é tarefa de fim de expediente.
  *
- * O de Venda é o único escuro, no preto da marca: a mancha forte da tela
- * é a do botão que ela mais usa. Os outros vão num degradê leve, do
- * branco ao rosa, com o rosa no canto sem texto.
+ * A cor segue a mesma ordem: Venda no preto da marca, Entrada e Saída no
+ * rosa cheio com contorno preto, e as tarefas de fim de dia em branco com
+ * contorno fino.
  */
 const PRINCIPAL = { id: 'venda', rotulo: 'Venda', Icone: IconeVenda };
 
