@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Dinheiro, Interruptor, Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { Dado, Total, normalizar } from '../components/Extrato.jsx';
@@ -76,6 +77,9 @@ const pedeAtencao = (i) => estaAcabando(i) || Boolean(prazoDaValidade(i.validade
  * histórico ficam no detalhe, que abre ao tocar no ingrediente.
  */
 export function Estoque() {
+  // Custo é resultado financeiro: a funcionária não vê (o servidor nem
+  // manda). Ela cadastra, compra, ajusta e vê validade e quantidade.
+  const { admin } = useAuth();
   const [lista, setLista] = useState(null);
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState('');
@@ -162,14 +166,14 @@ export function Estoque() {
         </p>
       )}
 
-      <div className="extrato__resumo">
+      <div className={admin ? 'extrato__resumo' : 'extrato__resumo extrato__resumo--dois'}>
         <Total rotulo="Ingredientes" valor={todos.length} />
         <Total
           rotulo="Pedem atenção"
           valor={quantosAtencao}
           tom={quantosAtencao ? 'alerta' : undefined}
         />
-        <Total rotulo="Valor em estoque" valor={moeda(valorEmEstoque)} />
+        {admin && <Total rotulo="Valor em estoque" valor={moeda(valorEmEstoque)} />}
       </div>
 
       <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
@@ -245,6 +249,7 @@ export function Estoque() {
  * custa e quando vence.
  */
 function LinhaInsumo({ insumo: i, aoAbrir, aoComprar }) {
+  const { admin } = useAuth();
   const acabando = estaAcabando(i);
   const prazo = prazoDaValidade(i.validade);
   const custo = Number(i.custoUnitario);
@@ -268,7 +273,9 @@ function LinhaInsumo({ insumo: i, aoAbrir, aoComprar }) {
   if (!partes.length) {
     if (custo > 0) partes.push(`${moeda(custo)} por ${curta(i.unidade)}`);
     if (prazo) partes.push(prazo.texto);
-    if (!partes.length) partes.push('nenhuma compra ainda');
+    // Sem o custo (que não chega para a funcionária), "nenhuma compra"
+    // seria mentira: para ela, sem aviso, a linha só não diz nada.
+    if (!partes.length && admin) partes.push('nenhuma compra ainda');
   }
 
   return (
@@ -292,6 +299,7 @@ function LinhaInsumo({ insumo: i, aoAbrir, aoComprar }) {
  * no pé, com a compra (a mais comum) no lugar do polegar.
  */
 function DetalheInsumo({ insumo: i, aoFechar, aoComprar, aoAjustar, aoEditar }) {
+  const { admin } = useAuth();
   const acabando = estaAcabando(i);
   const prazo = prazoDaValidade(i.validade);
   const custo = Number(i.custoUnitario);
@@ -329,10 +337,12 @@ function DetalheInsumo({ insumo: i, aoFechar, aoComprar, aoAjustar, aoEditar }) 
             'Não controla'
           )}
         </Dado>
-        <Dado rotulo="Custo médio">
-          {custo > 0 ? `${moeda(custo)} por ${curta(i.unidade)}` : 'Nenhuma compra com valor'}
-        </Dado>
-        {custo > 0 && (
+        {admin && (
+          <Dado rotulo="Custo médio">
+            {custo > 0 ? `${moeda(custo)} por ${curta(i.unidade)}` : 'Nenhuma compra com valor'}
+          </Dado>
+        )}
+        {admin && custo > 0 && (
           <Dado rotulo="Valor em estoque">
             {moeda(Math.max(Number(i.quantidadeAtual), 0) * custo)}
           </Dado>

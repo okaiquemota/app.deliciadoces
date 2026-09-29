@@ -1002,6 +1002,32 @@ input[type='date']::-webkit-date-and-time-value {
   color: var(--icone-fraco);
 }
 
+/* Na Equipe, quem está sem acesso fica apagado na lista: continua ali
+   (o histórico é dela), mas não disputa o olho com quem trabalha hoje. */
+.perfil__item--apagado .perfil__valor,
+.perfil__item--apagado .perfil__icone {
+  color: var(--texto-suave);
+}
+
+.perfil__carregando,
+.alerta.perfil__alerta {
+  margin: 8px 20px 12px;
+}
+
+.perfil__carregando {
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+}
+
+/* "Criar uma nova", na linha da senha: um link no lugar do valor, rosa
+   como os outros links do sistema. */
+.botao.perfil__senha {
+  min-height: 0;
+  padding: 0;
+  color: var(--marca-rosa-texto);
+  font-weight: 600;
+}
+
 /* Cancelar e confirmar à direita, no pé da janela. */
 .modal__acoes {
   display: flex;
@@ -1339,6 +1365,12 @@ input[type='date']::-webkit-date-and-time-value {
   padding: 14px 18px;
   border-radius: var(--r-2);
   background: var(--degrade-suave);
+}
+
+/* Sem o número de dinheiro (o que a funcionária não vê), o resumo fica
+   com dois números, lado a lado em qualquer largura. */
+.extrato__resumo.extrato__resumo--dois {
+  grid-template-columns: 1fr 1fr;
 }
 
 .extrato__total {
@@ -2281,10 +2313,21 @@ input[type='date']::-webkit-date-and-time-value {
   grid-template-rows: 1fr 1fr 0.62fr;
 }
 
+/* O Início da funcionária não tem a fileira de tarefas da dona (retirada,
+   fechar dia, resumo): são duas fileiras, e elas dividem a altura toda.
+   Duas classes para valer sobre o `.acoes` de qualquer largura. */
+.acoes.acoes--balcao {
+  grid-template-rows: 1fr 1fr;
+}
+
 @media (min-width: 901px) {
   .acoes {
     max-height: none;
     grid-template-rows: 1fr 1fr auto;
+  }
+
+  .acoes.acoes--balcao {
+    grid-template-rows: 1fr 1fr;
   }
 
   .cartao-acao--medio .cartao-acao__valor {

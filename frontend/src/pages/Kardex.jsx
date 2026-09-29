@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
 import {
   IconeAjuste,
@@ -25,7 +26,13 @@ import {
 import { avisarEstoqueMudou } from '../components/EstoqueComum.jsx';
 import { estoque, insumos, producoes, produtos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { data as formatarData, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
+import {
+  data as formatarData,
+  moeda,
+  paraInput,
+  quantidade,
+  UNIDADE_CURTA,
+} from '../utils/formato.js';
 
 /**
  * Kardex: o extrato do ESTOQUE, no mesmo desenho do Caixa.
@@ -636,9 +643,14 @@ const TITULO_DO_DETALHE = {
  */
 function Detalhe({ a, doItem, aoFechar, aoMudar, aoVerItem }) {
   const [excluindo, setExcluindo] = useState(false);
+  const { usuario, admin } = useAuth();
   const [m] = a.movs;
   const lote = m.producao;
-  const podeExcluirLote = !doItem && a.tipo === 'producao' && lote;
+  // A funcionária desfaz o lote que ela lançou, no mesmo dia — a mesma
+  // regra do Caixa, e o servidor confere de novo.
+  const doDia =
+    lote && (admin || (lote.usuarioId === usuario?.id && paraInput(a.data) === paraInput()));
+  const podeExcluirLote = !doItem && a.tipo === 'producao' && doDia;
 
   if (excluindo) {
     return <ExcluirLote a={a} aoVoltar={() => setExcluindo(false)} aoMudar={aoMudar} />;

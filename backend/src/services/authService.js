@@ -35,27 +35,6 @@ function gerarToken(usuario) {
 
 export const authService = {
   /**
-   * Cadastra um novo usuário.
-   * A rota é restrita a ADMIN — não é um cadastro público. O primeiro
-   * administrador é criado pelo seed (`npm run db:seed`).
-   */
-  async registrar({ nome, email, senha, papel }) {
-    const jaExiste = await prisma.usuario.findUnique({ where: { email } });
-
-    if (jaExiste) {
-      throw AppError.conflito('Já existe um usuário com este e-mail.');
-    }
-
-    const senhaHash = await bcrypt.hash(senha, CUSTO_HASH);
-
-    const usuario = await prisma.usuario.create({
-      data: { nome, email, senhaHash, papel },
-    });
-
-    return semSenha(usuario);
-  },
-
-  /**
    * Autentica e devolve o token de acesso.
    *
    * Detalhe de segurança: e-mail inexistente e senha errada retornam a

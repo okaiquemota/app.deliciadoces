@@ -4,8 +4,10 @@ import { producaoService } from '../services/producaoService.js';
 import { dashboardService } from '../services/dashboardService.js';
 import { estoqueService } from '../services/estoqueService.js';
 import { fechamentoService } from '../services/fechamentoService.js';
-import { diaDoCliente, filtrosPeriodo, limiteDaListagem } from '../utils/periodo.js';
+import { diaDoCliente, filtrosPeriodo, limiteDaListagem, limitesDoDia } from '../utils/periodo.js';
 import { AppError } from '../utils/AppError.js';
+import { ehAdmin } from '../middlewares/auth.js';
+import { exigirProprioDeHoje, semDataSeNaoAdmin } from '../utils/permissao.js';
 
 /**
  * Controllers: traduzem HTTP <-> serviço. Nenhuma regra de negócio aqui.
@@ -13,6 +15,31 @@ import { AppError } from '../utils/AppError.js';
  * São `async` e sem try/catch de propósito: o Express 5 encaminha Promise
  * rejeitada direto para o errorHandler.
  */
+
+/**
+ * O que cada pessoa enxerga do caixa.
+ *
+ * A administração pede o período que quiser. A funcionária vê só os
+ * lançamentos da conta dela, e só os de hoje — é o que ela pode corrigir
+ * (ver `exigirProprioDeHoje`); o caixa como um todo, não. O filtro é
+ * imposto aqui, e não pedido pela tela: vale mesmo que alguém monte a
+ * URL na mão.
+ */
+function recorteDoCaixa(req) {
+  if (ehAdmin(req.usuario)) return filtrosPeriodo(req.query);
+  return { ...limitesDoDia(diaDoCliente()), usuarioId: req.usuario.id };
+}
+
+/**
+ * Custo do ingrediente só a administração escreve à mão. A funcionária
+ * cadastra e edita o ingrediente, mas o custo dela chega pelo valor pago
+ * em "Comprei" — que passa pela conta do custo médio, e não por cima dela.
+ */
+function semCustoSeNaoAdmin(req) {
+  if (ehAdmin(req.usuario)) return req.body;
+  const { custoUnitario: _custo, ...resto } = req.body;
+  return resto;
+}
 
 export const insumoController = {
   async listar(req, res) {
@@ -22,10 +49,10 @@ export const insumoController = {
     res.json(await insumoService.porId(req.params.id));
   },
   async criar(req, res) {
-    res.status(201).json(await insumoService.criar(req.body));
+    res.status(201).json(await insumoService.criar(semCustoSeNaoAdmin(req)));
   },
   async atualizar(req, res) {
-    res.json(await insumoService.atualizar(req.params.id, req.body));
+    res.json(await insumoService.atualizar(req.params.id, semCustoSeNaoAdmin(req)));
   },
   async inativar(req, res) {
     res.json(await insumoService.inativar(req.params.id));
@@ -87,7 +114,7 @@ export const vendaController = {
   async listar(req, res) {
     res.json(
       await vendaService.listar({
-        ...filtrosPeriodo(req.query),
+        ...recorteDoCaixa(req),
         formaPagamento: req.query.formaPagamento,
         incluirCanceladas: req.query.incluirCanceladas === 'true',
         limite: limiteDaListagem(req.query),
@@ -95,38 +122,61 @@ export const vendaController = {
     );
   },
   async porId(req, res) {
-    res.json(await vendaService.porId(req.params.id));
+    const venda = await vendaService.porId(req.params.id);
+    exigirProprioDeHoje(req.usuario, venda);
+    res.json(venda);
   },
   async criar(req, res) {
-    res.status(201).json(await vendaService.criar(req.body, req.usuario.id));
+    const corpo = semDataSeNaoAdmin(req.usuario, req.body);
+    res.status(201).json(await vendaService.criar(corpo, req.usuario.id));
   },
   async atualizar(req, res) {
-    res.json(await vendaService.atualizar(req.params.id, req.body, req.usuario.id));
+    exigirProprioDeHoje(req.usuario, await vendaService.porId(req.params.id));
+    const corpo = semDataSeNaoAdmin(req.usuario, req.body);
+    res.json(await vendaService.atualizar(req.params.id, corpo, req.usuario.id));
   },
   async cancelar(req, res) {
+    exigirProprioDeHoje(req.usuario, await vendaService.porId(req.params.id));
     res.json(await vendaService.cancelar(req.params.id));
   },
   async reabrir(req, res) {
+    exigirProprioDeHoje(req.usuario, await vendaService.porId(req.params.id));
     res.json(await vendaService.reabrir(req.params.id));
   },
 };
+
+/**
+ * Retirada pessoal é dinheiro da Dalila saindo para ela: só ela lança,
+ * e só ela transforma uma saída em retirada.
+ */
+function recusarRetiradaSeNaoAdmin(req) {
+  if (!ehAdmin(req.usuario) && req.body.retirada === true) {
+    throw AppError.proibido('Retirada pessoal só a administração lança.');
+  }
+}
 
 export const despesaController = {
   async listar(req, res) {
     res.json(
       await despesaService.listar({
-        ...filtrosPeriodo(req.query),
+        ...recorteDoCaixa(req),
         limite: limiteDaListagem(req.query),
       })
     );
   },
   async criar(req, res) {
-    res.status(201).json(await despesaService.criar(req.body, req.usuario.id));
+    recusarRetiradaSeNaoAdmin(req);
+    const corpo = semDataSeNaoAdmin(req.usuario, req.body);
+    res.status(201).json(await despesaService.criar(corpo, req.usuario.id));
   },
   async atualizar(req, res) {
-    res.json(await despesaService.atualizar(req.params.id, req.body));
+    recusarRetiradaSeNaoAdmin(req);
+    exigirProprioDeHoje(req.usuario, await despesaService.porId(req.params.id));
+    const corpo = semDataSeNaoAdmin(req.usuario, req.body);
+    res.json(await despesaService.atualizar(req.params.id, corpo));
   },
   async excluir(req, res) {
+    exigirProprioDeHoje(req.usuario, await despesaService.porId(req.params.id));
     await despesaService.excluir(req.params.id);
     res.status(204).end();
   },
@@ -150,6 +200,7 @@ export const producaoController = {
     res.status(201).json(await producaoService.registrar(req.body, req.usuario.id));
   },
   async excluir(req, res) {
+    exigirProprioDeHoje(req.usuario, await producaoService.porId(req.params.id));
     await producaoService.excluir(req.params.id);
     res.status(204).end();
   },

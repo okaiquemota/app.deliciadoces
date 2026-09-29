@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Dinheiro, Linha, Selecao, Texto } from '../components/Campo.jsx';
 import { Segmentado } from '../components/Segmentado.jsx';
@@ -46,6 +47,12 @@ import {
  * e abre a escolha dele; os outros ligam e desligam um tipo de lançamento
  * com um toque. A busca cobre doce, descrição, cliente e forma de
  * pagamento — um campo só em vez de três menus.
+ *
+ * Para a FUNCIONÁRIA é a mesma tela, recortada: só os lançamentos dela, e
+ * só os de hoje — o que ela pode corrigir. Sem período para escolher, sem
+ * retiradas, e sem nenhuma soma (entrou, saiu, saldo do dia): somar é
+ * justamente o total do dinheiro, que a Dalila pediu para ficar só com
+ * ela. O recorte quem faz é o servidor; a tela só não oferece o resto.
  */
 
 const TIPOS = {
@@ -151,7 +158,8 @@ const comSinal = (sinal, valor) => `${sinal > 0 ? '+' : '−'}\u00a0${moeda(valo
 // ============================================================ página
 
 export function Caixa() {
-  const [periodo, setPeriodo] = useState('7dias');
+  const { admin } = useAuth();
+  const [periodo, setPeriodo] = useState(admin ? '7dias' : 'hoje');
   const [datas, setDatas] = useState(() => intervalo('mes'));
   const [tipos, setTipos] = useState([]);
   const [busca, setBusca] = useState('');
@@ -248,9 +256,12 @@ export function Caixa() {
       {/* O título à vista, grande, como o "Extrato" dos apps de banco. Para
           o leitor de tela o título da página é o `h1` da casca; este fica
           escondido dele para não ser lido duas vezes. */}
-      <p className="cabeca__titulo" aria-hidden="true">
-        Caixa
-      </p>
+      <header className="cabeca">
+        <p className="cabeca__titulo" aria-hidden="true">
+          Caixa
+        </p>
+        {!admin && <p className="cabeca__sub">Os seus lançamentos de hoje</p>}
+      </header>
 
       <input
         type="search"
@@ -264,17 +275,19 @@ export function Caixa() {
       {/* No celular a fileira rola para o lado, e o chip cortado na borda
           da tela é o que avisa que tem mais. */}
       <div className="extrato__chips" role="group" aria-label="Filtros">
-        <button
-          type="button"
-          className="chip"
-          aria-haspopup="dialog"
-          onClick={() => setEscolhendoPeriodo(true)}
-        >
-          <IconeFiltros tamanho={18} />
-          <span className="so-leitor">Período: </span>
-          {rotuloDoPeriodo(periodo, datas)}
-        </button>
-        {CHIPS_TIPO.map((c) => (
+        {admin && (
+          <button
+            type="button"
+            className="chip"
+            aria-haspopup="dialog"
+            onClick={() => setEscolhendoPeriodo(true)}
+          >
+            <IconeFiltros tamanho={18} />
+            <span className="so-leitor">Período: </span>
+            {rotuloDoPeriodo(periodo, datas)}
+          </button>
+        )}
+        {CHIPS_TIPO.filter((c) => admin || c.id !== 'retirada').map((c) => (
           <button
             key={c.id}
             type="button"
@@ -298,30 +311,32 @@ export function Caixa() {
         </p>
       )}
 
-      <div className="extrato__resumo">
-        <div className="extrato__total">
-          <span className="extrato__total-rotulo">Entrou</span>
-          <span className="extrato__total-valor extrato__total-valor--entrada">
-            {moeda(totais.entrou)}
-          </span>
+      {admin && (
+        <div className="extrato__resumo">
+          <div className="extrato__total">
+            <span className="extrato__total-rotulo">Entrou</span>
+            <span className="extrato__total-valor extrato__total-valor--entrada">
+              {moeda(totais.entrou)}
+            </span>
+          </div>
+          <div className="extrato__total">
+            <span className="extrato__total-rotulo">Saiu</span>
+            <span className="extrato__total-valor">{moeda(totais.saiu)}</span>
+          </div>
+          <div className="extrato__total">
+            <span className="extrato__total-rotulo">Saldo</span>
+            <span
+              className={
+                totais.saldo < 0
+                  ? 'extrato__total-valor extrato__total-valor--negativo'
+                  : 'extrato__total-valor'
+              }
+            >
+              {totais.saldo < 0 ? comSinal(-1, -totais.saldo) : moeda(totais.saldo)}
+            </span>
+          </div>
         </div>
-        <div className="extrato__total">
-          <span className="extrato__total-rotulo">Saiu</span>
-          <span className="extrato__total-valor">{moeda(totais.saiu)}</span>
-        </div>
-        <div className="extrato__total">
-          <span className="extrato__total-rotulo">Saldo</span>
-          <span
-            className={
-              totais.saldo < 0
-                ? 'extrato__total-valor extrato__total-valor--negativo'
-                : 'extrato__total-valor'
-            }
-          >
-            {totais.saldo < 0 ? comSinal(-1, -totais.saldo) : moeda(totais.saldo)}
-          </span>
-        </div>
-      </div>
+      )}
 
       <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
         {lancamentos === null ? (
@@ -332,7 +347,9 @@ export function Caixa() {
               ? `Nada encontrado para “${busca.trim()}”.`
               : filtrando
                 ? 'Nada com esses filtros neste período.'
-                : 'Nada lançado neste período.'}
+                : admin
+                  ? 'Nada lançado neste período.'
+                  : 'Você ainda não lançou nada hoje.'}
           </p>
         ) : (
           // Muda de `key` a cada carga e a cada chip: a lista entra de novo,
@@ -346,12 +363,14 @@ export function Caixa() {
               <section key={dia.chave} className="extrato__dia">
                 <h2 className="extrato__dia-titulo">
                   <span>{rotuloDoDia(dia.chave)}</span>
-                  <span className="extrato__dia-saldo">
-                    Saldo do dia{' '}
-                    {dia.saldo === 0
-                      ? moeda(0)
-                      : comSinal(Math.sign(dia.saldo), Math.abs(dia.saldo))}
-                  </span>
+                  {admin && (
+                    <span className="extrato__dia-saldo">
+                      Saldo do dia{' '}
+                      {dia.saldo === 0
+                        ? moeda(0)
+                        : comSinal(Math.sign(dia.saldo), Math.abs(dia.saldo))}
+                    </span>
+                  )}
                 </h2>
                 <ul className="extrato__itens">
                   {dia.itens.map((l) => (
@@ -827,6 +846,8 @@ const TIPOS_DESPESA = [
  * casa lançada como saída faria a confeitaria parecer dar menos lucro.
  */
 function EditarDespesa({ registro, aoVoltar, aoSalvar }) {
+  // Trocar saída por retirada é da dona: a retirada é dinheiro dela.
+  const { admin } = useAuth();
   const [form, setForm] = useState({
     descricao: registro.descricao,
     valor: dinheiroParaCampo(registro.valor),
@@ -885,20 +906,22 @@ function EditarDespesa({ registro, aoVoltar, aoSalvar }) {
           opcoes={[{ valor: '', rotulo: 'Não informado' }, ...FORMAS]}
         />
       </Linha>
-      <div className="campo">
-        {/* O nome acessível vem do próprio grupo; o rótulo à vista não é
-            repetido para quem usa leitor de tela. */}
-        <span className="campo__rotulo" aria-hidden="true">
-          Tipo
-        </span>
-        <Segmentado
-          rotulo="Tipo"
-          opcoes={TIPOS_DESPESA}
-          valor={form.tipo}
-          aoTrocar={(tipo) => setForm((f) => ({ ...f, tipo }))}
-          cheio
-        />
-      </div>
+      {admin && (
+        <div className="campo">
+          {/* O nome acessível vem do próprio grupo; o rótulo à vista não é
+              repetido para quem usa leitor de tela. */}
+          <span className="campo__rotulo" aria-hidden="true">
+            Tipo
+          </span>
+          <Segmentado
+            rotulo="Tipo"
+            opcoes={TIPOS_DESPESA}
+            valor={form.tipo}
+            aoTrocar={(tipo) => setForm((f) => ({ ...f, tipo }))}
+            cheio
+          />
+        </div>
+      )}
       <Erro texto={erro} />
       <Acoes salvando={salvando} aoVoltar={aoVoltar} />
     </form>

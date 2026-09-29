@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { Texto } from '../components/Campo.jsx';
-import { IconeNome, IconeEmail, IconeSenha, IconeSeta } from '../components/Icones.jsx';
+import { Segmentado } from '../components/Segmentado.jsx';
+import { Dado } from '../components/Extrato.jsx';
+import {
+  IconeNome,
+  IconeEmail,
+  IconeSenha,
+  IconeSeta,
+  IconePessoa,
+  IconeMais,
+} from '../components/Icones.jsx';
 import { authService } from '../services/authService.js';
+import { equipe } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
+import { data as formatarData } from '../utils/formato.js';
 
 /**
  * Conta do usuário: nome, e-mail de acesso e senha.
@@ -22,9 +33,11 @@ import { mensagemDeErro } from '../services/api.js';
  * ler seis campos para achar o nome. Aqui ela vê os três dados de relance
  * e só encontra campo quando decidiu mudar alguma coisa. Cada edição mora
  * numa janela própria, a mesma da Venda e da Entrada.
+ *
+ * Para a administração, embaixo, a Equipe: quem tem acesso ao sistema.
  */
 export function MinhaConta() {
-  const { usuario } = useAuth();
+  const { usuario, admin } = useAuth();
   const [editando, setEditando] = useState(null);
   const [aviso, setAviso] = useState('');
 
@@ -55,7 +68,7 @@ export function MinhaConta() {
         <Item
           Icone={IconeEmail}
           valor={usuario?.email}
-          rotulo="E-mail de acesso"
+          rotulo={usuario?.email?.includes('@') ? 'E-mail de acesso' : 'Usuário de acesso'}
           onClick={() => abrir('email')}
         />
       </Grupo>
@@ -63,6 +76,8 @@ export function MinhaConta() {
       <Grupo titulo="Segurança">
         <Item Icone={IconeSenha} valor="••••••••" rotulo="Senha" onClick={() => abrir('senha')} />
       </Grupo>
+
+      {admin && <Equipe aoAviso={setAviso} />}
 
       {/* Montadas só enquanto abertas: cada abertura começa com o
           formulário limpo, sem resto da tentativa anterior. */}
@@ -86,9 +101,13 @@ function Grupo({ titulo, children }) {
  * Uma linha da lista. A linha inteira é o botão — o alvo é a largura toda,
  * não a setinha.
  */
-function Item({ Icone, valor, rotulo, onClick }) {
+function Item({ Icone, valor, rotulo, onClick, apagado = false, leitor = ', alterar' }) {
   return (
-    <button type="button" className="perfil__item" onClick={onClick}>
+    <button
+      type="button"
+      className={apagado ? 'perfil__item perfil__item--apagado' : 'perfil__item'}
+      onClick={onClick}
+    >
       <span className="perfil__icone">
         <Icone tamanho={22} />
       </span>
@@ -101,7 +120,7 @@ function Item({ Icone, valor, rotulo, onClick }) {
       </span>
       {/* Sem isto o leitor de tela leria "Admin, Nome" sem dizer que é
           um botão para alterar. */}
-      <span className="so-leitor">, alterar</span>
+      {leitor && <span className="so-leitor">{leitor}</span>}
     </button>
   );
 }
@@ -330,6 +349,385 @@ function EditarSenha({ aoFechar, aoConcluir }) {
           aoFechar={aoFechar}
         />
       </form>
+    </Modal>
+  );
+}
+
+// ============================================================ equipe
+
+/**
+ * Os dois acessos, pelo que a pessoa FAZ — e não por cargo. "Balcão e
+ * cozinha" diz à Dalila o que a pessoa vai conseguir usar; "operador"
+ * não diria nada.
+ */
+const ACESSOS = [
+  { id: 'OPERADOR', rotulo: 'Balcão e cozinha' },
+  { id: 'ADMIN', rotulo: 'Acesso completo' },
+];
+
+const NOME_DO_ACESSO = Object.fromEntries(ACESSOS.map((a) => [a.id, a.rotulo]));
+
+const O_QUE_FAZ = {
+  OPERADOR:
+    'Lança venda, entrada, saída, produção e estoque, e corrige o que lançou no dia. Não vê totais, fechamento, resumo nem custos.',
+  ADMIN: 'Vê e mexe em tudo, inclusive no dinheiro e na equipe.',
+};
+
+/** Mesma regra do servidor: um e-mail, ou um usuário curto e sem espaço. */
+const LOGIN_VALIDO = (v) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || /^[a-z0-9][a-z0-9._-]{2,29}$/.test(v);
+
+/**
+ * Quem tem acesso ao sistema. A Dalila adiciona, muda o acesso, redefine
+ * a senha de quem esqueceu e tira o acesso de quem saiu — ninguém é
+ * apagado, porque o histórico guarda quem lançou cada coisa.
+ */
+function Equipe({ aoAviso }) {
+  const { usuario } = useAuth();
+  const [pessoas, setPessoas] = useState(null);
+  const [erro, setErro] = useState('');
+  const [aberta, setAberta] = useState(null);
+
+  const carregar = useCallback(async () => {
+    try {
+      setPessoas(await equipe.listar());
+      setErro('');
+    } catch (e) {
+      setErro(mensagemDeErro(e, 'Não foi possível carregar a equipe.'));
+    }
+  }, []);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  function abrir(alvo) {
+    aoAviso('');
+    setAberta(alvo);
+  }
+
+  function concluir(mensagem) {
+    setAberta(null);
+    aoAviso(mensagem);
+    carregar();
+  }
+
+  const fechar = () => setAberta(null);
+
+  return (
+    <Grupo titulo="Equipe">
+      {erro && (
+        <p className="alerta alerta--erro perfil__alerta" role="alert">
+          {erro}
+        </p>
+      )}
+      {pessoas === null && !erro && <p className="perfil__carregando">Carregando...</p>}
+      {pessoas?.map((p) => (
+        <Item
+          key={p.id}
+          Icone={IconePessoa}
+          valor={p.id === usuario?.id ? `${p.nome} (você)` : p.nome}
+          rotulo={[p.email, p.ativo ? NOME_DO_ACESSO[p.papel] : 'sem acesso']
+            .filter(Boolean)
+            .join(' · ')}
+          apagado={!p.ativo}
+          leitor=", ver"
+          onClick={() => abrir(p)}
+        />
+      ))}
+      <Item
+        Icone={IconeMais}
+        valor="Adicionar pessoa"
+        rotulo="Dar acesso a alguém da equipe"
+        leitor=""
+        onClick={() => abrir('nova')}
+      />
+
+      {aberta === 'nova' && <NovaPessoa aoFechar={fechar} aoConcluir={concluir} />}
+      {aberta && aberta !== 'nova' && (
+        <Pessoa
+          pessoa={aberta}
+          propria={aberta.id === usuario?.id}
+          aoFechar={fechar}
+          aoConcluir={concluir}
+        />
+      )}
+    </Grupo>
+  );
+}
+
+/** A escolha do acesso, com a frase do que ele deixa fazer logo embaixo. */
+function EscolherAcesso({ valor, aoTrocar }) {
+  return (
+    <div className="campo">
+      <span className="campo__rotulo" aria-hidden="true">
+        Acesso
+      </span>
+      <Segmentado rotulo="Acesso" opcoes={ACESSOS} valor={valor} aoTrocar={aoTrocar} cheio />
+      <span className="campo__dica">{O_QUE_FAZ[valor]}</span>
+    </div>
+  );
+}
+
+function NovaPessoa({ aoFechar, aoConcluir }) {
+  const [form, setForm] = useState({ nome: '', email: '', senha: '', papel: 'OPERADOR' });
+  const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
+  const campo = (nome) => (e) => {
+    setForm((f) => ({ ...f, [nome]: e.target.value }));
+    setErro('');
+  };
+
+  async function salvar(e) {
+    e.preventDefault();
+    const login = form.email.trim().toLowerCase();
+
+    // Conferido aqui porque, num formato inválido, o servidor responde só
+    // "Dados inválidos." — sem dizer qual campo nem o que fazer.
+    if (form.nome.trim().length < 2) return setErro('Informe o nome.');
+    if (!LOGIN_VALIDO(login)) {
+      return setErro('Para entrar, use um e-mail ou um usuário sem espaço, como maria.');
+    }
+    if (form.senha.length < 6) return setErro('A senha precisa ter ao menos 6 caracteres.');
+
+    setSalvando(true);
+    setErro('');
+    try {
+      const nova = await equipe.criar({
+        nome: form.nome.trim(),
+        email: login,
+        senha: form.senha,
+        papel: form.papel,
+      });
+      aoConcluir(`${nova.nome} já pode entrar com ${nova.email} e a senha que você criou.`);
+    } catch (err) {
+      setErro(mensagemDeErro(err, 'Não foi possível adicionar.'));
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <Modal aberto aoFechar={aoFechar} titulo="Adicionar pessoa" largura={480}>
+      <form onSubmit={salvar}>
+        <Texto
+          rotulo="Nome"
+          value={form.nome}
+          onChange={campo('nome')}
+          autoComplete="off"
+          maxLength={80}
+          autoFocus
+        />
+        <Texto
+          rotulo="Entra com"
+          dica="Um e-mail, ou um usuário simples, como maria."
+          type="text"
+          autoCapitalize="none"
+          spellCheck={false}
+          autoComplete="off"
+          value={form.email}
+          onChange={campo('email')}
+        />
+        <Texto
+          rotulo="Senha para o primeiro acesso"
+          dica="Mínimo 6 caracteres. Depois a pessoa troca na Minha conta."
+          type="text"
+          autoCapitalize="none"
+          spellCheck={false}
+          autoComplete="new-password"
+          value={form.senha}
+          onChange={campo('senha')}
+        />
+        <EscolherAcesso
+          valor={form.papel}
+          aoTrocar={(papel) => setForm((f) => ({ ...f, papel }))}
+        />
+        <Erro texto={erro} />
+        <Acoes
+          salvando={salvando}
+          rotulo="Adicionar"
+          desabilitado={!form.nome.trim() || !form.email.trim() || !form.senha}
+          aoFechar={aoFechar}
+        />
+      </form>
+    </Modal>
+  );
+}
+
+/**
+ * Uma pessoa da equipe: o acesso dela, e as duas ações que a Dalila vai
+ * precisar — nova senha para quem esqueceu, e tirar (ou devolver) o
+ * acesso. A própria conta aparece, mas não se mexe por aqui: tirar o
+ * próprio acesso trancaria a dona fora, e a senha dela se troca em
+ * Segurança, que pede a atual.
+ */
+function Pessoa({ pessoa, propria, aoFechar, aoConcluir }) {
+  const [modo, setModo] = useState('ver');
+  const [papel, setPapel] = useState(pessoa.papel);
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
+  async function executar(acao, mensagem) {
+    setSalvando(true);
+    setErro('');
+    try {
+      await acao();
+      aoConcluir(mensagem);
+    } catch (err) {
+      setErro(mensagemDeErro(err));
+      setSalvando(false);
+    }
+  }
+
+  if (modo === 'senha') {
+    return (
+      <Modal aberto aoFechar={aoFechar} titulo="Nova senha" largura={440}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (senha.length < 6) return setErro('A senha precisa ter ao menos 6 caracteres.');
+            executar(
+              () => equipe.redefinirSenha(pessoa.id, senha),
+              `Senha de ${pessoa.nome} trocada. Passe a nova para a pessoa.`
+            );
+          }}
+        >
+          <p className="lancamento__pergunta">
+            Para quando {pessoa.nome} esquecer a senha. Depois de entrar, a pessoa troca na Minha
+            conta.
+          </p>
+          <Texto
+            rotulo="Nova senha"
+            dica="Mínimo 6 caracteres."
+            type="text"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoComplete="new-password"
+            value={senha}
+            onChange={(e) => {
+              setSenha(e.target.value);
+              setErro('');
+            }}
+            autoFocus
+          />
+          <Erro texto={erro} />
+          <Acoes
+            salvando={salvando}
+            rotulo="Trocar senha"
+            desabilitado={!senha}
+            aoFechar={() => setModo('ver')}
+          />
+        </form>
+      </Modal>
+    );
+  }
+
+  if (modo === 'tirar') {
+    return (
+      <Modal aberto aoFechar={aoFechar} titulo={`Tirar o acesso de ${pessoa.nome}?`} largura={440}>
+        <p className="lancamento__pergunta">
+          {pessoa.nome} não consegue mais entrar, nem com o sistema já aberto no celular. Tudo o que
+          foi lançado na conta continua no histórico, e dá para devolver o acesso depois.
+        </p>
+        <Erro texto={erro} />
+        <div className="modal__acoes">
+          <button type="button" className="botao botao--auto" onClick={() => setModo('ver')}>
+            Voltar
+          </button>
+          <button
+            type="button"
+            className="botao botao--auto botao--perigo"
+            disabled={salvando}
+            onClick={() =>
+              executar(
+                () => equipe.alterar(pessoa.id, { ativo: false }),
+                `${pessoa.nome} não tem mais acesso.`
+              )
+            }
+          >
+            {salvando ? 'Tirando...' : 'Tirar acesso'}
+          </button>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal aberto aoFechar={aoFechar} titulo={pessoa.nome} largura={480}>
+      <dl className="lancamento__dados">
+        <Dado rotulo="Entra com">{pessoa.email}</Dado>
+        {/* A nova senha mora na linha da senha, e não no pé da janela: lá
+            já estão tirar o acesso e salvar, e três botões não cabem numa
+            fileira do celular. */}
+        {!propria && pessoa.ativo && (
+          <Dado rotulo="Senha">
+            <button
+              type="button"
+              className="botao botao--texto perfil__senha"
+              onClick={() => setModo('senha')}
+            >
+              Criar uma nova
+            </button>
+          </Dado>
+        )}
+        <Dado rotulo="Desde">{formatarData(pessoa.criadoEm)}</Dado>
+        {!pessoa.ativo && <Dado rotulo="Acesso">Sem acesso</Dado>}
+      </dl>
+
+      {propria ? (
+        <p className="lancamento__pergunta">
+          É a sua conta. Nome, acesso e senha se mudam em Informações pessoais e Segurança, aqui na
+          Minha conta.
+        </p>
+      ) : (
+        pessoa.ativo && <EscolherAcesso valor={papel} aoTrocar={setPapel} />
+      )}
+
+      <Erro texto={erro} />
+
+      {!propria && (
+        <div className="modal__acoes modal__acoes--separadas">
+          {pessoa.ativo ? (
+            <>
+              <button
+                type="button"
+                className="botao botao--auto botao--perigo"
+                onClick={() => setModo('tirar')}
+              >
+                Tirar acesso
+              </button>
+              <button
+                type="button"
+                className="botao botao--primario botao--auto"
+                disabled={salvando || papel === pessoa.papel}
+                onClick={() =>
+                  executar(
+                    () => equipe.alterar(pessoa.id, { papel }),
+                    `Acesso de ${pessoa.nome}: ${NOME_DO_ACESSO[papel].toLowerCase()}.`
+                  )
+                }
+              >
+                {salvando ? 'Salvando...' : 'Salvar'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="botao botao--primario botao--auto"
+              disabled={salvando}
+              onClick={() =>
+                executar(
+                  () => equipe.alterar(pessoa.id, { ativo: true }),
+                  `${pessoa.nome} tem acesso de novo.`
+                )
+              }
+            >
+              {salvando ? 'Devolvendo...' : 'Devolver acesso'}
+            </button>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }

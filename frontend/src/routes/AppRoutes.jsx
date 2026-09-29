@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { RotaProtegida } from './RotaProtegida.jsx';
+import { RotaProtegida, SoAdmin } from './RotaProtegida.jsx';
 import { Layout } from '../components/Layout.jsx';
 import { Login } from '../pages/Login.jsx';
 import { Dashboard } from '../pages/Dashboard.jsx';
@@ -29,10 +29,12 @@ export function AppRoutes() {
           <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/resumo" element={<Resumo />} />
+            <Route element={<SoAdmin />}>
+              <Route path="/resumo" element={<Resumo />} />
+              <Route path="/fechamento" element={<Fechamento />} />
+            </Route>
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/caixa" element={<Caixa />} />
-            <Route path="/fechamento" element={<Fechamento />} />
             <Route path="/producao" element={<Producao />} />
             <Route path="/kardex" element={<Kardex />} />
             <Route path="/minha-conta" element={<MinhaConta />} />

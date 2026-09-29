@@ -251,6 +251,8 @@ export const estoqueService = {
             quantidade: true,
             custoEstimado: true,
             observacao: true,
+            // Quem lançou o lote: a funcionária só desfaz os dela, do dia.
+            usuarioId: true,
             produto: { select: { nome: true, unidade: true } },
           },
         },

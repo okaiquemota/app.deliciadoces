@@ -318,7 +318,7 @@ Rodando na **raiz** do projeto:
 npm test
 ```
 
-36 testes cobrindo onde um erro corrompe dado em vez de só quebrar tela: direção das movimentações, transação, estorno na edição de venda, custo médio, ficha técnica opcional e a separação entre lucro e saldo de caixa.
+175 testes cobrindo onde um erro corrompe dado em vez de só quebrar tela: direção das movimentações, transação, estorno na edição de venda, custo médio, ficha técnica opcional, a separação entre lucro e saldo de caixa — e as permissões, testadas pela API de verdade com as duas contas logadas.
 
 Rodam contra um **PostgreSQL de verdade**, não contra simulação. O que está sendo verificado é justamente o comportamento transacional — saldo e razão mudando juntos — e um banco falso apenas confirmaria a nossa suposição em vez do comportamento real.
 
@@ -376,20 +376,30 @@ O fluxo é o padrão JWT:
 
 ### Endpoints já disponíveis
 
-| Método  | Rota                  | Acesso         | Descrição                    |
-| ------- | --------------------- | -------------- | ---------------------------- |
-| `GET`   | `/api/health`         | Público        | Verifica se a API está no ar |
-| `POST`  | `/api/auth/login`     | Público        | Autentica e devolve o token  |
-| `GET`   | `/api/auth/eu`        | Autenticado    | Dados do usuário logado      |
-| `POST`  | `/api/auth/registrar` | Apenas `ADMIN` | Cadastra um novo usuário     |
-| `PATCH` | `/api/auth/senha`     | Autenticado    | Troca a própria senha        |
+| Método  | Rota                      | Acesso         | Descrição                    |
+| ------- | ------------------------- | -------------- | ---------------------------- |
+| `GET`   | `/api/health`             | Público        | Verifica se a API está no ar |
+| `POST`  | `/api/auth/login`         | Público        | Autentica e devolve o token  |
+| `GET`   | `/api/auth/eu`            | Autenticado    | Dados do usuário logado      |
+| `PATCH` | `/api/auth/senha`         | Autenticado    | Troca a própria senha        |
+| `GET`   | `/api/usuarios`           | Apenas `ADMIN` | Lista a equipe               |
+| `POST`  | `/api/usuarios`           | Apenas `ADMIN` | Adiciona alguém à equipe     |
+| `PATCH` | `/api/usuarios/:id`       | Apenas `ADMIN` | Muda nome, papel ou acesso   |
+| `PATCH` | `/api/usuarios/:id/senha` | Apenas `ADMIN` | Cria uma senha nova          |
+
+### Papéis
+
+- **`ADMIN`** (a Dalila): tudo.
+- **`OPERADOR`** ("Balcão e cozinha" na tela): lança venda, entrada avulsa, saída, produção e estoque, e corrige só o que lançou no mesmo dia. Não chega ao resumo (`/api/dashboard`), ao fechamento, ao caixa de outras pessoas, ao cadastro do doce nem à equipe (403), e as respostas chegam para ele **sem os campos de custo**.
+- O papel e o acesso são lidos **do banco a cada requisição**, não do token: tirar o acesso de alguém vale na próxima ação da pessoa, e não quando o token vencer.
 
 ### Cuidados de segurança já aplicados
 
 - A senha **nunca** é gravada em texto puro — só o hash bcrypt.
 - O `senhaHash` **nunca** aparece em nenhuma resposta da API.
 - E-mail inexistente e senha errada devolvem **a mesma mensagem**, para não permitir descobrir quais e-mails estão cadastrados.
-- **Não existe cadastro público.** Este é um sistema interno: quem cria contas é o `ADMIN`. O primeiro administrador nasce do `seed`.
+- **Não existe cadastro público.** Este é um sistema interno: quem cria contas é o `ADMIN`, na tela **Minha conta → Equipe**. O primeiro administrador nasce do `seed`.
+- Ninguém é apagado: quem sai da equipe **perde o acesso**, e o histórico continua dizendo quem lançou cada coisa.
 - A proteção de rotas no React é apenas conveniência visual — **quem protege os dados de verdade é o backend**.
 
 ---
