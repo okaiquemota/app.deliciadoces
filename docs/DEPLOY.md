@@ -109,7 +109,9 @@ Duas coisas para combinar com o grupo antes do uso real:
 1. **Quem roda o backup e com que frequência.** Semanal já resolve no começo. Um backup que ninguém roda não é backup.
 2. **Onde o arquivo fica.** Não adianta guardar no mesmo lugar que pode falhar.
 
-> Projeto gratuito do Supabase **pausa por inatividade** depois de alguns dias sem uso. Despausar é um clique no painel, mas se isso acontecer na véspera da apresentação, dá susto. Vale abrir o sistema uma vez por semana.
+> Projeto gratuito do Supabase **pausa por inatividade** depois de alguns dias sem uso, e com ele o sistema inteiro sai do ar (aconteceu em outubro de 2026, depois de uma semana sem acesso). Para evitar, o `vercel.json` tem um **Cron Job** que chama `/api/health` uma vez por dia, às 9h UTC (6h em Brasília). O health check faz um `SELECT 1` no banco, e esse acesso diário conta como uso.
+>
+> Para conferir se ele está rodando: **Vercel → o projeto → Settings → Cron Jobs**. Se mesmo assim o banco pausar, despausar é um clique no painel do Supabase (**Restore project**), e os dados continuam lá.
 
 ---
 
@@ -177,13 +179,14 @@ Estão no `vercel.json`, em `headers`. O principal é a política de conteúdo (
 
 > **Variável nova exige deploy novo.** A Vercel congela as variáveis no momento do build: adicionar uma não afeta um deploy que já existe. Depois de mexer nelas, faça **Redeploy** (ou um push qualquer na `main`).
 
-| Sintoma                                     | Causa provável                                                          | Onde olhar                          |
-| ------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
-| Site abre, login dá erro 500                | Variável faltando, errada, ou adicionada sem redeploy                   | Vercel → Logs                       |
-| `FUNCTION_INVOCATION_FAILED` sem log nenhum | A função morreu ao carregar — quase sempre variável obrigatória ausente | Vercel → Runtime Logs               |
-| Erro de conexão só em produção              | Usou a _Direct connection_ (IPv6) em vez do pooler                      | Trocar pela Transaction pooler      |
-| `Can't reach database server`               | Projeto do Supabase pausado                                             | Painel do Supabase → despausar      |
-| Deploy falha no build                       | Erro de compilação                                                      | Vercel → Deployments → log do build |
-| Login diz senha inválida                    | Seed não rodou neste banco                                              | Conferir a tabela `usuarios`        |
+| Sintoma                                                  | Causa provável                                                          | Onde olhar                          |
+| -------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
+| Site abre, login dá erro 500                             | Variável faltando, errada, ou adicionada sem redeploy                   | Vercel → Logs                       |
+| `FUNCTION_INVOCATION_FAILED` sem log nenhum              | A função morreu ao carregar — quase sempre variável obrigatória ausente | Vercel → Runtime Logs               |
+| Erro de conexão só em produção                           | Usou a _Direct connection_ (IPv6) em vez do pooler                      | Trocar pela Transaction pooler      |
+| `Can't reach database server`                            | Projeto do Supabase pausado                                             | Painel do Supabase → despausar      |
+| `/api/health` com 503 e `tenant/user … not found` no log | Projeto do Supabase pausado (o pooler não acha o banco)                 | Painel do Supabase → despausar      |
+| Deploy falha no build                                    | Erro de compilação                                                      | Vercel → Deployments → log do build |
+| Login diz senha inválida                                 | Seed não rodou neste banco                                              | Conferir a tabela `usuarios`        |
 
 Os logs do backend em produção ficam em **Vercel → o deploy → Runtime Logs**. Todo erro não tratado cai lá com a stack completa.
