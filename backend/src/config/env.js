@@ -45,9 +45,10 @@ export const env = {
    */
   // Aceita também `DIRECT_URL`, que é o nome usado no modelo que o Supabase
   // entrega na aba ORM — evita que alguém copie de lá e a variável seja
-  // silenciosamente ignorada.
+  // silenciosamente ignorada. `||` porque o `.env.example` deixa a variável
+  // em branco, e em branco tem de cair na DATABASE_URL.
   directDatabaseUrl:
-    process.env.DIRECT_DATABASE_URL ?? process.env.DIRECT_URL ?? process.env.DATABASE_URL,
+    process.env.DIRECT_DATABASE_URL || process.env.DIRECT_URL || process.env.DATABASE_URL,
 
   jwt: {
     secret: process.env.JWT_SECRET,

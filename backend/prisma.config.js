@@ -17,6 +17,10 @@ import { defineConfig } from 'prisma/config';
  * `postinstall` roda `prisma generate` logo após o `npm install`, quando o
  * `.env` de um clone novo ainda não existe. O helper abortaria e derrubaria
  * o install inteiro; `generate` não precisa de banco nenhum.
+ *
+ * `||` e não `??`: o `.env.example` traz DIRECT_DATABASE_URL em branco, e
+ * texto vazio não é `undefined`. Com `??`, quem copiava o exemplo recebia
+ * "Connection url is empty" no primeiro `prisma migrate`.
  */
 export default defineConfig({
   schema: path.join('prisma', 'schema.prisma'),
@@ -25,6 +29,6 @@ export default defineConfig({
   },
   datasource: {
     url:
-      process.env.DIRECT_DATABASE_URL ?? process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? '',
+      process.env.DIRECT_DATABASE_URL || process.env.DIRECT_URL || process.env.DATABASE_URL || '',
   },
 });

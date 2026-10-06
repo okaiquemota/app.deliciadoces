@@ -4,6 +4,12 @@
   "outputDirectory": "frontend/dist",
   "framework": null,
   "regions": ["gru1"],
+  "crons": [
+    {
+      "path": "/api/health",
+      "schedule": "0 9 * * *"
+    }
+  ],
   "functions": {
     "api/**": {
       "includeFiles": "node_modules/.prisma/client/**"
