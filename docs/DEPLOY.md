@@ -82,20 +82,28 @@ O jeito certo é pelo próprio sistema: entrando com a conta da Dalila, **Minha 
 
 ### Senha da cliente
 
-A conta da Dalila em produção tem senha própria, forte, diferente da do seed local.
+A conta da Dalila em produção é criada pela própria Equipe, com o link de acesso (abaixo): ela escolhe o e-mail e a senha, e ninguém mais sabe a senha. A conta que o seed criou, com o e-mail provisório `dalila@deliciadoces.com.br`, não era a dela e sai de produção (não tinha nenhum lançamento).
+
+> **Não rode `npm run db:seed` em produção.** Ele recria a conta `dalila@deliciadoces.com.br` com a senha padrão do `.env.example`, que está neste repositório público.
 
 A cliente troca a própria senha pelo sistema, em **Minha conta** (o nome dela no cabeçalho). A senha atual é exigida mesmo com a sessão aberta, para que quem encontre a tela destravada não consiga tomar a conta.
 
 ### Link de acesso: ela escolhe o e-mail e a senha
 
-Para a Dalila (ou uma funcionária) passar a entrar com um e-mail e uma senha que **só ela sabe**, sem ninguém ditar senha pelo WhatsApp:
+Para a Dalila (ou uma funcionária) entrar com um e-mail e uma senha que **só ela sabe**, sem ninguém ditar senha pelo WhatsApp.
 
-1. Entre com outra conta de administração.
-2. **Minha conta → Equipe →** a pessoa **→ Link de acesso → Gerar e enviar**.
-3. Toque em **WhatsApp** (ou **Copiar**) e mande o link para ela.
+**Pessoa nova:**
+
+1. Entre com uma conta de administração.
+2. **Minha conta → Equipe → Adicionar pessoa**: o nome, **E-mail e senha: Pelo link**, e o acesso (**Acesso completo** para a Dalila).
+3. **Gerar link**, e toque em **WhatsApp** (ou **Copiar**).
 4. Ela abre, escolhe o e-mail e a senha, e já entra no sistema.
 
-O link vale **uma vez só, por 3 dias**. Ele não cria conta nova: só deixa a dona de uma conta que já existe escolher os dados de entrar. Usado, morre; criar uma senha nova para a pessoa na Equipe também anula os links que estavam soltos. Não dá para gerar link da própria conta: a Minha conta exige a senha atual, e o link seria o atalho para pular essa conferência.
+Até ela usar o link, a Equipe mostra a pessoa como **esperando o link**, e ninguém consegue entrar na conta.
+
+**Quem já tem conta** (esqueceu a senha, ou o e-mail mudou): **Equipe →** a pessoa **→ Link de acesso → Gerar e enviar**.
+
+O link vale **uma vez só, por 3 dias**. Usado, morre; criar uma senha nova para a pessoa na Equipe também anula os links que estavam soltos. Perdeu o prazo, é só gerar outro. Não dá para gerar link da própria conta: a Minha conta exige a senha atual, e o link seria o atalho para pular essa conferência.
 
 > O link vai depois do `#` no endereço (`/acesso#...`), parte que o navegador não envia ao servidor. Por isso ele não aparece nos logs da Vercel.
 
@@ -159,7 +167,7 @@ Por que cada um:
 
 | O que tem                           | Por quê                                                                     |
 | ----------------------------------- | --------------------------------------------------------------------------- |
-| A conta da Dalila                   | Acesso dela ao sistema                                                      |
+| A conta da Dalila                   | Acesso dela ao sistema (criada pelo link de acesso)                         |
 | As 2 categorias internas de despesa | Engrenagem do lucro: separam saída de retirada pessoal. A cliente não as vê |
 
 Nenhuma venda, produto, insumo ou despesa fictícia. Os números que aparecerem na tela serão os que a cliente (ou vocês, testando) realmente lançarem.

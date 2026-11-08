@@ -416,6 +416,20 @@ const LOGIN_VALIDO = (v) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || /^[a-z0-9][a-z0-9._-]{2,29}$/.test(v);
 
 /**
+ * Quem foi adicionado para escolher os dados pelo link e ainda não usou o
+ * link tem um login provisório no servidor (`_convite-...`, ver
+ * `equipeService`). Ele não serve para nada, então a tela não o mostra.
+ */
+const ESPERANDO_LINK = (email) => email.startsWith('_convite-');
+const loginNaTela = (email) => (ESPERANDO_LINK(email) ? 'esperando o link' : email);
+
+/** Como a senha da pessoa nova nasce. */
+const MODOS_SENHA = [
+  { id: 'link', rotulo: 'Pelo link' },
+  { id: 'agora', rotulo: 'Eu crio agora' },
+];
+
+/**
  * Quem tem acesso ao sistema. A Dalila adiciona, muda o acesso, redefine
  * a senha de quem esqueceu e tira o acesso de quem saiu — ninguém é
  * apagado, porque o histórico guarda quem lançou cada coisa.
@@ -477,7 +491,7 @@ function Equipe({ aoAviso }) {
           key={p.id}
           Icone={IconePessoa}
           valor={p.id === usuario?.id ? `${p.nome} (você)` : p.nome}
-          rotulo={[p.email, p.ativo ? NOME_DO_ACESSO[p.papel] : 'sem acesso']
+          rotulo={[loginNaTela(p.email), p.ativo ? NOME_DO_ACESSO[p.papel] : 'sem acesso']
             .filter(Boolean)
             .join(' · ')}
           apagado={!p.ativo}
@@ -486,8 +500,18 @@ function Equipe({ aoAviso }) {
         />
       ))}
 
-      {aberta === 'nova' && <NovaPessoa aoFechar={fechar} aoConcluir={concluir} />}
-      {aberta && aberta !== 'nova' && (
+      {aberta === 'nova' && (
+        <NovaPessoa
+          aoFechar={fechar}
+          aoConcluir={concluir}
+          aoCriarComLink={(nova) => {
+            carregar();
+            setAberta({ comLink: nova });
+          }}
+        />
+      )}
+      {aberta?.comLink && <EnviarLink pessoa={aberta.comLink} aoFechar={fechar} />}
+      {aberta && aberta !== 'nova' && !aberta.comLink && (
         <Pessoa
           pessoa={aberta}
           propria={aberta.id === usuario?.id}
@@ -512,10 +536,22 @@ function EscolherAcesso({ valor, aoTrocar }) {
   );
 }
 
-function NovaPessoa({ aoFechar, aoConcluir }) {
-  const [form, setForm] = useState({ nome: '', email: '', senha: '', papel: 'OPERADOR' });
+/**
+ * Adicionar alguém. Do jeito mais simples, só nome e acesso: a pessoa
+ * recebe um link e escolhe ela mesma o e-mail e a senha, que ninguém mais
+ * fica sabendo. Ou, como antes, a administração cria a senha na hora.
+ */
+function NovaPessoa({ aoFechar, aoConcluir, aoCriarComLink }) {
+  const [form, setForm] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    papel: 'OPERADOR',
+    modo: 'link',
+  });
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const peloLink = form.modo === 'link';
 
   const campo = (nome) => (e) => {
     setForm((f) => ({ ...f, [nome]: e.target.value }));
@@ -529,10 +565,10 @@ function NovaPessoa({ aoFechar, aoConcluir }) {
     // Conferido aqui porque, num formato inválido, o servidor responde só
     // "Dados inválidos." — sem dizer qual campo nem o que fazer.
     if (form.nome.trim().length < 2) return setErro('Informe o nome.');
-    if (!LOGIN_VALIDO(login)) {
+    if ((login || !peloLink) && !LOGIN_VALIDO(login)) {
       return setErro('Para entrar, use um e-mail ou um usuário sem espaço, como maria.');
     }
-    if (form.senha.length < SENHA_MINIMA)
+    if (!peloLink && form.senha.length < SENHA_MINIMA)
       return setErro('A senha precisa ter ao menos 8 caracteres.');
 
     setSalvando(true);
@@ -540,11 +576,12 @@ function NovaPessoa({ aoFechar, aoConcluir }) {
     try {
       const nova = await equipe.criar({
         nome: form.nome.trim(),
-        email: login,
-        senha: form.senha,
         papel: form.papel,
+        ...(login ? { email: login } : {}),
+        ...(peloLink ? {} : { senha: form.senha }),
       });
-      aoConcluir(`${nova.nome} já pode entrar com ${nova.email} e a senha que você criou.`);
+      if (peloLink) aoCriarComLink(nova);
+      else aoConcluir(`${nova.nome} já pode entrar com ${nova.email} e a senha que você criou.`);
     } catch (err) {
       setErro(mensagemDeErro(err, 'Não foi possível adicionar.'));
       setSalvando(false);
@@ -562,26 +599,50 @@ function NovaPessoa({ aoFechar, aoConcluir }) {
           maxLength={80}
           autoFocus
         />
-        <Texto
-          rotulo="Entra com"
-          dica="Um e-mail, ou um usuário simples, como maria."
-          type="text"
-          autoCapitalize="none"
-          spellCheck={false}
-          autoComplete="off"
-          value={form.email}
-          onChange={campo('email')}
-        />
-        <Texto
-          rotulo="Senha para o primeiro acesso"
-          dica="Mínimo 8 caracteres. Depois a pessoa troca na Minha conta."
-          type="text"
-          autoCapitalize="none"
-          spellCheck={false}
-          autoComplete="new-password"
-          value={form.senha}
-          onChange={campo('senha')}
-        />
+        <div className="campo">
+          <span className="campo__rotulo" aria-hidden="true">
+            E-mail e senha
+          </span>
+          <Segmentado
+            rotulo="E-mail e senha"
+            opcoes={MODOS_SENHA}
+            valor={form.modo}
+            aoTrocar={(modo) => {
+              setForm((f) => ({ ...f, modo }));
+              setErro('');
+            }}
+            cheio
+          />
+          <span className="campo__dica">
+            {peloLink
+              ? 'Você manda um link pelo WhatsApp, e a pessoa escolhe o e-mail e a senha. Ninguém mais fica sabendo a senha.'
+              : 'Você cria os dados de entrar e passa para a pessoa.'}
+          </span>
+        </div>
+        {!peloLink && (
+          <>
+            <Texto
+              rotulo="Entra com"
+              dica="Um e-mail, ou um usuário simples, como maria."
+              type="text"
+              autoCapitalize="none"
+              spellCheck={false}
+              autoComplete="off"
+              value={form.email}
+              onChange={campo('email')}
+            />
+            <Texto
+              rotulo="Senha para o primeiro acesso"
+              dica="Mínimo 8 caracteres. Depois a pessoa troca na Minha conta."
+              type="text"
+              autoCapitalize="none"
+              spellCheck={false}
+              autoComplete="new-password"
+              value={form.senha}
+              onChange={campo('senha')}
+            />
+          </>
+        )}
         <EscolherAcesso
           valor={form.papel}
           aoTrocar={(papel) => setForm((f) => ({ ...f, papel }))}
@@ -589,8 +650,8 @@ function NovaPessoa({ aoFechar, aoConcluir }) {
         <Erro texto={erro} />
         <Acoes
           salvando={salvando}
-          rotulo="Adicionar"
-          desabilitado={!form.nome.trim() || !form.email.trim() || !form.senha}
+          rotulo={peloLink ? 'Gerar link' : 'Adicionar'}
+          desabilitado={!form.nome.trim() || (!peloLink && (!form.email.trim() || !form.senha))}
           aoFechar={aoFechar}
         />
       </form>
@@ -705,11 +766,11 @@ function Pessoa({ pessoa, propria, aoFechar, aoConcluir }) {
   return (
     <Modal aberto aoFechar={aoFechar} titulo={pessoa.nome} largura={480}>
       <dl className="lancamento__dados">
-        <Dado rotulo="Entra com">{pessoa.email}</Dado>
+        <Dado rotulo="Entra com">{loginNaTela(pessoa.email)}</Dado>
         {/* A nova senha mora na linha da senha, e não no pé da janela: lá
             já estão tirar o acesso e salvar, e três botões não cabem numa
             fileira do celular. */}
-        {!propria && pessoa.ativo && (
+        {!propria && pessoa.ativo && !ESPERANDO_LINK(pessoa.email) && (
           <Dado rotulo="Senha">
             <button
               type="button"
@@ -810,7 +871,7 @@ const diaEHora = (valor) =>
  * não estraga o anterior; o que anula os soltos é a pessoa usar um deles,
  * ou uma senha nova criada aqui (ver `linkAcessoService` no backend).
  */
-function EnviarLink({ pessoa, aoFechar, aoVoltar }) {
+function EnviarLink({ pessoa, aoFechar, aoVoltar = null }) {
   const [link, setLink] = useState(null);
   const [erro, setErro] = useState('');
   const [copiado, setCopiado] = useState(false);
@@ -873,8 +934,9 @@ function EnviarLink({ pessoa, aoFechar, aoVoltar }) {
       <Erro texto={erro} />
 
       <div className="modal__acoes">
-        <button type="button" className="botao botao--auto" onClick={aoVoltar}>
-          Voltar
+        {/* Logo depois de adicionar a pessoa não há para onde voltar. */}
+        <button type="button" className="botao botao--auto" onClick={aoVoltar ?? aoFechar}>
+          {aoVoltar ? 'Voltar' : 'Fechar'}
         </button>
         {link && (
           <a

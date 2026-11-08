@@ -29,12 +29,23 @@ const nome = z.string().trim().min(2, 'Informe o nome.');
 export const senha = z.string().min(8, 'A senha precisa ter ao menos 8 caracteres.');
 const papel = z.enum(['ADMIN', 'OPERADOR']);
 
-export const novaPessoaSchema = z.object({
-  nome,
-  email: identificador,
-  senha,
-  papel: papel.default('OPERADOR'),
-});
+/**
+ * Sem senha, a conta nasce para o link de acesso: a pessoa escolhe o
+ * e-mail e a senha por ele (ver `linkAcessoService`). Aí o login também
+ * pode ficar em branco. Com senha, é a administração quem passa os dados,
+ * e precisa dizer com o que a pessoa entra.
+ */
+export const novaPessoaSchema = z
+  .object({
+    nome,
+    email: identificador.optional(),
+    senha: senha.optional(),
+    papel: papel.default('OPERADOR'),
+  })
+  .refine((d) => d.senha === undefined || d.email !== undefined, {
+    message: 'Informe com o que a pessoa entra.',
+    path: ['email'],
+  });
 
 export const alterarPessoaSchema = z
   .object({ nome: nome.optional(), papel: papel.optional(), ativo: z.boolean().optional() })

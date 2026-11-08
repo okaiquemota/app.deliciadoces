@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { authService } from './authService.js';
+import { ehLoginProvisorio } from './equipeService.js';
 
 /**
  * Link de acesso: a pessoa escolhe o próprio e-mail e a própria senha.
@@ -82,10 +83,14 @@ export const linkAcessoService = {
     return { token, expiraEm: new Date(jwt.decode(token).exp * 1000).toISOString() };
   },
 
-  /** O que a tela do link mostra antes de ela preencher: nome e login atual. */
+  /**
+   * O que a tela do link mostra antes de ela preencher: nome e login atual.
+   * Login provisório (conta criada para o link) vai em branco: é ela quem
+   * escolhe.
+   */
   async conferir(token) {
     const { nome, email } = await abrir(token);
-    return { nome, email };
+    return { nome, email: ehLoginProvisorio(email) ? '' : email };
   },
 
   /** Grava o e-mail e a senha escolhidos e devolve a sessão, como o login. */

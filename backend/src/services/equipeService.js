@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import { AppError } from '../utils/AppError.js';
@@ -12,6 +13,15 @@ import { AppError } from '../utils/AppError.js';
  */
 
 const CUSTO_HASH = 10;
+
+/**
+ * Login de quem foi adicionado para escolher os dados pelo link e ainda
+ * não escolheu. Começa com `_`, que nenhum login de verdade aceita (nem
+ * e-mail nem usuário simples começam assim): ninguém o escolhe por engano,
+ * e a tela sabe mostrar "esperando o link" no lugar dele.
+ */
+const PROVISORIO = '_convite-';
+export const ehLoginProvisorio = (email) => email.startsWith(PROVISORIO);
 
 const PUBLICO = {
   id: true,
@@ -37,12 +47,18 @@ export const equipeService = {
     });
   },
 
+  /**
+   * Sem senha, a conta nasce com uma senha aleatória que ninguém sabe: só
+   * entra depois de a pessoa usar o link de acesso e escolher a dela.
+   */
   async criar({ nome, email, senha, papel }) {
-    if (await prisma.usuario.findUnique({ where: { email } })) {
+    const login = email ?? `${PROVISORIO}${crypto.randomBytes(4).toString('hex')}`;
+    if (await prisma.usuario.findUnique({ where: { email: login } })) {
       throw AppError.conflito('Já existe alguém com este e-mail ou usuário.');
     }
+    const segredo = senha ?? crypto.randomBytes(32).toString('hex');
     return prisma.usuario.create({
-      data: { nome, email, papel, senhaHash: await bcrypt.hash(senha, CUSTO_HASH) },
+      data: { nome, email: login, papel, senhaHash: await bcrypt.hash(segredo, CUSTO_HASH) },
       select: PUBLICO,
     });
   },

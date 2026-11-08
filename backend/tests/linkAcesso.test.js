@@ -14,7 +14,10 @@ const ADMIN = 'teste-admin@link.local';
 const FUNC = 'teste-func-link';
 const DALILA = 'teste-dalila@link.local';
 const NOVO = 'dalila.nova@link.local';
-const CONTAS = [ADMIN, FUNC, DALILA, NOVO];
+const PELO_LINK = 'nova.pelo.link@link.local';
+const CONTAS = [ADMIN, FUNC, DALILA, NOVO, PELO_LINK];
+// Contas criadas para o link e ainda sem login escolhido.
+const LIMPAR = { OR: [{ email: { in: CONTAS } }, { email: { startsWith: '_convite-' } }] };
 
 let servidor;
 let base;
@@ -57,7 +60,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   zerarLimites();
-  await prisma.usuario.deleteMany({ where: { email: { in: CONTAS } } });
+  await prisma.usuario.deleteMany({ where: LIMPAR });
   const senhaHash = await bcrypt.hash('senha-teste', 10);
   admin = await prisma.usuario.create({
     data: { nome: 'Admin Teste', email: ADMIN, senhaHash, papel: 'ADMIN' },
@@ -73,7 +76,7 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
-  await prisma.usuario.deleteMany({ where: { email: { in: CONTAS } } });
+  await prisma.usuario.deleteMany({ where: LIMPAR });
   await new Promise((fim) => servidor.close(fim));
   await prisma.$disconnect();
 });
@@ -187,6 +190,48 @@ describe('usar o link', () => {
 
     const forjado = jwt.sign({ sub: dalila.id, h }, 'segredo-qualquer');
     expect((await conferir(forjado)).status).toBe(410);
+  });
+});
+
+describe('conta nova pelo link', () => {
+  const criar = (corpo) => chamar(tokenAdmin, 'POST', '/usuarios', corpo);
+
+  it('só com nome e acesso: ela escolhe e-mail e senha pelo link e entra', async () => {
+    const { status, corpo: nova } = await criar({ nome: 'Dalila Nova', papel: 'ADMIN' });
+    expect(status).toBe(201);
+    expect(nova.email).toMatch(/^_convite-[0-9a-f]{8}$/);
+
+    const link = await gerarLink(nova.id);
+    // O login provisório não aparece para ela: o campo vem em branco.
+    expect((await conferir(link)).corpo).toEqual({ nome: 'Dalila Nova', email: '' });
+
+    const { status: usado, corpo } = await usar(link, PELO_LINK, 'senha-dela-123');
+    expect(usado).toBe(200);
+    expect(corpo.usuario).toMatchObject({ email: PELO_LINK, papel: 'ADMIN' });
+    expect((await entrar(PELO_LINK, 'senha-dela-123')).status).toBe(200);
+  });
+
+  it('antes do link, ninguém entra na conta', async () => {
+    const { corpo: nova } = await criar({ nome: 'Sem Senha' });
+    expect((await entrar(nova.email, '')).status).toBe(422);
+    expect((await entrar(nova.email, 'qualquer-senha')).status).toBe(401);
+  });
+
+  it('não dá para ficar com o login provisório', async () => {
+    const { corpo: nova } = await criar({ nome: 'Sem Senha' });
+    const link = await gerarLink(nova.id);
+    expect((await usar(link, nova.email)).status).toBe(422);
+    expect((await conferir(link)).status).toBe(200);
+  });
+
+  it('com senha, o login continua obrigatório', async () => {
+    expect((await criar({ nome: 'Com Senha', senha: 'provisoria1' })).status).toBe(422);
+  });
+
+  it('pode já vir com o login, e ela só escolhe a senha', async () => {
+    const { corpo: nova } = await criar({ nome: 'Com Login', email: PELO_LINK });
+    expect(nova.email).toBe(PELO_LINK);
+    expect((await conferir(await gerarLink(nova.id))).corpo.email).toBe(PELO_LINK);
   });
 });
 
