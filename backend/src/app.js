@@ -67,12 +67,19 @@ app.use(express.json());
  *
  * Devolve 503 quando o banco não responde, para que monitoramento (e a
  * própria Vercel) enxerguem o problema.
+ *
+ * É também o que mantém o Supabase acordado: três agendadores chamam esta
+ * rota várias vezes por dia (ver "Banco pausado" no docs/DEPLOY.md). Por
+ * isso a consulta lê uma tabela de verdade, e não um `SELECT 1`. O Supabase
+ * pausa o projeto gratuito que não recebe "consultas de usuário"
+ * suficientes na semana, e um `SELECT 1` por dia não bastou: o banco
+ * pausou em novembro de 2026 mesmo com o cron diário da Vercel configurado.
  */
 app.get('/api/health', async (_req, res) => {
   let banco = 'ok';
 
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await prisma.usuario.findFirst({ select: { id: true } });
   } catch (erro) {
     banco = 'indisponivel';
     // Loga o motivo real para quem tem acesso ao painel, mas nunca o
