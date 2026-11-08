@@ -15,7 +15,7 @@ import { equipeService } from '../services/equipeService.js';
  */
 const USUARIO_SIMPLES = /^[a-z0-9][a-z0-9._-]{2,29}$/;
 
-const identificador = z
+export const identificador = z
   .string()
   .trim()
   .toLowerCase()
@@ -26,15 +26,26 @@ const identificador = z
 const nome = z.string().trim().min(2, 'Informe o nome.');
 // 8, e não 6: com 6 caracteres, um robô sem freio acha a senha em horas.
 // Quem já tem senha menor continua entrando; a regra vale ao criar e trocar.
-const senha = z.string().min(8, 'A senha precisa ter ao menos 8 caracteres.');
+export const senha = z.string().min(8, 'A senha precisa ter ao menos 8 caracteres.');
 const papel = z.enum(['ADMIN', 'OPERADOR']);
 
-export const novaPessoaSchema = z.object({
-  nome,
-  email: identificador,
-  senha,
-  papel: papel.default('OPERADOR'),
-});
+/**
+ * Sem senha, a conta nasce para o link de acesso: a pessoa escolhe o
+ * e-mail e a senha por ele (ver `linkAcessoService`). Aí o login também
+ * pode ficar em branco. Com senha, é a administração quem passa os dados,
+ * e precisa dizer com o que a pessoa entra.
+ */
+export const novaPessoaSchema = z
+  .object({
+    nome,
+    email: identificador.optional(),
+    senha: senha.optional(),
+    papel: papel.default('OPERADOR'),
+  })
+  .refine((d) => d.senha === undefined || d.email !== undefined, {
+    message: 'Informe com o que a pessoa entra.',
+    path: ['email'],
+  });
 
 export const alterarPessoaSchema = z
   .object({ nome: nome.optional(), papel: papel.optional(), ativo: z.boolean().optional() })

@@ -376,16 +376,19 @@ O fluxo é o padrão JWT:
 
 ### Endpoints já disponíveis
 
-| Método  | Rota                      | Acesso         | Descrição                    |
-| ------- | ------------------------- | -------------- | ---------------------------- |
-| `GET`   | `/api/health`             | Público        | Verifica se a API está no ar |
-| `POST`  | `/api/auth/login`         | Público        | Autentica e devolve o token  |
-| `GET`   | `/api/auth/eu`            | Autenticado    | Dados do usuário logado      |
-| `PATCH` | `/api/auth/senha`         | Autenticado    | Troca a própria senha        |
-| `GET`   | `/api/usuarios`           | Apenas `ADMIN` | Lista a equipe               |
-| `POST`  | `/api/usuarios`           | Apenas `ADMIN` | Adiciona alguém à equipe     |
-| `PATCH` | `/api/usuarios/:id`       | Apenas `ADMIN` | Muda nome, papel ou acesso   |
-| `PATCH` | `/api/usuarios/:id/senha` | Apenas `ADMIN` | Cria uma senha nova          |
+| Método  | Rota                             | Acesso               | Descrição                                  |
+| ------- | -------------------------------- | -------------------- | ------------------------------------------ |
+| `GET`   | `/api/health`                    | Público              | Verifica se a API está no ar               |
+| `POST`  | `/api/auth/login`                | Público              | Autentica e devolve o token                |
+| `GET`   | `/api/auth/eu`                   | Autenticado          | Dados do usuário logado                    |
+| `PATCH` | `/api/auth/senha`                | Autenticado          | Troca a própria senha                      |
+| `GET`   | `/api/usuarios`                  | Apenas `ADMIN`       | Lista a equipe                             |
+| `POST`  | `/api/usuarios`                  | Apenas `ADMIN`       | Adiciona alguém à equipe                   |
+| `PATCH` | `/api/usuarios/:id`              | Apenas `ADMIN`       | Muda nome, papel ou acesso                 |
+| `PATCH` | `/api/usuarios/:id/senha`        | Apenas `ADMIN`       | Cria uma senha nova                        |
+| `POST`  | `/api/usuarios/:id/link-acesso`  | Apenas `ADMIN`       | Link para a pessoa escolher e-mail e senha |
+| `POST`  | `/api/auth/link-acesso/conferir` | Público (com o link) | De quem é o link                           |
+| `POST`  | `/api/auth/link-acesso`          | Público (com o link) | Grava e-mail e senha e já entra            |
 
 ### Papéis
 

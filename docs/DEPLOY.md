@@ -82,9 +82,30 @@ O jeito certo é pelo próprio sistema: entrando com a conta da Dalila, **Minha 
 
 ### Senha da cliente
 
-A conta da Dalila em produção tem senha própria, forte, diferente da do seed local.
+A conta da Dalila em produção é criada pela própria Equipe, com o link de acesso (abaixo): ela escolhe o e-mail e a senha, e ninguém mais sabe a senha. A conta que o seed criou, com o e-mail provisório `dalila@deliciadoces.com.br`, não era a dela e sai de produção (não tinha nenhum lançamento).
+
+> **Não rode `npm run db:seed` em produção.** Ele recria a conta `dalila@deliciadoces.com.br` com a senha padrão do `.env.example`, que está neste repositório público.
 
 A cliente troca a própria senha pelo sistema, em **Minha conta** (o nome dela no cabeçalho). A senha atual é exigida mesmo com a sessão aberta, para que quem encontre a tela destravada não consiga tomar a conta.
+
+### Link de acesso: ela escolhe o e-mail e a senha
+
+Para a Dalila (ou uma funcionária) entrar com um e-mail e uma senha que **só ela sabe**, sem ninguém ditar senha pelo WhatsApp.
+
+**Pessoa nova:**
+
+1. Entre com uma conta de administração.
+2. **Minha conta → Equipe → Adicionar pessoa**: o nome, **E-mail e senha: Pelo link**, e o acesso (**Acesso completo** para a Dalila).
+3. **Gerar link**, e toque em **WhatsApp** (ou **Copiar**).
+4. Ela abre, escolhe o e-mail e a senha, e já entra no sistema.
+
+Até ela usar o link, a Equipe mostra a pessoa como **esperando o link**, e ninguém consegue entrar na conta.
+
+**Quem já tem conta** (esqueceu a senha, ou o e-mail mudou): **Equipe →** a pessoa **→ Link de acesso → Gerar e enviar**.
+
+O link vale **uma vez só, por 3 dias**. Usado, morre; criar uma senha nova para a pessoa na Equipe também anula os links que estavam soltos. Perdeu o prazo, é só gerar outro. Não dá para gerar link da própria conta: a Minha conta exige a senha atual, e o link seria o atalho para pular essa conferência.
+
+> O link vai depois do `#` no endereço (`/acesso#...`), parte que o navegador não envia ao servidor. Por isso ele não aparece nos logs da Vercel.
 
 ---
 
@@ -109,9 +130,34 @@ Duas coisas para combinar com o grupo antes do uso real:
 1. **Quem roda o backup e com que frequência.** Semanal já resolve no começo. Um backup que ninguém roda não é backup.
 2. **Onde o arquivo fica.** Não adianta guardar no mesmo lugar que pode falhar.
 
-> Projeto gratuito do Supabase **pausa por inatividade** depois de alguns dias sem uso, e com ele o sistema inteiro sai do ar (aconteceu em outubro de 2026, depois de uma semana sem acesso). Para evitar, o `vercel.json` tem um **Cron Job** que chama `/api/health` uma vez por dia, às 9h UTC (6h em Brasília). O health check faz um `SELECT 1` no banco, e esse acesso diário conta como uso.
->
-> Para conferir se ele está rodando: **Vercel → o projeto → Settings → Cron Jobs**. Se mesmo assim o banco pausar, despausar é um clique no painel do Supabase (**Restore project**), e os dados continuam lá.
+---
+
+## ⚠️ Banco pausado
+
+O Supabase **pausa o projeto gratuito** que passa uma semana com pouca consulta, e com ele o sistema inteiro sai do ar: o login responde "Erro interno do servidor". Segundo a documentação deles, "algumas requisições por dia" bastam para não pausar.
+
+Já aconteceu duas vezes:
+
+1. **Outubro de 2026**, depois de uma semana sem ninguém usar. A resposta foi um cron diário da Vercel chamando `/api/health`, que fazia um `SELECT 1`.
+2. **Novembro de 2026**, mesmo com esse cron. Um `SELECT 1` por dia não bastou.
+
+Por isso agora são **três agendadores independentes**, que chamam `/api/health` cerca de 9 vezes por dia. A rota lê a tabela `usuarios` (uma consulta de verdade, não um `SELECT 1`), e cada chamada faz o mesmo caminho de uma usuária: Vercel → pooler → banco. Se um deles parar, os outros seguram.
+
+| Agendador          | Onde está                                                               | Quando (UTC)               | Onde conferir                                             |
+| ------------------ | ----------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------- |
+| **GitHub Actions** | `.github/workflows/manter-banco-ativo.yml`                              | 00:23, 06:23, 12:23, 18:23 | GitHub → **Actions** → _Manter banco ativo_               |
+| **pg_cron**        | Dentro do próprio banco (migration `20261108200000_manter_banco_ativo`) | 03:47, 09:47, 15:47, 21:47 | Supabase → **Integrations → Cron** → `manter-banco-ativo` |
+| **Vercel Cron**    | `vercel.json`, em `crons`                                               | 09:00                      | Vercel → o projeto → **Settings → Cron Jobs**             |
+
+Por que cada um:
+
+- **GitHub Actions** é o único que **avisa**. Se o banco não responder três vezes seguidas, a execução fica vermelha na aba Actions. Também dá para rodar na hora pelo botão **Run workflow**. O repositório é público, e o GitHub desliga agendamentos depois de 60 dias sem commit; o próprio workflow se religa a cada execução para isso não acontecer.
+- **pg_cron** é o mesmo recurso usado no forlabs: o banco agenda a tarefa nele mesmo e faz a chamada HTTP com o `pg_net`. Não depende da Vercel nem do GitHub. A migration só age no Supabase; no Postgres local ela passa sem fazer nada.
+- **Vercel Cron**: o plano Hobby só deixa rodar uma vez por dia, por isso sozinho não bastou. Fica como reforço.
+
+> **A migration do pg_cron precisa ser aplicada em produção** (`npm run prisma:deploy --workspace=backend` com a `DIRECT_DATABASE_URL` de produção) depois que o banco estiver ativo. Ela pode rodar de novo sem problema.
+
+**Se mesmo assim pausar:** Supabase → projeto `app-deliciadoces` → **Restore project**. Os dados continuam lá por até 90 dias. Atenção: o plano gratuito permite **só 2 projetos ativos por dono**, somando todas as organizações. Se o Supabase recusar a restauração por esse limite, é preciso pausar (ou excluir) outro projeto antes.
 
 ---
 
@@ -121,7 +167,7 @@ Duas coisas para combinar com o grupo antes do uso real:
 
 | O que tem                           | Por quê                                                                     |
 | ----------------------------------- | --------------------------------------------------------------------------- |
-| A conta da Dalila                   | Acesso dela ao sistema                                                      |
+| A conta da Dalila                   | Acesso dela ao sistema (criada pelo link de acesso)                         |
 | As 2 categorias internas de despesa | Engrenagem do lucro: separam saída de retirada pessoal. A cliente não as vê |
 
 Nenhuma venda, produto, insumo ou despesa fictícia. Os números que aparecerem na tela serão os que a cliente (ou vocês, testando) realmente lançarem.
@@ -186,6 +232,7 @@ Estão no `vercel.json`, em `headers`. O principal é a política de conteúdo (
 | Erro de conexão só em produção                           | Usou a _Direct connection_ (IPv6) em vez do pooler                      | Trocar pela Transaction pooler      |
 | `Can't reach database server`                            | Projeto do Supabase pausado                                             | Painel do Supabase → despausar      |
 | `/api/health` com 503 e `tenant/user … not found` no log | Projeto do Supabase pausado (o pooler não acha o banco)                 | Painel do Supabase → despausar      |
+| Login diz "Erro interno do servidor"                     | Quase sempre o banco pausado (ver "Banco pausado")                      | Abrir `/api/health`                 |
 | Deploy falha no build                                    | Erro de compilação                                                      | Vercel → Deployments → log do build |
 | Login diz senha inválida                                 | Seed não rodou neste banco                                              | Conferir a tabela `usuarios`        |
 

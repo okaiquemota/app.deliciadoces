@@ -1,0 +1,64 @@
+# Mantém o banco do Supabase acordado.
+#
+# O plano gratuito do Supabase pausa o projeto que passa uma semana com
+# pouca consulta, e com ele o sistema inteiro sai do ar (login dá "Erro
+# interno do servidor"). Este workflow chama /api/health a cada 6 horas; a
+# rota lê a tabela de usuários, e essa leitura conta como uso.
+#
+# É um dos três agendadores (os outros são o cron da Vercel e o pg_cron do
+# próprio banco), todos explicados em docs/DEPLOY.md, seção "Banco pausado".
+# Este aqui é o único que AVISA: se o banco não responder, a execução fica
+# vermelha na aba Actions do GitHub.
+
+name: Manter banco ativo
+
+on:
+  schedule:
+    # 00:23, 06:23, 12:23 e 18:23 UTC. Fora do minuto 0, que é quando o
+    # GitHub mais atrasa ou pula agendamentos.
+    - cron: '23 */6 * * *'
+  # Botão "Run workflow" na aba Actions, para testar na hora.
+  workflow_dispatch:
+
+# Só o necessário para religar o próprio agendamento (último passo).
+permissions:
+  actions: write
+
+concurrency:
+  group: manter-banco-ativo
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      URL_DO_SISTEMA: https://app-deliciadoces.vercel.app
+    steps:
+      - name: Chamar /api/health
+        run: |
+          # Três tentativas: a primeira chamada pode pegar a função da
+          # Vercel fria e estourar o tempo sem o banco ter problema nenhum.
+          for tentativa in 1 2 3; do
+            status=$(curl -sS -o resposta.json -w '%{http_code}' --max-time 60 \
+              "$URL_DO_SISTEMA/api/health" || echo 000)
+            echo "Tentativa $tentativa: HTTP $status"
+            cat resposta.json 2>/dev/null && echo
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::O banco não respondeu. Se o Supabase pausou o projeto, reative em supabase.com → projeto app-deliciadoces → Restore project."
+          exit 1
+
+      # Em repositório público, o GitHub desliga sozinho os agendamentos
+      # depois de 60 dias sem commit. Religar o workflow pela API zera essa
+      # contagem (é a técnica de projetos como o keepalive-workflow), então
+      # ele mesmo se mantém ligado enquanto rodar. Se um dia desligar mesmo
+      # assim, o GitHub manda e-mail avisando e basta clicar em "Enable".
+      - name: Manter o agendamento ligado
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/manter-banco-ativo.yml/enable"

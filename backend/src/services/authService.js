@@ -56,6 +56,14 @@ export const authService = {
       throw AppError.naoAutorizado('E-mail ou senha inválidos.');
     }
 
+    return authService.sessao(usuario);
+  },
+
+  /**
+   * Abre a sessão de quem já provou quem é: pelo login, ou pelo link de
+   * acesso (ver `linkAcessoService`).
+   */
+  sessao(usuario) {
     return {
       token: gerarToken(usuario),
       usuario: semSenha(usuario),

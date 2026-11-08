@@ -1017,6 +1017,11 @@ input[type='date']::-webkit-date-and-time-value {
   font-size: 0.9375rem;
 }
 
+/* A explicação do link de acesso, com folga antes do campo do link. */
+.lancamento__pergunta.perfil__explica {
+  margin-bottom: 16px;
+}
+
 /* "Criar uma nova", na linha da senha: um link no lugar do valor, rosa
    como os outros links do sistema. */
 .botao.perfil__senha {
@@ -3775,17 +3780,26 @@ input[type='date']::-webkit-date-and-time-value {
   text-align: center;
 }
 
+/* Link de acesso que não vale mais: o motivo, entre o título e o botão. */
+.login__aviso {
+  margin: 16px 0 8px;
+}
+
 /* O "Mostrar" mora dentro do campo da senha, à direita. */
-.login__senha {
+.login__senha,
+.campo-acao {
   position: relative;
   display: block;
 }
 
-.login__senha .campo__entrada {
+.login__senha .campo__entrada,
+.campo-acao .campo__entrada {
   padding-right: 92px;
 }
 
-.login__ver-senha {
+/* O mesmo botão dentro do campo serve ao "Copiar" do link de acesso. */
+.login__ver-senha,
+.campo-acao__botao {
   position: absolute;
   top: 0;
   right: 0;
@@ -3804,7 +3818,8 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* Só onde existe mouse: no toque, o sublinhado ficava preso. */
 @media (hover: hover) {
-  .login__ver-senha:hover {
+  .login__ver-senha:hover,
+  .campo-acao__botao:hover {
     text-decoration: underline;
   }
 }
