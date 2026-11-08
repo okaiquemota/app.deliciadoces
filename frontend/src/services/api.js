@@ -30,6 +30,14 @@ api.interceptors.request.use((config) => {
 });
 
 /**
+ * Páginas abertas sem login. Nelas um 401 não manda para o login: no link
+ * de acesso, uma sessão velha guardada no navegador derrubaria a página
+ * (e o link, que fica no endereço) antes de a pessoa ver o formulário. A
+ * sessão velha, o AuthContext já descarta sozinho.
+ */
+const PAGINAS_PUBLICAS = ['/login', '/acesso'];
+
+/**
  * Interceptor de RESPOSTA: se a API devolver 401, o token venceu ou é
  * inválido — limpamos a sessão e mandamos o usuário para o login.
  *
@@ -40,9 +48,9 @@ api.interceptors.response.use(
   (resposta) => resposta,
   (erro) => {
     const naoAutorizado = erro.response?.status === 401;
-    const estaNoLogin = window.location.pathname === '/login';
+    const paginaPublica = PAGINAS_PUBLICAS.includes(window.location.pathname);
 
-    if (naoAutorizado && !estaNoLogin) {
+    if (naoAutorizado && !paginaPublica) {
       localStorage.removeItem(CHAVE_TOKEN);
       window.location.assign('/login');
     }

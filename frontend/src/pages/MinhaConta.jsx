@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Modal } from '../components/Modal.jsx';
-import { Texto } from '../components/Campo.jsx';
+import { Campo, Texto } from '../components/Campo.jsx';
 import { Segmentado } from '../components/Segmentado.jsx';
 import { Dado } from '../components/Extrato.jsx';
 import {
@@ -668,6 +668,10 @@ function Pessoa({ pessoa, propria, aoFechar, aoConcluir }) {
     );
   }
 
+  if (modo === 'link') {
+    return <EnviarLink pessoa={pessoa} aoFechar={aoFechar} aoVoltar={() => setModo('ver')} />;
+  }
+
   if (modo === 'tirar') {
     return (
       <Modal aberto aoFechar={aoFechar} titulo={`Tirar o acesso de ${pessoa.nome}?`} largura={440}>
@@ -713,6 +717,17 @@ function Pessoa({ pessoa, propria, aoFechar, aoConcluir }) {
               onClick={() => setModo('senha')}
             >
               Criar uma nova
+            </button>
+          </Dado>
+        )}
+        {!propria && pessoa.ativo && (
+          <Dado rotulo="Link de acesso">
+            <button
+              type="button"
+              className="botao botao--texto perfil__senha"
+              onClick={() => setModo('link')}
+            >
+              Gerar e enviar
             </button>
           </Dado>
         )}
@@ -773,6 +788,107 @@ function Pessoa({ pessoa, propria, aoFechar, aoConcluir }) {
           )}
         </div>
       )}
+    </Modal>
+  );
+}
+
+/** "11/11, 20:13": até quando o link vale. */
+const diaEHora = (valor) =>
+  new Date(valor).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+/**
+ * Link para a pessoa escolher o próprio e-mail e a senha, e entrar. É o
+ * jeito de dar acesso sem ditar senha pelo WhatsApp: ninguém além dela
+ * fica sabendo.
+ *
+ * Gera ao abrir. O link não fica guardado em lugar nenhum, e gerar outro
+ * não estraga o anterior; o que anula os soltos é a pessoa usar um deles,
+ * ou uma senha nova criada aqui (ver `linkAcessoService` no backend).
+ */
+function EnviarLink({ pessoa, aoFechar, aoVoltar }) {
+  const [link, setLink] = useState(null);
+  const [erro, setErro] = useState('');
+  const [copiado, setCopiado] = useState(false);
+  const campo = useRef(null);
+
+  useEffect(() => {
+    equipe
+      .linkAcesso(pessoa.id)
+      .then(({ token, expiraEm }) =>
+        setLink({ endereco: `${window.location.origin}/acesso#${token}`, expiraEm })
+      )
+      .catch((e) => setErro(mensagemDeErro(e, 'Não foi possível gerar o link.')));
+  }, [pessoa.id]);
+
+  const primeiroNome = pessoa.nome.split(' ')[0];
+  const mensagem =
+    link &&
+    `Oi, ${primeiroNome}! Este é o seu link para entrar no sistema da Delícia Doces. ` +
+      `Nele você escolhe o seu e-mail e a sua senha:\n\n${link.endereco}\n\n` +
+      'Ele vale uma vez só, por 3 dias.';
+
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(link.endereco);
+      setCopiado(true);
+    } catch {
+      // Sem permissão para a área de transferência: deixa o link
+      // selecionado, e ela copia segurando o dedo ou com Ctrl+C.
+      campo.current?.select();
+    }
+  }
+
+  return (
+    <Modal aberto aoFechar={aoFechar} titulo="Link de acesso" largura={480}>
+      <p className="lancamento__pergunta perfil__explica">
+        Mande este link para {pessoa.nome}. Por ele, {primeiroNome} escolhe o e-mail e a senha de
+        entrar, e ninguém mais fica sabendo a senha.
+      </p>
+
+      {link ? (
+        <Campo rotulo="Link" dica={`Vale uma vez só, até ${diaEHora(link.expiraEm)}.`}>
+          <span className="campo-acao">
+            <input
+              ref={campo}
+              className="campo__entrada"
+              readOnly
+              value={link.endereco}
+              onFocus={(e) => e.target.select()}
+            />
+            <button type="button" className="campo-acao__botao" onClick={copiar}>
+              {copiado ? 'Copiado' : 'Copiar'}
+              <span className="so-leitor"> o link</span>
+            </button>
+          </span>
+        </Campo>
+      ) : (
+        !erro && <p className="perfil__carregando">Gerando o link...</p>
+      )}
+
+      <Erro texto={erro} />
+
+      <div className="modal__acoes">
+        <button type="button" className="botao botao--auto" onClick={aoVoltar}>
+          Voltar
+        </button>
+        {link && (
+          <a
+            className="botao botao--primario botao--auto"
+            href={`https://wa.me/?text=${encodeURIComponent(mensagem)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {/* Só "WhatsApp": "Mandar no WhatsApp" quebrava em duas linhas
+                no celular, e o texto de cima já diz para mandar. */}
+            WhatsApp
+          </a>
+        )}
+      </div>
     </Modal>
   );
 }

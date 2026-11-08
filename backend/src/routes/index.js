@@ -20,6 +20,7 @@ import {
   alterarPessoaSchema,
   redefinirSenhaSchema,
 } from '../controllers/equipeController.js';
+import { linkAcessoController } from '../controllers/linkAcessoController.js';
 import {
   insumoSchema,
   insumoUpdateSchema,
@@ -176,5 +177,7 @@ router
   .post(validar(novaPessoaSchema), equipeController.criar);
 router.patch('/usuarios/:id', validar(alterarPessoaSchema), equipeController.alterar);
 router.patch('/usuarios/:id/senha', validar(redefinirSenhaSchema), equipeController.redefinirSenha);
+// Link para a pessoa escolher o próprio e-mail e a senha (ver linkAcessoService).
+router.post('/usuarios/:id/link-acesso', linkAcessoController.gerar);
 
 export default router;

@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { RotaProtegida, SoAdmin } from './RotaProtegida.jsx';
 import { Layout } from '../components/Layout.jsx';
 import { Login } from '../pages/Login.jsx';
+import { LinkAcesso } from '../pages/LinkAcesso.jsx';
 import { Dashboard } from '../pages/Dashboard.jsx';
 import { Resumo } from '../pages/Resumo.jsx';
 import { Estoque } from '../pages/Estoque.jsx';
@@ -24,6 +25,8 @@ export function AppRoutes() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        {/* Público: quem abre o link de acesso ainda não tem senha. */}
+        <Route path="/acesso" element={<LinkAcesso />} />
 
         <Route element={<RotaProtegida />}>
           <Route element={<Layout />}>

@@ -66,6 +66,8 @@ export const equipe = {
   criar: (corpo) => dados(api.post('/usuarios', corpo)),
   alterar: (id, corpo) => dados(api.patch(`/usuarios/${id}`, corpo)),
   redefinirSenha: (id, senha) => dados(api.patch(`/usuarios/${id}/senha`, { senha })),
+  /** { token, expiraEm }: o endereço da página é montado na tela. */
+  linkAcesso: (id) => dados(api.post(`/usuarios/${id}/link-acesso`)),
 };
 
 export const fechamentos = {

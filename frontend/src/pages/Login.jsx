@@ -17,7 +17,6 @@ export function Login() {
   const [verSenha, setVerSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [semLogo, setSemLogo] = useState(false);
 
   const { entrar } = useAuth();
   const navegar = useNavigate();
@@ -48,21 +47,7 @@ export function Login() {
 
       <section className="login__lado">
         <form className="login__form" onSubmit={aoEnviar}>
-          {!semLogo && (
-            <span className="login__medalha">
-              <picture>
-                <source srcSet="/logo.webp" type="image/webp" />
-                {/* O nome está escrito logo abaixo: a medalha é decorativa. */}
-                <img
-                  src="/logo.png"
-                  alt=""
-                  width="400"
-                  height="400"
-                  onError={() => setSemLogo(true)}
-                />
-              </picture>
-            </span>
-          )}
+          <Medalha />
           <p className="login__nome">Delícia Doces</p>
           <h1 className="login__titulo">Entrar no sistema</h1>
           <p className="login__sub">Use seu e-mail ou usuário e a sua senha.</p>
@@ -125,5 +110,23 @@ export function Login() {
         <p className="login__rodape">Delícia Doces · v1.0</p>
       </section>
     </main>
+  );
+}
+
+/**
+ * A logo da casa no alto do formulário. Também usada pela página do link
+ * de acesso, que tem a mesma cara do Entrar.
+ */
+export function Medalha() {
+  const [semLogo, setSemLogo] = useState(false);
+  if (semLogo) return null;
+  return (
+    <span className="login__medalha">
+      <picture>
+        <source srcSet="/logo.webp" type="image/webp" />
+        {/* O nome está escrito logo abaixo: a medalha é decorativa. */}
+        <img src="/logo.png" alt="" width="400" height="400" onError={() => setSemLogo(true)} />
+      </picture>
+    </span>
   );
 }

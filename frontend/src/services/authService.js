@@ -28,4 +28,16 @@ export const authService = {
     const { data } = await api.patch('/auth/senha', dados);
     return data;
   },
+
+  /** Link de acesso: de quem é a conta. Devolve { nome, email }. */
+  async conferirLink(token) {
+    const { data } = await api.post('/auth/link-acesso/conferir', { token });
+    return data;
+  },
+
+  /** Grava o e-mail e a senha escolhidos. Devolve { token, usuario }, como o login. */
+  async usarLink(token, email, senha) {
+    const { data } = await api.post('/auth/link-acesso', { token, email, senha });
+    return data;
+  },
 };

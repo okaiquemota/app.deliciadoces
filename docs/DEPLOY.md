@@ -86,6 +86,19 @@ A conta da Dalila em produção tem senha própria, forte, diferente da do seed 
 
 A cliente troca a própria senha pelo sistema, em **Minha conta** (o nome dela no cabeçalho). A senha atual é exigida mesmo com a sessão aberta, para que quem encontre a tela destravada não consiga tomar a conta.
 
+### Link de acesso: ela escolhe o e-mail e a senha
+
+Para a Dalila (ou uma funcionária) passar a entrar com um e-mail e uma senha que **só ela sabe**, sem ninguém ditar senha pelo WhatsApp:
+
+1. Entre com outra conta de administração.
+2. **Minha conta → Equipe →** a pessoa **→ Link de acesso → Gerar e enviar**.
+3. Toque em **WhatsApp** (ou **Copiar**) e mande o link para ela.
+4. Ela abre, escolhe o e-mail e a senha, e já entra no sistema.
+
+O link vale **uma vez só, por 3 dias**. Ele não cria conta nova: só deixa a dona de uma conta que já existe escolher os dados de entrar. Usado, morre; criar uma senha nova para a pessoa na Equipe também anula os links que estavam soltos. Não dá para gerar link da própria conta: a Minha conta exige a senha atual, e o link seria o atalho para pular essa conferência.
+
+> O link vai depois do `#` no endereço (`/acesso#...`), parte que o navegador não envia ao servidor. Por isso ele não aparece nos logs da Vercel.
+
 ---
 
 ## ⚠️ Backup
