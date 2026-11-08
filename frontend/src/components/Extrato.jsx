@@ -13,6 +13,7 @@ export const PERIODOS = [
   { id: 'hoje', rotulo: 'Hoje' },
   { id: '7dias', rotulo: 'Últimos 7 dias' },
   { id: 'mes', rotulo: 'Este mês' },
+  { id: 'tudo', rotulo: 'Todo o período' },
   { id: 'datas', rotulo: 'Escolher datas' },
 ];
 
@@ -63,8 +64,13 @@ export function rotuloDoPeriodo(periodo, datas) {
   return PERIODOS.find((p) => p.id === periodo).rotulo;
 }
 
+/**
+ * As datas de cada período. "Todo o período" vai sem início: o servidor
+ * só filtra a ponta que recebe, e assim entra desde o primeiro lançamento.
+ */
 export function intervalo(periodo, datas) {
   if (periodo === 'hoje') return { inicio: paraInput(), fim: paraInput() };
+  if (periodo === 'tudo') return { fim: paraInput() };
   if (periodo === '7dias') return { inicio: diasAtras(6), fim: paraInput() };
   if (periodo === 'mes') {
     const primeiro = new Date();
@@ -73,6 +79,10 @@ export function intervalo(periodo, datas) {
   }
   return datas;
 }
+
+/** Dá para buscar: tem fim, e o início (quando há) não passa dele. */
+export const faixaValida = (faixa) =>
+  Boolean(faixa.fim) && (!faixa.inicio || faixa.inicio <= faixa.fim);
 
 /** Agrupa por dia, na ordem em que a lista veio: `[{ chave, itens }]`. */
 export function porDia(lista) {
