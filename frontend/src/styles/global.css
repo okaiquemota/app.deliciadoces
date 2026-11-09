@@ -46,7 +46,10 @@
   --c-200: #e8e8ed; /* borda de cartão */
   --c-300: #d2d2d7; /* borda forte, régua */
   --c-400: #86868b; /* terciário: 3,62 no branco — ÍCONE, nunca texto */
-  --c-500: #6e6e73; /* secundário: 5,07 no branco */
+  /* Secundário: 6,45 no branco e 4,97 no rosa mais forte da casa. Era
+     #6e6e73 (5,07 no branco), que caía para 4,2 sobre os cartões
+     creme → rosa e reprovava até no realce cinza do menu. */
+  --c-500: #5e5e63;
   --c-700: #424245;
   --c-800: #2d2d30;
   --c-900: #1d1d1f; /* o preto do texto da Apple, não #000 */
@@ -84,29 +87,33 @@
      escreve estas cores. Os degradês claros já vêm diluídos no branco, na
      proporção anotada ao lado — para mais cor, aumente a proporção. */
   --marca-rosa: #ff0164; /* ícone, traço, borda: 3,9:1 no branco. NUNCA texto pequeno */
-  --marca-rosa-texto: #d40055; /* o rosa quando for texto: 5,3:1 no branco */
+  /* O rosa quando for texto: 6:1 no branco, 4,7:1 no rosa do hover. */
+  --marca-rosa-texto: #c4004e;
   --marca-rosa-claro: #ffc1ea;
   --marca-creme: #fef4d1;
   --marca-preto: #010200;
-  /* Rosa-claro bem diluído, para realce de linha (o texto secundário
-     fica com 4,8:1) e o fundo das contagens. */
-  --marca-rosa-nevoa: #fff6fb;
-  --marca-rosa-bruma: #ffedf8;
+  /* Rosa-claro diluído, para realce de linha e o fundo das contagens. */
+  --marca-rosa-nevoa: #fff0f7;
+  --marca-rosa-bruma: #ffe4f2;
   /* Texto rosa sobre a bruma: 6:1. */
   --marca-rosa-escuro: #b8004a;
 
-  /* Blocos de resumo, login, cartão de Venda: creme 45% → rosa-claro
-     22%. O cinza secundário fica com 4,6:1 ou mais em qualquer ponto —
-     mais do que tinha no cinza de antes. */
-  --degrade-suave: linear-gradient(135deg, #fffaea 0%, #fff1fa 100%);
-  /* O mesmo, um tom acima, para o passar do mouse (creme 65% → rosa 28%). */
-  --degrade-suave-forte: linear-gradient(135deg, #fef8e1 0%, #ffedf9 100%);
-  /* A pastilha do item ativo no menu (rosa 38% → creme 60%): o ícone rosa
-     por cima tem 3,3:1. */
-  --degrade-ativo: linear-gradient(90deg, #ffe7f7 0%, #fef8e3 100%);
-  /* O selo dos ícones redondos (creme 70% → rosa 45%): o ícone em
-     rosa-texto por cima tem 4,5:1 ou mais. */
-  --degrade-selo: linear-gradient(135deg, #fef7df 0%, #ffe3f6 100%);
+  /* A SUPERFÍCIE DA CASA: cartões do Início, blocos de resumo, topo das
+     janelas. Creme → rosa com cor de verdade, mais um contorno rosado.
+
+     A versão anterior (#fffaea → #fff1fa, sem contorno) tinha 1,04 a
+     1,09:1 contra o branco: num notebook, com o brilho alto e o painel
+     lavado, os cartões sumiam no fundo. Agora o preenchimento vai a 1,13
+     e 1,22:1, e o contorno, a 1,7:1 — é ele que desenha a borda do botão
+     em qualquer tela. O texto secundário por cima fica com 4,9:1 ou mais. */
+  --degrade-suave: linear-gradient(135deg, #fdf0d2 0%, #fce2ee 100%);
+  /* Um tom acima, para o passar do mouse. */
+  --degrade-suave-forte: linear-gradient(135deg, #fcebc7 0%, #fbd9e9 100%);
+  --borda-casa: #ecb6cf;
+  /* A pastilha do item ativo no menu: o ícone rosa por cima tem 3:1. */
+  --degrade-ativo: linear-gradient(90deg, #fcdcec 0%, #fdeecb 100%);
+  /* O selo dos ícones redondos: o ícone em rosa-texto por cima tem 4,6:1. */
+  --degrade-selo: linear-gradient(135deg, #fdedc8 0%, #fbd6ea 100%);
   /* Traço fino (o marcador da barra do celular): as duas pontas com 3:1
      ou mais no branco. */
   --degrade-traco: linear-gradient(90deg, var(--marca-rosa) 0%, #ff4d94 100%);
@@ -117,6 +124,29 @@
   --degrade-acao: linear-gradient(135deg, #c8004f 0%, #e0005a 100%);
   --degrade-acao-forte: linear-gradient(135deg, #b8004a 0%, #d40055 100%);
   --sombra-acao: 0 6px 16px -8px rgb(212 0 85 / 0.55);
+  /* A letra sobre o rosa da ação: branca nos dois temas. */
+  --sobre-rosa: #ffffff;
+
+  /* O cartão de Venda, o destaque do Início: preto com letra branca. */
+  --destaque-fundo: var(--c-900);
+  --destaque-fundo-hover: var(--c-800);
+  --destaque-texto: var(--c-0);
+  --destaque-suave: var(--c-300);
+  --destaque-selo: var(--degrade-acao);
+
+  /* Peças de controle que o modo escuro precisa trocar. */
+  --anel-foco: rgb(0 0 0 / 0.12);
+  --anel-foco-leve: rgb(0 0 0 / 0.08);
+  --fio-interno: rgb(20 24 29 / 0.12);
+  --segmentado-fundo: rgb(118 118 128 / 0.12);
+  --segmentado-ativo: var(--superficie);
+  --interruptor-bolinha: #ffffff;
+  --sobre-acao-realce: rgb(255 255 255 / 0.22);
+  --sobre-acao-realce-forte: rgb(255 255 255 / 0.35);
+  --veu-modal: rgb(0 0 0 / 0.4);
+  /* A lupa do campo Buscar: um desenho dentro do CSS não herda a cor do
+     texto, então cada tema tem a sua. */
+  --icone-busca: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1d1f' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4.5 4.5'/%3E%3C/svg%3E");
 
   --erro: #b3261e;
   --erro-fundo: #fdecec;
@@ -164,6 +194,93 @@
      a superfície branca não parecer colada no fundo. */
   --sombra-cartao: 0 1px 2px rgb(0 0 0 / 0.04);
   --sombra-modal: 0 24px 64px -16px rgb(0 0 0 / 0.3);
+}
+
+/* =====================================================================
+   MODO NOTURNO
+
+   O tema escuro troca SÓ as variáveis acima; nenhuma regra da folha
+   escreve cor própria para ele. Quem decide o tema é o atributo
+   `data-tema` no <html>, posto antes de a página aparecer por
+   `public/tema.js` (Automático segue o aparelho; Claro e Escuro, a
+   escolha em Minha conta).
+
+   As decisões, para quem for mexer:
+   - Cinzas invertidos na escala da Apple: superfície #1c1c1e, fundo
+     #111113, texto #f5f5f7. Quem usa `--c-0` como "branco" e `--c-900`
+     como "preto" vira, sozinho, o par escuro/claro.
+   - Por isso o preto da ESCOLHA (chips, forma de pagamento) vira claro
+     com letra escura: continua sendo o elemento de maior contraste.
+   - O cartão de Venda não vira um bloco branco (ofuscaria no escuro): ele
+     vai para o rosa da ação, com letra branca.
+   - Rosa e verde/vermelho/âmbar sobem de luz para ler no fundo escuro, e
+     os fundos tingidos descem para tons escuros da mesma família.
+   Contrastes medidos: texto 13 a 17:1, texto secundário 6,3:1 ou mais,
+   rosa de texto 5,5:1 ou mais, ícones 4:1 ou mais.
+   ===================================================================== */
+:root {
+  color-scheme: light;
+}
+
+:root[data-tema='escuro'] {
+  color-scheme: dark;
+
+  --c-0: #1c1c1e;
+  --c-50: #111113;
+  --c-100: #2c2c2e;
+  --c-200: #38383a;
+  --c-300: #4a4a4d;
+  --c-400: #8e8e93;
+  --c-500: #aeaeb2;
+  --c-700: #d1d1d6;
+  --c-800: #e5e5ea;
+  --c-900: #f5f5f7;
+
+  --acao-hover: #ffffff;
+
+  --marca-rosa: #ff3d86;
+  --marca-rosa-texto: #ff6fa5;
+  --marca-rosa-escuro: #ff9cc3;
+  --marca-rosa-claro: #6e2d4c;
+  --marca-creme: #2e2818;
+  --marca-rosa-nevoa: #2a1c23;
+  --marca-rosa-bruma: #3a2230;
+
+  --degrade-suave: linear-gradient(135deg, #2b2519 0%, #2f1c27 100%);
+  --degrade-suave-forte: linear-gradient(135deg, #352d1d 0%, #3b2230 100%);
+  --borda-casa: #5c3549;
+  --degrade-ativo: linear-gradient(90deg, #3d2231 0%, #332b1b 100%);
+  --degrade-selo: linear-gradient(135deg, #3a301f 0%, #4a2539 100%);
+  --sombra-acao: 0 6px 16px -8px rgb(0 0 0 / 0.6);
+
+  --destaque-fundo: var(--degrade-acao);
+  --destaque-fundo-hover: var(--degrade-acao-forte);
+  --destaque-texto: #ffffff;
+  --destaque-suave: rgb(255 255 255 / 0.85);
+  --destaque-selo: rgb(255 255 255 / 0.18);
+
+  --anel-foco: rgb(255 255 255 / 0.18);
+  --anel-foco-leve: rgb(255 255 255 / 0.12);
+  --fio-interno: rgb(255 255 255 / 0.14);
+  --segmentado-fundo: rgb(118 118 128 / 0.24);
+  --segmentado-ativo: #5a5a5e;
+  --sobre-acao-realce: rgb(0 0 0 / 0.1);
+  --sobre-acao-realce-forte: rgb(0 0 0 / 0.18);
+  --veu-modal: rgb(0 0 0 / 0.6);
+  --icone-busca: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f7' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4.5 4.5'/%3E%3C/svg%3E");
+
+  --erro: #ff8a80;
+  --erro-fundo: #3a1615;
+  --erro-borda: #6b2b27;
+  --ok: #5fd39a;
+  --ok-fundo: #0f2a1d;
+  --ok-borda: #1f563b;
+  --aviso: #f2b552;
+  --aviso-fundo: #33260e;
+  --aviso-borda: #5e4517;
+
+  --sombra-cartao: 0 1px 2px rgb(0 0 0 / 0.5);
+  --sombra-modal: 0 24px 64px -16px rgb(0 0 0 / 0.75);
 }
 
 * {
@@ -723,7 +840,7 @@ body {
   border-color: transparent;
   background: var(--degrade-acao);
   box-shadow: var(--sombra-acao);
-  color: var(--c-0);
+  color: var(--sobre-rosa);
   font-weight: 600;
 }
 
@@ -821,7 +938,7 @@ input[type='date']::-webkit-date-and-time-value {
 .campo__entrada:focus {
   outline: none;
   border-color: var(--acao);
-  box-shadow: 0 0 0 3.5px rgb(0 0 0 / 0.12);
+  box-shadow: 0 0 0 3.5px var(--anel-foco);
 }
 
 .campo__dica {
@@ -1010,6 +1127,11 @@ input[type='date']::-webkit-date-and-time-value {
 .perfil__carregando,
 .alerta.perfil__alerta {
   margin: 4px 0 8px;
+}
+
+/* O seletor de tema logo abaixo do título do grupo. */
+.perfil__aparencia {
+  margin-top: 4px;
 }
 
 .perfil__carregando {
@@ -1204,15 +1326,13 @@ input[type='date']::-webkit-date-and-time-value {
   padding: 10px 18px 10px 48px;
   border: 1.5px solid var(--borda-forte);
   border-radius: 999px;
-  background: var(--superficie)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1d1f' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4.5 4.5'/%3E%3C/svg%3E")
-    no-repeat 18px center / 20px;
+  background: var(--superficie) var(--icone-busca) no-repeat 18px center / 20px;
   font-size: 1rem;
 }
 
 .extrato__busca:focus {
   border-color: var(--acao);
-  box-shadow: 0 0 0 3.5px rgb(0 0 0 / 0.08);
+  box-shadow: 0 0 0 3.5px var(--anel-foco-leve);
 }
 
 .extrato__busca::-webkit-search-cancel-button {
@@ -1397,14 +1517,16 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* ---------- Resumo do período ----------
 
-   Um bloco cinza-claro, sem borda nem sombra: na lista lisa, um cartão
-   com contorno seria o único objeto "de caixa" da tela. */
+   O bloco da casa (creme → rosa), com o contorno rosado fino. Sem o
+   contorno, num notebook de brilho alto o bloco se perdia no branco e os
+   números pareciam soltos na tela. */
 
 .extrato__resumo {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   padding: 14px 18px;
+  border: 1px solid var(--borda-casa);
   border-radius: var(--r-2);
   background: var(--degrade-suave);
 }
@@ -1648,7 +1770,7 @@ input[type='date']::-webkit-date-and-time-value {
   border-radius: 999px;
   background: var(--degrade-acao);
   box-shadow: var(--sombra-acao);
-  color: var(--c-0);
+  color: var(--sobre-rosa);
   font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -1741,7 +1863,7 @@ input[type='date']::-webkit-date-and-time-value {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgb(20 24 29 / 0.12);
+  box-shadow: inset 0 0 0 1px var(--fio-interno);
 }
 
 .extrato__valor--alerta,
@@ -1862,7 +1984,7 @@ input[type='date']::-webkit-date-and-time-value {
   width: 27px;
   height: 27px;
   border-radius: 50%;
-  background-color: var(--c-0);
+  background-color: var(--interruptor-bolinha);
   box-shadow:
     0 3px 8px rgb(0 0 0 / 0.15),
     0 1px 1px rgb(0 0 0 / 0.16);
@@ -2084,7 +2206,7 @@ input[type='date']::-webkit-date-and-time-value {
   padding: 2px;
   border: none;
   border-radius: 9px;
-  background-color: rgb(118 118 128 / 0.12);
+  background-color: var(--segmentado-fundo);
 }
 
 .seletor-periodo__item {
@@ -2112,7 +2234,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .seletor-periodo__item--ativo,
 .seletor-periodo__item--ativo:hover {
-  background-color: var(--superficie);
+  background-color: var(--segmentado-ativo);
   color: var(--texto);
   font-weight: 600;
   box-shadow:
@@ -2132,7 +2254,7 @@ input[type='date']::-webkit-date-and-time-value {
   align-items: flex-start;
   justify-content: center;
   padding: 32px 24px;
-  background-color: rgb(0 0 0 / 0.4);
+  background-color: var(--veu-modal);
   backdrop-filter: saturate(160%) blur(12px);
   overflow-y: auto;
 }
@@ -2237,7 +2359,7 @@ input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
   min-height: var(--altura, 92px);
   padding: 16px;
-  border: none;
+  border: 1px solid var(--borda-casa);
   border-radius: var(--r-3);
   background: var(--degrade-suave);
   color: var(--texto);
@@ -2252,7 +2374,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--grande:hover {
-    background: var(--c-800);
+    background: var(--destaque-fundo-hover);
   }
 }
 
@@ -2288,23 +2410,24 @@ input[type='date']::-webkit-date-and-time-value {
 .cartao-acao--grande {
   grid-column: span 6;
   --altura: 120px;
-  background: var(--c-900);
-  color: var(--c-0);
+  border-color: transparent;
+  background: var(--destaque-fundo);
+  color: var(--destaque-texto);
 }
 
 .cartao-acao--grande .cartao-acao__rotulo,
 .cartao-acao--grande .cartao-acao__valor {
-  color: var(--c-0);
+  color: var(--destaque-texto);
 }
 
 .cartao-acao--grande .cartao-acao__rodape {
-  color: var(--c-300);
+  color: var(--destaque-suave);
 }
 
 .cartao-acao--grande .icone-aro {
   border-color: transparent;
-  background: var(--degrade-acao);
-  color: var(--c-0);
+  background: var(--destaque-selo);
+  color: var(--sobre-rosa);
 }
 
 .cartao-acao--grande .cartao-acao__valor {
@@ -2607,7 +2730,7 @@ input[type='date']::-webkit-date-and-time-value {
   width: 34px;
   height: 34px;
   border-radius: var(--r-1);
-  box-shadow: inset 0 0 0 1px rgb(20 24 29 / 0.1);
+  box-shadow: inset 0 0 0 1px var(--fio-interno);
 }
 
 .doce__info {
@@ -2660,7 +2783,7 @@ input[type='date']::-webkit-date-and-time-value {
   height: 18px;
   border: none;
   border-radius: 4px;
-  background-color: rgb(255 255 255 / 0.22);
+  background-color: var(--sobre-acao-realce);
   color: var(--c-0);
   font-size: 0.9rem;
   line-height: 1;
@@ -2668,7 +2791,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .doce__passo:hover {
-  background-color: rgb(255 255 255 / 0.35);
+  background-color: var(--sobre-acao-realce-forte);
 }
 
 .barra-confirmar {
@@ -3098,6 +3221,7 @@ input[type='date']::-webkit-date-and-time-value {
    que chegou nele. */
 .fechar__conta {
   padding: 18px 20px 8px;
+  border: 1px solid var(--borda-casa);
   border-radius: var(--r-2);
   background: var(--degrade-suave);
 }
