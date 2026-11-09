@@ -17,6 +17,7 @@ import {
   Total,
   hora,
   intervalo,
+  faixaValida,
   normalizar,
   porDia,
   quandoPorExtenso,
@@ -254,7 +255,7 @@ export function Kardex() {
   const faixa = useMemo(() => intervalo(periodo, datas), [periodo, datas]);
 
   const carregar = useCallback(async () => {
-    if (!faixa.inicio || !faixa.fim || faixa.inicio > faixa.fim) return;
+    if (!faixaValida(faixa)) return;
     setAtualizando(true);
     try {
       const movs = await estoque.movimentacoes({

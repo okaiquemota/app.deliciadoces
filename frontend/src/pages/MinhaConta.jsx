@@ -16,6 +16,7 @@ import { authService } from '../services/authService.js';
 import { equipe } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { data as formatarData } from '../utils/formato.js';
+import { TEMAS, escolherTema, temaEscolhido } from '../utils/tema.js';
 
 /**
  * Conta do usuário: nome, e-mail de acesso e senha.
@@ -98,6 +99,8 @@ export function MinhaConta() {
               onClick={() => abrir('senha')}
             />
           </Grupo>
+
+          <Aparencia />
         </div>
 
         {admin && <Equipe aoAviso={setAviso} />}
@@ -109,6 +112,38 @@ export function MinhaConta() {
       {editando === 'email' && <EditarEmail aoFechar={fechar} aoConcluir={concluir} />}
       {editando === 'senha' && <EditarSenha aoFechar={fechar} aoConcluir={concluir} />}
     </section>
+  );
+}
+
+/**
+ * Claro, escuro, ou o que o aparelho estiver usando. Vale na hora, sem
+ * janela nem botão de salvar: é a escolha de ver, não um dado da conta, e
+ * fica guardada neste aparelho (o celular pode ficar no escuro e o
+ * notebook no claro).
+ */
+function Aparencia() {
+  const [tema, setTema] = useState(temaEscolhido);
+
+  return (
+    <Grupo titulo="Aparência">
+      <div className="campo perfil__aparencia">
+        <Segmentado
+          rotulo="Tema"
+          opcoes={TEMAS}
+          valor={tema}
+          aoTrocar={(escolha) => {
+            setTema(escolha);
+            escolherTema(escolha);
+          }}
+          cheio
+        />
+        <span className="campo__dica">
+          {tema === 'auto'
+            ? 'Segue o celular ou o computador: fica escuro quando ele estiver no modo escuro.'
+            : 'Vale só neste aparelho.'}
+        </span>
+      </div>
+    </Grupo>
   );
 }
 
