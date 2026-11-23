@@ -35,6 +35,13 @@ const FORMAS = [
  * se couber dentro dele, então mexer aqui não vira uma via de cobrar o que
  * se quiser.
  */
+/**
+ * Quantos há prontos para vender. Não se vende o que não foi produzido: o
+ * servidor recusa, e a tela não deixa nem pôr no carrinho — o "+" para no
+ * que há, e o doce que acabou fica apagado, dizendo "acabou".
+ */
+const pronto = (p) => (p ? Math.max(0, Math.floor(Number(p.quantidadeAtual))) : 0);
+
 export function VendaRapida({ aberto, aoFechar, aoLancar }) {
   const [lista, setLista] = useState([]);
   const [carrinho, setCarrinho] = useState({});
@@ -89,7 +96,8 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
    */
   const mexer = (id, passo) => {
     setCobrado(null);
-    setCarrinho((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + passo) }));
+    const teto = pronto(lista.find((p) => p.id === id));
+    setCarrinho((c) => ({ ...c, [id]: Math.min(teto, Math.max(0, (c[id] ?? 0) + passo)) }));
   };
 
   const pecas = itens.reduce((n, [, q]) => n + q, 0);
@@ -127,6 +135,9 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
       aoLancar();
     } catch (e) {
       setErro(mensagemDeErro(e));
+      // O estoque pode ter mudado em outro aparelho desde que a janela
+      // abriu: recarrega para ela ver quanto há agora.
+      carregar();
     } finally {
       setSalvando(false);
     }
@@ -149,13 +160,23 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
           <div className="grade-produtos">
             {lista.map((p) => {
               const qtd = carrinho[p.id] ?? 0;
+              const teto = pronto(p);
+              const acabou = teto === 0;
               return (
-                <div key={p.id} className={qtd > 0 ? 'doce doce--escolhido' : 'doce'}>
+                <div
+                  key={p.id}
+                  className={
+                    qtd > 0 ? 'doce doce--escolhido' : acabou ? 'doce doce--acabou' : 'doce'
+                  }
+                >
                   <button
                     type="button"
                     className="doce__toque"
                     onClick={() => mexer(p.id, 1)}
-                    aria-label={`Adicionar ${p.nome}`}
+                    disabled={qtd >= teto}
+                    aria-label={
+                      acabou ? `${p.nome}: acabou, registre a produção` : `Adicionar ${p.nome}`
+                    }
                   >
                     {/* A bolinha de cor vem do nome do doce. Ela reconhece
                         pela cor antes de ler, que no balcão é a diferença
@@ -169,7 +190,7 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
                       <span className="doce__nome">{p.nome}</span>
                       <span className="doce__preco">{moeda(p.precoVenda)}</span>
                       <span className="doce__estoque">
-                        {quantidade(p.quantidadeAtual, p.unidade)}
+                        {acabou ? 'acabou' : quantidade(p.quantidadeAtual, p.unidade)}
                       </span>
                     </span>
                   </button>
@@ -191,7 +212,10 @@ export function VendaRapida({ aberto, aoFechar, aoLancar }) {
                         type="button"
                         className="doce__passo"
                         onClick={() => mexer(p.id, 1)}
-                        aria-label={`Somar um ${p.nome}`}
+                        disabled={qtd >= teto}
+                        aria-label={
+                          qtd >= teto ? `${p.nome}: são todos os que há` : `Somar um ${p.nome}`
+                        }
                       >
                         +
                       </button>

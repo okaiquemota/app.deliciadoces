@@ -2958,6 +2958,27 @@ input[type='date']::-webkit-date-and-time-value {
   color: var(--texto-suave);
 }
 
+/* Sem doce pronto: o cartão fica apagado e diz "acabou" em vermelho, e
+   tocar nele não faz nada — não se vende o que não foi produzido. O
+   "+" que chegou no que há também para. */
+.doce--acabou .doce__toque {
+  opacity: 0.55;
+}
+
+.doce--acabou .doce__estoque {
+  color: var(--erro);
+  font-weight: 600;
+}
+
+.doce__toque:disabled {
+  cursor: default;
+}
+
+.doce__passo:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* Contador no canto de baixo, não no de cima: em cima ele cobria o nome
    do doce, e apertar o nome para caber do lado quebrava "Bolo de pote"
    em três linhas. */

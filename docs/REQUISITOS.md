@@ -194,9 +194,20 @@ A validade exibida é **estimada** pela RN16: se ela usa o mais antigo primeiro,
 
 Rastrear saldo exato por lote exigiria amarrar cada saída a uma entrada, alterando como a venda dá baixa. Foi avaliado e adiado. Antes da estimativa, a tela listava compra por compra — inclusive as já usadas, que seguiam "vencendo" para sempre.
 
-### 6.3 Limite conhecido — estoque negativo
+### 6.3 Estoque de doces nunca fica negativo
 
-Uma venda pode levar o estoque a negativo, porque a produção nem sempre é lançada. Isso é **deliberado**: travar a venda por causa de registro pendente impediria a cliente de registrar dinheiro que entrou de verdade. O saldo negativo funciona como sinal de que falta lançar produção.
+**Não se vende o que não foi produzido.** A venda, a edição de venda, reabrir uma venda cancelada, a perda, o ajuste e desfazer um lote de produção são recusados se deixariam algum doce com saldo abaixo de zero. A mensagem diz qual doce, quanto há pronto e o que fazer.
+
+Até novembro de 2026 era o contrário, por decisão deliberada: a venda podia levar o saldo a negativo, como sinal de que faltava lançar produção, para não impedir a cliente de registrar dinheiro que entrou de verdade. Na prática, o número negativo confundia mais do que avisava, e a regra mudou.
+
+O caso que motivava a regra antiga continua coberto: para guardar o dinheiro de uma venda sem baixar estoque, existe a **entrada avulsa**, e a mensagem de bloqueio aponta para ela.
+
+Como funciona:
+
+- A trava fica em `estoqueService` (o único que escreve saldo), então vale para todo caminho que tira doce do estoque.
+- Tira e confere numa instrução só (`UPDATE ... WHERE saldo >= quanto`): duas vendas ao mesmo tempo não conseguem, juntas, passar do que há.
+- Ingrediente continua podendo ficar negativo: a produção baixa a receita inteira mesmo quando a compra ainda não foi lançada, e travar ali impediria registrar um lote que existe de verdade.
+- A tela de venda também não deixa pôr no carrinho mais do que há pronto, e o doce que acabou aparece como "acabou".
 
 ---
 
