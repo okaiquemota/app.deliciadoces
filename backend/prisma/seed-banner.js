@@ -407,7 +407,7 @@ async function main() {
               : encomenda
                 ? um([50, 60, 80, 100])
                 : um([6, 10, 12, 15, 20, 25]);
-        // Não vende o que não fez: o saldo negativo pareceria defeito.
+        // Só vende o que há pronto (o sistema recusa o resto) e deixa sobra na prateleira.
         const qtd = Math.min(desejado, Math.floor(tem * 0.6));
         if (qtd >= 1) itens.push({ produtoId: produtos[nome].id, quantidade: qtd });
       }

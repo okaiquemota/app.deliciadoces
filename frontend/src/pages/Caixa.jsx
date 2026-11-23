@@ -691,8 +691,39 @@ function EditarVenda({ registro, aoVoltar, aoSalvar }) {
       atual.map((i, n) => (n === indice ? { ...i, [campo]: e.target.value } : i))
     );
 
+  /**
+   * Doce não sai do estoque além do que há pronto. Nesta venda, o que dá
+   * para usar é o estoque de agora MAIS o que ela mesma já levava: salvar
+   * devolve o antigo antes de tirar o novo. O servidor confere de novo;
+   * aqui é para avisar antes, dizendo qual doce e quanto há.
+   */
+  function semDoceBastante() {
+    const pedido = new Map();
+    for (const i of itens) {
+      if (!i.produtoId || !(Number(i.quantidade) > 0)) continue;
+      pedido.set(i.produtoId, (pedido.get(i.produtoId) ?? 0) + Number(i.quantidade));
+    }
+    for (const [produtoId, quer] of pedido) {
+      const p = catalogo.find((x) => x.id === produtoId);
+      if (!p) continue;
+      const jaLevava = registro.itens
+        .filter((i) => i.produtoId === produtoId)
+        .reduce((s, i) => s + Number(i.quantidade), 0);
+      const pode = Math.max(0, Number(p.quantidadeAtual)) + jaLevava;
+      if (quer > pode) {
+        return `Só há ${quantidade(pode)} ${p.nome} para esta venda. Registre a produção antes de vender mais.`;
+      }
+    }
+    return null;
+  }
+
   async function salvar(e) {
     e.preventDefault();
+    const falta = semDoceBastante();
+    if (falta) {
+      setErro(falta);
+      return;
+    }
     setSalvando(true);
     setErro('');
     try {

@@ -75,6 +75,58 @@ async function saldosDepois({ insumoId, produtoId }) {
   return new Map(linhas.map((l) => [l.id, Number((atual - Number(l.depois)).toFixed(3))]));
 }
 
+/**
+ * DOCE NÃO FICA COM SALDO NEGATIVO: não se vende o que não foi produzido.
+ *
+ * Antes era deliberado deixar passar (ver docs/REQUISITOS.md, 6.3): uma
+ * venda sem produção lançada levava o saldo abaixo de zero, como aviso de
+ * que faltava lançar. Na prática o número negativo confundia mais do que
+ * avisava, e a decisão mudou: o estoque de doces só sai do que existe.
+ * Para guardar o dinheiro de uma venda sem baixar estoque, existe a
+ * entrada avulsa.
+ *
+ * Tira e confere NUMA instrução só (`UPDATE ... WHERE saldo >= quanto`):
+ * duas vendas ao mesmo tempo não conseguem, juntas, passar do que há. O
+ * Postgres reavalia o WHERE na linha travada, então a segunda espera a
+ * primeira e vê o saldo já descontado. Sem linha atualizada, a transação
+ * inteira desfaz — a venda não fica gravada pela metade.
+ *
+ * Ingrediente continua podendo ficar negativo: a produção baixa a receita
+ * inteira mesmo quando a compra ainda não foi lançada, e travar ali
+ * impediria registrar um lote que existe de verdade.
+ */
+async function tirarDoce(tx, produtoId, quanto, motivo) {
+  const { count } = await tx.produto.updateMany({
+    where: { id: produtoId, quantidadeAtual: { gte: quanto } },
+    data: { quantidadeAtual: { decrement: quanto } },
+  });
+  if (count === 0) throw await faltaDeDoce(tx, produtoId, quanto, motivo);
+}
+
+/** A mensagem de quando não há doce bastante, dita pelo que se tentava fazer. */
+async function faltaDeDoce(tx, produtoId, pedido, motivo) {
+  const produto = await tx.produto.findUnique({
+    where: { id: produtoId },
+    select: { nome: true, quantidadeAtual: true },
+  });
+  const nome = produto?.nome ?? 'este doce';
+  const tem = Math.max(0, Number(produto?.quantidadeAtual ?? 0));
+  const numero = (n) => Number(n.toFixed(3)).toLocaleString('pt-BR');
+  const haPronto = tem > 0 ? `só há ${numero(tem)} pronto(s)` : 'não há nenhum pronto';
+
+  const mensagens = {
+    SAIDA_VENDA:
+      `Não dá para vender ${numero(pedido)} ${nome}: ${haPronto}. Registre a produção ` +
+      'antes — ou, para só guardar o dinheiro, lance como entrada avulsa.',
+    PERDA: `Não dá para dar perda de ${numero(pedido)} ${nome}: ${haPronto}.`,
+    AJUSTE: `A contagem não pode deixar ${nome} abaixo de zero: ${haPronto}.`,
+    ESTORNO_PRODUCAO:
+      `Não dá para desfazer este lote de ${nome}: parte dele já foi vendida ` +
+      `(${haPronto} no estoque). Cancele as vendas antes, se for o caso.`,
+  };
+  return new AppError(mensagens[motivo] ?? `${nome}: ${haPronto}.`, 422);
+}
+
 export const estoqueService = {
   /**
    * Registra uma movimentação e ajusta o saldo, na mesma transação.
@@ -144,6 +196,8 @@ export const estoqueService = {
         where: { id: insumoId },
         data: { quantidadeAtual: { increment: delta } },
       });
+    } else if (delta < 0) {
+      await tirarDoce(tx, produtoId, -delta, tipo);
     } else {
       await tx.produto.update({
         where: { id: produtoId },
@@ -176,6 +230,10 @@ export const estoqueService = {
           where: { id: mov.insumoId },
           data: { quantidadeAtual: { decrement: delta } },
         });
+      } else if (mov.produtoId && delta > 0) {
+        // Desfazer uma entrada (o lote de produção) tira doce do estoque:
+        // não pode tirar o que já foi vendido.
+        await tirarDoce(tx, mov.produtoId, delta, 'ESTORNO_PRODUCAO');
       } else if (mov.produtoId) {
         await tx.produto.update({
           where: { id: mov.produtoId },

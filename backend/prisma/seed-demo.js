@@ -192,13 +192,8 @@ async function main() {
   let totalVendas = 0;
 
   /**
-   * A quantidade vendida respeita o que existe em estoque.
-   *
-   * O sistema PERMITE vender mais do que tem (decisão a confirmar com a
-   * cliente — ela pode preferir ser avisada em vez de bloqueada). Mas numa
-   * demonstração o saldo negativo parece defeito, então aqui limitamos ao
-   * disponível, que é como o negócio funciona de verdade: ela não entrega
-   * um doce que não fez.
+   * A quantidade vendida respeita o que existe em estoque: o sistema recusa
+   * vender doce que não foi produzido (ver docs/REQUISITOS.md, 6.3).
    */
   async function disponivel(nome) {
     const p = await prisma.produto.findUnique({ where: { id: produtos[nome].id } });
