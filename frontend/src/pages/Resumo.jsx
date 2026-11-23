@@ -128,7 +128,9 @@ export function Resumo() {
       )}
 
       {!resumo ? (
-        <p className="extrato__vazio">Carregando...</p>
+        <p className="extrato__vazio" role="status">
+          Carregando…
+        </p>
       ) : (
         // Recarregando, a tela fica onde estava, apagada — sem esqueleto
         // nem salto: o número novo entra no lugar do velho.

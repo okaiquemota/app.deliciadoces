@@ -99,7 +99,7 @@ export function porDia(lista) {
  * Um número do bloco de resumo cinza, com o rótulo pequeno em cima.
  * `tom`: 'entrada' (verde, o que entra) ou 'alerta' (vermelho, problema).
  */
-export function Total({ rotulo, valor, tom, nota }) {
+export function Total({ rotulo, valor, tom, nota, carregando = false }) {
   return (
     <div className="extrato__total">
       <span className="extrato__total-rotulo">{rotulo}</span>
@@ -108,10 +108,25 @@ export function Total({ rotulo, valor, tom, nota }) {
           tom ? `extrato__total-valor extrato__total-valor--${tom}` : 'extrato__total-valor'
         }
       >
-        {valor}
+        {carregando ? <ValorCarregando /> : valor}
       </span>
       {nota && <span className="extrato__total-nota">{nota}</span>}
     </div>
+  );
+}
+
+/**
+ * O lugar de um número do resumo enquanto a lista carrega: um traço do
+ * esqueleto, e não "R$ 0,00". Por um instante, um caixa zerado que não é
+ * verdade aparecia na tela — o tipo de susto que faz a dona ligar para
+ * perguntar o que aconteceu com o dinheiro.
+ */
+export function ValorCarregando() {
+  return (
+    <>
+      <span className="esqueleto__bloco esqueleto__bloco--total" aria-hidden="true" />
+      <span className="so-leitor">carregando</span>
+    </>
   );
 }
 

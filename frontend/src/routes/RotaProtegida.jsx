@@ -9,11 +9,32 @@ import { useAuth } from '../contexts/AuthContext.jsx';
  * telas que resultariam em 401.
  */
 export function RotaProtegida() {
-  const { autenticado, carregando } = useAuth();
+  const { autenticado, carregando, semConexao, tentarDeNovo } = useAuth();
   const localizacao = useLocation();
 
   if (carregando) {
-    return <div className="carregando">Carregando...</div>;
+    return (
+      <div className="carregando" role="status">
+        Carregando…
+      </div>
+    );
+  }
+
+  // A sessão existe, mas o servidor não respondeu: em vez de mandar para o
+  // login (e fazer digitar a senha de novo), explica e oferece tentar.
+  if (semConexao) {
+    return (
+      <main className="pagina-erro">
+        <h1 className="pagina-erro__titulo">Sem conexão com o sistema</h1>
+        <p className="pagina-erro__texto">
+          Confira a internet do aparelho. Se ela estiver funcionando, o sistema pode estar fora do
+          ar por alguns minutos. Seus dados estão guardados.
+        </p>
+        <button type="button" className="botao botao--primario botao--auto" onClick={tentarDeNovo}>
+          Tentar de novo
+        </button>
+      </main>
+    );
   }
 
   if (!autenticado) {

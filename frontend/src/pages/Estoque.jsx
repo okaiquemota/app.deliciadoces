@@ -19,6 +19,7 @@ import {
 import { estoque, insumos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { data as formatarData, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
+import { Esqueleto } from '../components/Esqueleto.jsx';
 
 const UNIDADES = Object.entries(UNIDADE_CURTA).map(([valor, rotulo]) => ({
   valor,
@@ -167,18 +168,25 @@ export function Estoque() {
       )}
 
       <div className={admin ? 'extrato__resumo' : 'extrato__resumo extrato__resumo--dois'}>
-        <Total rotulo="Ingredientes" valor={todos.length} />
+        <Total carregando={lista === null} rotulo="Ingredientes" valor={todos.length} />
         <Total
+          carregando={lista === null}
           rotulo="Pedem atenção"
           valor={quantosAtencao}
           tom={quantosAtencao ? 'alerta' : undefined}
         />
-        {admin && <Total rotulo="Valor em estoque" valor={moeda(valorEmEstoque)} />}
+        {admin && (
+          <Total
+            carregando={lista === null}
+            rotulo="Valor em estoque"
+            valor={moeda(valorEmEstoque)}
+          />
+        )}
       </div>
 
       <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
         {lista === null ? (
-          <p className="extrato__vazio">Carregando...</p>
+          <Esqueleto linhas={5} />
         ) : todos.length === 0 ? (
           <div className="extrato__vazio">
             <p>Nenhum ingrediente cadastrado ainda.</p>
