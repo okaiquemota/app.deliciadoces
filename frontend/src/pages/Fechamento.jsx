@@ -150,7 +150,9 @@ export function Fechamento() {
       )}
 
       {!previa ? (
-        <p className="extrato__vazio">Carregando...</p>
+        <p className="extrato__vazio" role="status">
+          Carregando…
+        </p>
       ) : (
         <div className={atualizando ? 'fechar conteudo--atualizando' : 'fechar'}>
           <div className="fechar__principal">

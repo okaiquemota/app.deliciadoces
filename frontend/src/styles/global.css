@@ -162,9 +162,88 @@
      A Apple usa canto GRANDE e crescente com a superfície: controle
      pequeno 8, cartão 12, folha 18. Canto pequeno demais num cartão
      grande é o que dá aparência de planilha. */
+  --r-0: 4px; /* traço, barra de gráfico, selo miúdo */
   --r-1: 8px; /* botão, campo, item de menu, chip */
-  --r-2: 12px; /* cartão, painel, tabela */
+  --r-2: 12px; /* cartão, painel, tabela, linha de lista */
   --r-3: 18px; /* modal e login, que são "folhas" */
+  --r-4: 24px; /* a folha grande do login no celular */
+  --r-pilula: 999px; /* busca, "+ Novo", botões redondos */
+
+  /* ----- Espaço ----------------------------------------------------
+     Uma escala só, em múltiplos de 4px, com meio-passo de 2px abaixo de
+     16 para o ajuste fino de controle (o respiro de um ícone, o vão entre
+     chips). Nenhum espaçamento da folha fica fora dela: antes eram 30
+     medidas diferentes, com 5, 7, 9, 11, 13, 18 e 22px soltos.
+
+     Uso, por tamanho:
+       2–6   dentro de um controle (ícone ↔ texto, rótulo ↔ campo)
+       8–14  entre controles irmãos e o recheio de botões e linhas
+       16–24 recheio de cartão e janela, vão entre blocos da tela
+       28–48 respiro entre seções e as margens da página */
+  --esp-2: 2px;
+  --esp-4: 4px;
+  --esp-6: 6px;
+  --esp-8: 8px;
+  --esp-10: 10px;
+  --esp-12: 12px;
+  --esp-14: 14px;
+  --esp-16: 16px;
+  --esp-20: 20px;
+  --esp-24: 24px;
+  --esp-28: 28px;
+  --esp-32: 32px;
+  --esp-40: 40px;
+  --esp-48: 48px;
+
+  /* ----- Tamanho de letra -------------------------------------------
+     Onze degraus (eram 22 valores). O menor é 12px: os rótulos em
+     versalete de 11px subiram, porque a dona do sistema lê no celular, de
+     pé, no balcão. Campo de formulário fica em 16px, que é o mínimo para o
+     iPhone não dar zoom na página ao tocar no campo.
+       12 legenda, versalete, eixo de gráfico
+       13 detalhe de linha, rodapé de cartão
+       14 rótulo de campo, botão secundário, chip
+       15 texto corrido (o corpo da página)
+       16 campo de formulário, botão principal
+       17 título de bloco no celular, total de destaque
+       20 título de bloco, valor de cartão
+       24 número de resumo
+       28 título da página
+       32 número grande (lucro, esperado na gaveta)
+       40 valor digitado (o "R$ 0,00" da janela) */
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-15: 0.9375rem;
+  --fs-16: 1rem;
+  --fs-17: 1.0625rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-28: 1.75rem;
+  --fs-32: 2rem;
+  --fs-40: 2.5rem;
+
+  /* ----- Duração ----------------------------------------------------
+     Quatro tempos (eram 13): 100 para responder a um toque (hover,
+     apertar), 200 para trocar de estado, 300 para algo entrar na tela,
+     400 para o que atravessa a tela (o marcador do menu). Mais lento que
+     isso a interface parece pesada; mais rápido, o olho não acompanha. */
+  --dur-1: 100ms;
+  --dur-2: 200ms;
+  --dur-3: 300ms;
+  --dur-4: 400ms;
+
+  /* ----- Altura de controle -----------------------------------------
+     Três alturas para tudo que se toca. Com dedo (pointer: coarse) nada
+     fica abaixo de 44px — ver a regra no fim da folha. */
+  --altura-p: 36px; /* ícone na barra, atalho de valor, botão de texto */
+  --altura-m: 40px; /* chip, botão de linha, "+ Novo", selo */
+  --altura-g: 48px; /* busca, botão principal de formulário */
+
+  /* ----- Largura útil do conteúdo -----------------------------------
+     Num monitor largo a lista não pode ir de ponta a ponta: o nome do
+     doce ficava a mais de 2000px do valor dele, e o olho perdia a linha. */
+  --conteudo-max: 1200px;
 
   /* ----- Tipografia -------------------------------------------------
      A escala de texto da Apple aperta o espacejamento conforme o corpo
@@ -331,7 +410,7 @@ body {
   /* O anel de quem usa teclado, no rosa da marca: 3,9:1 no branco. */
   outline: 2.5px solid var(--marca-rosa);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: var(--r-1);
 }
 
 /* =====================================================================
@@ -357,7 +436,7 @@ body {
   height: 100dvh;
   overflow: hidden;
   /* Recolher e abrir o menu: a coluna encolhe, não pula. */
-  transition: grid-template-columns 280ms var(--curva-ios);
+  transition: grid-template-columns var(--dur-3) var(--curva-ios);
 }
 
 /* Topo e lado formam juntos a coluna da esquerda: mesma superfície branca
@@ -374,8 +453,8 @@ body {
   grid-area: topo;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px 10px 8px;
+  gap: var(--esp-4);
+  padding: var(--esp-14) var(--esp-10) var(--esp-8);
 }
 
 .app__lado {
@@ -390,7 +469,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: var(--esp-6);
 }
 
 .app__recolher {
@@ -399,8 +478,8 @@ body {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: var(--altura-p);
+  height: var(--altura-p);
   padding: 0;
   border: none;
   border-radius: var(--r-1);
@@ -440,8 +519,44 @@ body {
   padding: var(--gutter);
 }
 
+/* Recebe o foco pelo "Pular para o conteúdo", mas não é um controle. */
+.app__conteudo:focus {
+  outline: none;
+}
+
 .app__conteudo > * > *:last-child {
   margin-bottom: 0;
+}
+
+/* Largura útil. Até ~1450px de tela nada muda; num monitor largo a tela
+   para em 1200px, no centro, em vez de levar o nome de um doce para uma
+   ponta e o valor dele para a outra. */
+.app__conteudo > :is(.extrato, .inicio, .pagina-lisa, .perfil) {
+  width: 100%;
+  max-width: var(--conteudo-max);
+  margin-inline: auto;
+}
+
+/* "Pular para o conteúdo": o primeiro Tab de quem usa teclado. Fica fora
+   da tela até receber o foco; aí aparece no alto, por cima de tudo, e
+   leva direto à tela, sem passar pelos dez itens do menu. */
+.pular {
+  position: fixed;
+  top: var(--esp-8);
+  left: var(--esp-8);
+  z-index: 100;
+  padding: var(--esp-10) var(--esp-16);
+  border-radius: var(--r-1);
+  background: var(--acao);
+  color: var(--c-0);
+  font-size: var(--fs-15);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.pular:focus-visible {
+  transform: none;
 }
 
 /* ---------- Navegação ---------- */
@@ -452,15 +567,15 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px 10px;
+  gap: var(--esp-2);
+  padding: var(--esp-4) var(--esp-10);
 }
 
 .nav__grupo {
-  margin: 14px 0 4px;
-  padding: 0 10px;
+  margin: var(--esp-14) 0 var(--esp-4);
+  padding: 0 var(--esp-10);
   letter-spacing: var(--tr-miudo);
-  font-size: 0.6875rem;
+  font-size: var(--fs-12);
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -470,14 +585,14 @@ body {
 .nav__item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: var(--esp-10);
+  padding: var(--esp-8) var(--esp-10);
   border-radius: var(--r-1);
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 450;
   text-decoration: none;
-  transition: background-color 90ms ease-out;
+  transition: background-color var(--dur-1) ease-out;
 }
 
 .nav__item:hover {
@@ -527,9 +642,9 @@ body {
    quicar. */
 .nav__marca--desliza {
   transition:
-    transform 360ms var(--curva-ios),
-    width 360ms var(--curva-ios),
-    height 360ms var(--curva-ios);
+    transform var(--dur-4) var(--curva-ios),
+    width var(--dur-4) var(--curva-ios),
+    height var(--dur-4) var(--curva-ios);
 }
 
 .nav__item .icone {
@@ -555,11 +670,11 @@ body {
   flex: 0 0 auto;
   margin-left: auto;
   min-width: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
+  padding: 0 var(--esp-6);
+  border-radius: var(--r-pilula);
   background-color: var(--aviso);
   color: var(--c-0);
-  font-size: 0.6875rem;
+  font-size: var(--fs-12);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -570,9 +685,9 @@ body {
    responde sozinha a pergunta que mais aparece em suporte — "qual versão
    você está usando?". */
 .app__versao {
-  padding: 10px 18px 14px;
+  padding: var(--esp-10) var(--esp-16) var(--esp-14);
   color: var(--texto-suave);
-  font-size: 0.6875rem;
+  font-size: var(--fs-12);
   letter-spacing: var(--tr-miudo);
 }
 
@@ -581,7 +696,7 @@ body {
 .app__conta {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--esp-4);
 }
 
 /* Só o nome, sem a inicial num quadrado ao lado. O quadrado imitava uma
@@ -592,10 +707,10 @@ body {
   align-items: center;
   flex: 1 1 auto;
   min-width: 0;
-  padding: 7px 8px;
+  padding: var(--esp-8) var(--esp-8);
   border-radius: var(--r-1);
   color: var(--texto);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 500;
   text-decoration: none;
 }
@@ -616,8 +731,8 @@ body {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
+  width: var(--altura-p);
+  height: var(--altura-p);
   padding: 0;
   border: none;
   border-radius: var(--r-1);
@@ -658,16 +773,16 @@ body {
     top: 50%;
     left: calc(100% + 20px);
     z-index: 5;
-    padding: 5px 10px;
-    border-radius: 7px;
+    padding: var(--esp-4) var(--esp-10);
+    border-radius: var(--r-1);
     background-color: var(--c-900);
     color: var(--c-0);
-    font-size: 0.8125rem;
+    font-size: var(--fs-13);
     font-weight: 500;
     white-space: nowrap;
     transform: translateY(-50%);
     pointer-events: none;
-    animation: aparece 150ms ease-out;
+    animation: aparece var(--dur-2) ease-out;
   }
 
   .app--recolhida {
@@ -684,21 +799,21 @@ body {
 
   .app--recolhida .app__topo {
     align-items: center;
-    padding: 14px 8px 8px;
+    padding: var(--esp-14) var(--esp-8) var(--esp-8);
   }
 
   .app--recolhida .app__marca-linha {
     flex-direction: column;
-    gap: 6px;
+    gap: var(--esp-6);
   }
 
   .app--recolhida .app__topo .marca {
-    padding: 2px 0 0;
+    padding: var(--esp-2) 0 0;
   }
 
   .app--recolhida .app__conta {
     flex-direction: column;
-    gap: 2px;
+    gap: var(--esp-2);
   }
 
   .app--recolhida .conta-link {
@@ -716,14 +831,14 @@ body {
 
   .app--recolhida .nav {
     overflow: visible;
-    padding: 4px 12px;
+    padding: var(--esp-4) var(--esp-12);
   }
 
   /* O cabeçalho de grupo vira um fio: a divisão entre o expediente e o
      fim do dia continua à vista, sem palavra. */
   .app--recolhida .nav__grupo {
     height: 1px;
-    margin: 10px 6px;
+    margin: var(--esp-10) var(--esp-6);
     padding: 0;
     overflow: hidden;
     background-color: var(--borda);
@@ -732,7 +847,7 @@ body {
 
   .app--recolhida .nav__item {
     justify-content: center;
-    padding: 10px 0;
+    padding: var(--esp-10) 0;
   }
 
   /* Escondidos à vista, mas não do leitor de tela — e, ao apontar, viram
@@ -754,16 +869,16 @@ body {
     z-index: 5;
     width: auto;
     height: auto;
-    padding: 5px 10px;
-    border-radius: 7px;
+    padding: var(--esp-4) var(--esp-10);
+    border-radius: var(--r-1);
     background-color: var(--c-900);
     color: var(--c-0);
-    font-size: 0.8125rem;
+    font-size: var(--fs-13);
     font-weight: 500;
     clip-path: none;
     transform: translateY(-50%);
     pointer-events: none;
-    animation: aparece 150ms ease-out;
+    animation: aparece var(--dur-2) ease-out;
   }
 
   /* O número de pendências vira um ponto no canto do ícone, como na
@@ -774,7 +889,7 @@ body {
     left: 50%;
     min-width: 8px;
     height: 8px;
-    margin-left: 6px;
+    margin-left: var(--esp-6);
     padding: 0;
     font-size: 0;
     line-height: 0;
@@ -808,21 +923,21 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 9px 14px;
+  gap: var(--esp-8);
+  padding: var(--esp-8) var(--esp-14);
   border: 1px solid var(--borda);
   border-radius: var(--r-1);
   background-color: var(--superficie);
   color: var(--texto);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 500;
   line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
   transition:
-    background-color 90ms ease-out,
-    border-color 90ms ease-out;
+    background-color var(--dur-1) ease-out,
+    border-color var(--dur-1) ease-out;
 }
 
 .botao:hover:not(:disabled) {
@@ -858,11 +973,11 @@ body {
 }
 
 .botao--texto {
-  padding: 5px 8px;
+  padding: var(--esp-4) var(--esp-8);
   border-color: transparent;
   background: none;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
 }
 
 .botao--texto:hover:not(:disabled) {
@@ -887,26 +1002,26 @@ body {
 
 .campo {
   display: block;
-  margin-bottom: 14px;
+  margin-bottom: var(--esp-14);
 }
 
 .campo__rotulo {
   display: block;
-  margin-bottom: 5px;
-  font-size: 0.8125rem;
+  margin-bottom: var(--esp-4);
+  font-size: var(--fs-13);
   font-weight: 500;
   color: var(--c-700);
 }
 
 .campo__entrada {
   width: 100%;
-  padding: 9px 11px;
+  padding: var(--esp-8) var(--esp-12);
   border: 1px solid var(--borda-forte);
   border-radius: var(--r-1);
   background-color: var(--superficie);
   color: var(--texto);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 /* Campo de data no Safari do iPhone.
@@ -943,15 +1058,15 @@ input[type='date']::-webkit-date-and-time-value {
 
 .campo__dica {
   display: block;
-  margin-top: 5px;
+  margin-top: var(--esp-4);
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
 }
 
 .form__linha {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: var(--esp-12);
 }
 
 .form__linha > .campo {
@@ -963,7 +1078,7 @@ input[type='date']::-webkit-date-and-time-value {
    ===================================================================== */
 
 .cartao {
-  padding: 20px;
+  padding: var(--esp-20);
   border: 1px solid var(--borda);
   border-radius: var(--r-2);
   background-color: var(--superficie);
@@ -971,8 +1086,8 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .cartao__titulo {
-  margin: 0 0 4px;
-  font-size: 1.0625rem;
+  margin: 0 0 var(--esp-4);
+  font-size: var(--fs-17);
   font-weight: 600;
   letter-spacing: var(--tr-titulo);
 }
@@ -987,8 +1102,8 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .cartao__subtitulo {
-  margin: 20px 0 8px;
-  font-size: 0.6875rem;
+  margin: var(--esp-20) 0 var(--esp-8);
+  font-size: var(--fs-12);
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -998,13 +1113,13 @@ input[type='date']::-webkit-date-and-time-value {
 .cartao__texto {
   margin: 0;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
 }
 
 .cartao__lista {
   margin: 0;
-  padding-left: 18px;
-  font-size: 0.875rem;
+  padding-left: var(--esp-16);
+  font-size: var(--fs-14);
 }
 
 /* Texto em --c-700 e não no cinza secundário: sobre o realce, o
@@ -1012,12 +1127,12 @@ input[type='date']::-webkit-date-and-time-value {
    8,50, e a caixa continua lendo como nota de rodapé pelo corpo menor,
    que é o que a distingue, não a cor apagada. */
 .cartao__aviso {
-  margin: 14px 0 0;
-  padding: 9px 11px;
+  margin: var(--esp-14) 0 0;
+  padding: var(--esp-8) var(--esp-12);
   border-radius: var(--r-1);
   background-color: var(--c-100);
   color: var(--c-700);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
 }
 
 /* ---------- Minha conta, no desenho das outras telas
@@ -1034,48 +1149,48 @@ input[type='date']::-webkit-date-and-time-value {
 .perfil {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: var(--esp-24);
 }
 
 .perfil__colunas,
 .perfil__coluna {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: var(--esp-24);
 }
 
 .perfil__grupo {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
 }
 
 .perfil__lista {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
 }
 
 .perfil__grupo > .bloco__titulo {
-  margin-bottom: 6px;
+  margin-bottom: var(--esp-6);
 }
 
 .perfil__item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--esp-14);
   width: calc(100% + 24px);
   min-height: 70px;
   margin: 0 -12px;
-  padding: 10px 12px;
+  padding: var(--esp-10) var(--esp-12);
   border: none;
-  border-radius: 14px;
+  border-radius: var(--r-2);
   background: none;
   color: var(--texto);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color 90ms ease-out;
+  transition: background-color var(--dur-1) ease-out;
 }
 
 /* Só onde existe mouse: no toque, o realce ficaria preso na linha tocada
@@ -1090,13 +1205,13 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
   min-width: 0;
 }
 
 .perfil__valor {
   overflow: hidden;
-  font-size: 1rem;
+  font-size: var(--fs-16);
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1104,7 +1219,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .perfil__rotulo {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
 }
 
 .perfil__seta {
@@ -1126,22 +1241,22 @@ input[type='date']::-webkit-date-and-time-value {
 
 .perfil__carregando,
 .alerta.perfil__alerta {
-  margin: 4px 0 8px;
+  margin: var(--esp-4) 0 var(--esp-8);
 }
 
 /* O seletor de tema logo abaixo do título do grupo. */
 .perfil__aparencia {
-  margin-top: 4px;
+  margin-top: var(--esp-4);
 }
 
 .perfil__carregando {
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 /* A explicação do link de acesso, com folga antes do campo do link. */
 .lancamento__pergunta.perfil__explica {
-  margin-bottom: 16px;
+  margin-bottom: var(--esp-16);
 }
 
 /* "Criar uma nova", na linha da senha: um link no lugar do valor, rosa
@@ -1157,8 +1272,8 @@ input[type='date']::-webkit-date-and-time-value {
 .modal__acoes {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 18px;
+  gap: var(--esp-8);
+  margin-top: var(--esp-20);
 }
 
 /* Excluir de um lado, Editar do outro: a ação que destrói fica longe da
@@ -1200,7 +1315,7 @@ input[type='date']::-webkit-date-and-time-value {
 .pagina-lisa {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--esp-14);
 }
 
 .pagina-lisa > * {
@@ -1214,13 +1329,13 @@ input[type='date']::-webkit-date-and-time-value {
 .cabeca {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
 }
 
 .cabeca__titulo {
   margin: 0;
   color: var(--texto);
-  font-size: 1.875rem;
+  font-size: var(--fs-28);
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.15;
@@ -1245,7 +1360,7 @@ input[type='date']::-webkit-date-and-time-value {
 .cabeca__sub {
   margin: 0;
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 .cabeca__sub::first-letter {
@@ -1256,7 +1371,7 @@ input[type='date']::-webkit-date-and-time-value {
 .cabeca__textos {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
   min-width: 0;
 }
 
@@ -1310,7 +1425,7 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--esp-14);
   height: 100%;
 }
 
@@ -1322,12 +1437,12 @@ input[type='date']::-webkit-date-and-time-value {
 /* Busca: uma pílula com contorno e a lupa dentro, na largura toda. */
 .extrato__busca {
   width: 100%;
-  min-height: 46px;
-  padding: 10px 18px 10px 48px;
+  min-height: var(--altura-g);
+  padding: var(--esp-10) var(--esp-16) var(--esp-10) var(--esp-48);
   border: 1.5px solid var(--borda-forte);
-  border-radius: 999px;
+  border-radius: var(--r-pilula);
   background: var(--superficie) var(--icone-busca) no-repeat 18px center / 20px;
-  font-size: 1rem;
+  font-size: var(--fs-16);
 }
 
 .extrato__busca:focus {
@@ -1348,9 +1463,9 @@ input[type='date']::-webkit-date-and-time-value {
 
 .extrato__chips {
   display: flex;
-  gap: 8px;
+  gap: var(--esp-8);
   margin: -4px 0;
-  padding: 4px 0;
+  padding: var(--esp-4) 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -1364,21 +1479,21 @@ input[type='date']::-webkit-date-and-time-value {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 14px;
+  gap: var(--esp-8);
+  height: var(--altura-m);
+  padding: 0 var(--esp-14);
   border: 1.5px solid var(--borda-forte);
-  border-radius: 12px;
+  border-radius: var(--r-2);
   background-color: var(--superficie);
   color: var(--texto);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 90ms ease-out,
-    border-color 90ms ease-out;
+    background-color var(--dur-1) ease-out,
+    border-color var(--dur-1) ease-out;
 }
 
 /* Moldura invisível: o desenho tem 38px, o alvo do dedo 46. */
@@ -1425,15 +1540,15 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--esp-12);
   min-height: 52px;
-  padding: 12px 2px;
+  padding: var(--esp-12) var(--esp-2);
   border: none;
   border-bottom: 1px solid var(--c-100);
   background: none;
   color: var(--texto);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--fs-16);
   text-align: left;
   cursor: pointer;
 }
@@ -1455,17 +1570,17 @@ input[type='date']::-webkit-date-and-time-value {
    Doces e Ingredientes, com o cabeçalho pequeno de seção dos Ajustes do
    iPhone. Cada opção diz quanto tem — é o que ela confere ao escolher. */
 .opcoes__busca {
-  margin-bottom: 6px;
+  margin-bottom: var(--esp-6);
 }
 
 .opcoes__bloco {
-  margin-top: 16px;
+  margin-top: var(--esp-16);
 }
 
 .opcoes__grupo {
-  margin: 0 0 2px;
+  margin: 0 0 var(--esp-2);
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -1474,13 +1589,13 @@ input[type='date']::-webkit-date-and-time-value {
 .opcao__textos {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
   min-width: 0;
 }
 
 .opcao__nota {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 400;
 }
 
@@ -1491,17 +1606,17 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato__datas {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 14px;
+  gap: var(--esp-10);
+  margin-top: var(--esp-14);
 }
 
 .extrato__data {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--esp-12);
   min-width: 0;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 500;
 }
 
@@ -1524,8 +1639,8 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato__resumo {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding: 14px 18px;
+  gap: var(--esp-12);
+  padding: var(--esp-14) var(--esp-16);
   border: 1px solid var(--borda-casa);
   border-radius: var(--r-2);
   background: var(--degrade-suave);
@@ -1540,19 +1655,19 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato__total {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
   min-width: 0;
 }
 
 .extrato__total-rotulo {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 500;
 }
 
 .extrato__total-valor {
   overflow: hidden;
-  font-size: 1.25rem;
+  font-size: var(--fs-20);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tr-numero);
@@ -1585,20 +1700,96 @@ input[type='date']::-webkit-date-and-time-value {
   flex: 1 1 auto;
   min-height: 160px;
   margin: 0 -12px;
-  padding: 0 12px;
+  padding: 0 var(--esp-12);
   overflow-y: auto;
 }
 
 .extrato__vazio {
   margin: 0;
-  padding: 40px 0;
+  padding: var(--esp-40) 0;
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   text-align: center;
 }
 
+/* ---------- Carregando ----------
+
+   O esqueleto tem a forma da linha que vai chegar (o círculo, duas
+   linhas de texto, o valor), no lugar de um "Carregando..." solto: a tela
+   não pula quando os dados chegam e já mostra onde cada coisa vai ficar.
+   O brilho que passa é só um aceno de que algo acontece; quem pediu menos
+   movimento ao aparelho vê o esqueleto parado. */
+.esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-8);
+  margin: 0;
+  padding: var(--esp-8) 0;
+  list-style: none;
+}
+
+.esqueleto__linha {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-14);
+  padding: var(--esp-6) 0;
+}
+
+.esqueleto__bloco {
+  flex: 0 0 auto;
+  border-radius: var(--r-0);
+  background: var(--c-100);
+  animation: esqueleto-brilho 1.4s ease-in-out infinite;
+}
+
+.esqueleto__bloco--circulo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+}
+
+.esqueleto__textos {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--esp-8);
+  min-width: 0;
+}
+
+.esqueleto__bloco--titulo {
+  width: 55%;
+  height: 14px;
+}
+
+.esqueleto__bloco--detalhe {
+  width: 35%;
+  height: 11px;
+}
+
+.esqueleto__bloco--total {
+  display: inline-block;
+  width: 5.5em;
+  height: 0.8em;
+  vertical-align: middle;
+}
+
+.esqueleto__bloco--valor {
+  width: 72px;
+  height: 14px;
+}
+
+@keyframes esqueleto-brilho {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
 .extrato__dia + .extrato__dia {
-  margin-top: 8px;
+  margin-top: var(--esp-8);
 }
 
 /* O cabeçalho do dia gruda no alto enquanto a lista do dia passa por
@@ -1611,19 +1802,19 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--esp-12);
   margin: 0 -12px;
-  padding: 14px 12px 6px;
+  padding: var(--esp-14) var(--esp-12) var(--esp-6);
   background-color: var(--superficie);
   color: var(--texto);
-  font-size: 1.0625rem;
+  font-size: var(--fs-17);
   font-weight: 700;
   letter-spacing: var(--tr-titulo);
 }
 
 .extrato__dia-saldo {
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
@@ -1633,11 +1824,11 @@ input[type='date']::-webkit-date-and-time-value {
 /* A contagem de um grupo ("Pede atenção 3"): uma pílula rosa. */
 .contagem {
   min-width: 24px;
-  padding: 1px 8px;
-  border-radius: 999px;
+  padding: 1px var(--esp-8);
+  border-radius: var(--r-pilula);
   background-color: var(--marca-rosa-bruma);
   color: var(--marca-rosa-escuro);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -1652,19 +1843,19 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato__item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--esp-14);
   width: calc(100% + 24px);
   min-height: 70px;
   margin: 0 -12px;
-  padding: 10px 12px;
+  padding: var(--esp-10) var(--esp-12);
   border: none;
-  border-radius: 14px;
+  border-radius: var(--r-2);
   background: none;
   color: var(--texto);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color 90ms ease-out;
+  transition: background-color var(--dur-1) ease-out;
 }
 
 /* Só onde existe mouse: no toque, o realce ficaria preso na linha
@@ -1679,7 +1870,7 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--esp-2);
   min-width: 0;
 }
 
@@ -1689,7 +1880,7 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato__titulo {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 1rem;
+  font-size: var(--fs-16);
   font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -1701,7 +1892,7 @@ input[type='date']::-webkit-date-and-time-value {
 .extrato__detalhe {
   overflow: hidden;
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1712,11 +1903,11 @@ input[type='date']::-webkit-date-and-time-value {
   flex: 0 0 auto;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: var(--esp-2);
 }
 
 .extrato__valor {
-  font-size: 1rem;
+  font-size: var(--fs-16);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1724,7 +1915,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .extrato__hora {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1753,7 +1944,7 @@ input[type='date']::-webkit-date-and-time-value {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--esp-12);
 }
 
 /* O botão de cadastrar é uma pílula preta, a ação primária da tela. No
@@ -1763,16 +1954,16 @@ input[type='date']::-webkit-date-and-time-value {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 6px;
-  height: 40px;
-  padding: 0 16px 0 12px;
+  gap: var(--esp-6);
+  height: var(--altura-m);
+  padding: 0 var(--esp-16) 0 var(--esp-12);
   border: none;
-  border-radius: 999px;
+  border-radius: var(--r-pilula);
   background: var(--degrade-acao);
   box-shadow: var(--sombra-acao);
   color: var(--sobre-rosa);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -1796,7 +1987,7 @@ input[type='date']::-webkit-date-and-time-value {
 .item-linha {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--esp-8);
 }
 
 .item-linha > .extrato__item {
@@ -1812,15 +2003,15 @@ input[type='date']::-webkit-date-and-time-value {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 14px 0 10px;
+  gap: var(--esp-6);
+  height: var(--altura-m);
+  padding: 0 var(--esp-14) 0 var(--esp-10);
   border: 1.5px solid var(--borda-forte);
-  border-radius: 999px;
+  border-radius: var(--r-pilula);
   background-color: var(--superficie);
   color: var(--texto);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -1876,7 +2067,7 @@ input[type='date']::-webkit-date-and-time-value {
    receita, "só 2 lata — o resto vence depois". */
 .lancamento__nota {
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 400;
 }
 
@@ -1885,11 +2076,11 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: var(--esp-4);
   min-height: 44px;
-  margin-top: 6px;
+  margin-top: var(--esp-6);
   color: var(--marca-rosa-texto);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 600;
   text-decoration: none;
 }
@@ -1904,12 +2095,12 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* Lista vazia com o convite para cadastrar. */
 .extrato__vazio > p {
-  margin: 0 0 14px;
+  margin: 0 0 var(--esp-14);
 }
 
 @media (max-width: 560px) {
   .cabeca__novo {
-    padding-right: 14px;
+    padding-right: var(--esp-14);
   }
 
   /* No celular o botão da linha vira só o "+", redondo: com o rótulo,
@@ -1937,9 +2128,9 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--esp-16);
   min-height: 44px;
-  margin: 4px 0 14px;
+  margin: var(--esp-4) 0 var(--esp-14);
   cursor: pointer;
 }
 
@@ -1949,12 +2140,12 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .interruptor__rotulo {
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 500;
 }
 
 .interruptor .campo__dica {
-  margin-top: 2px;
+  margin-top: var(--esp-2);
 }
 
 /* A chave do iPhone: trilho de 51x31, bolinha branca que desliza. O
@@ -1966,14 +2157,14 @@ input[type='date']::-webkit-date-and-time-value {
   width: 51px;
   height: 31px;
   margin: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pilula);
   background-color: var(--c-100);
   box-shadow: inset 0 0 0 1.5px var(--c-400);
   cursor: pointer;
   appearance: none;
   transition:
-    background-color 200ms var(--curva-entra),
-    box-shadow 200ms var(--curva-entra);
+    background-color var(--dur-2) var(--curva-entra),
+    box-shadow var(--dur-2) var(--curva-entra);
 }
 
 .interruptor input::after {
@@ -1988,7 +2179,7 @@ input[type='date']::-webkit-date-and-time-value {
   box-shadow:
     0 3px 8px rgb(0 0 0 / 0.15),
     0 1px 1px rgb(0 0 0 / 0.16);
-  transition: transform 260ms var(--curva-ios);
+  transition: transform var(--dur-3) var(--curva-ios);
 }
 
 .interruptor input:checked {
@@ -2011,15 +2202,15 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px 0 18px;
+  gap: var(--esp-4);
+  padding: var(--esp-4) 0 var(--esp-16);
   border-bottom: 1px solid var(--borda);
   text-align: center;
 }
 
 .lancamento__valor {
   margin: 0;
-  font-size: 2rem;
+  font-size: var(--fs-32);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tr-numero);
@@ -2029,11 +2220,11 @@ input[type='date']::-webkit-date-and-time-value {
 .lancamento__quando {
   margin: 0;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
 }
 
 .lancamento .etiqueta {
-  margin-top: 4px;
+  margin-top: var(--esp-4);
 }
 
 .lancamento__dados {
@@ -2043,10 +2234,10 @@ input[type='date']::-webkit-date-and-time-value {
 .lancamento__dados > div {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
-  padding: 11px 0;
+  gap: var(--esp-16);
+  padding: var(--esp-12) 0;
   border-bottom: 1px solid var(--c-100);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 .lancamento__dados dt {
@@ -2068,15 +2259,15 @@ input[type='date']::-webkit-date-and-time-value {
 .lancamento__pergunta {
   margin: 0;
   color: var(--c-700);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 .lancamento__alvo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding: 12px 14px;
+  gap: var(--esp-12);
+  margin-bottom: var(--esp-14);
+  padding: var(--esp-12) var(--esp-14);
   border-radius: var(--r-2);
   background-color: var(--c-50);
 }
@@ -2096,7 +2287,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .lancamento__alvo-quando {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
 }
 
 .lancamento__alvo-valor {
@@ -2111,8 +2302,8 @@ input[type='date']::-webkit-date-and-time-value {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 76px auto;
   align-items: end;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--esp-8);
+  margin-bottom: var(--esp-10);
 }
 
 .edicao-item > .campo {
@@ -2121,7 +2312,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .edicao-item__mais {
-  margin-bottom: 12px;
+  margin-bottom: var(--esp-12);
 }
 
 /* Da altura do campo ao lado, para o texto ficar na mesma linha dele. */
@@ -2130,12 +2321,12 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .tabela__aviso {
-  padding: 40px 24px;
+  padding: var(--esp-40) var(--esp-24);
   border: 1px solid var(--borda);
   border-radius: var(--r-2);
   background-color: var(--superficie);
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   text-align: center;
   box-shadow: var(--sombra-cartao);
 }
@@ -2143,9 +2334,9 @@ input[type='date']::-webkit-date-and-time-value {
 /* "Tem agora 12 un → vai ficar com 10": o antes e o depois de um
    lançamento de estoque, para ela conferir o número antes de gravar. */
 .ajuste__atual {
-  margin: 12px 0;
+  margin: var(--esp-12) 0;
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 .ajuste__atual strong {
@@ -2159,21 +2350,21 @@ input[type='date']::-webkit-date-and-time-value {
 
 .etiqueta {
   display: inline-block;
-  padding: 1px 7px;
+  padding: 1px var(--esp-8);
   border: 1px solid var(--borda);
   border-radius: var(--r-1);
   background-color: var(--c-50);
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
   font-weight: 500;
   white-space: nowrap;
 }
 
 .alerta {
-  padding: 9px 12px;
+  padding: var(--esp-8) var(--esp-12);
   border: 1px solid var(--borda);
   border-radius: var(--r-1);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
 }
 
 .alerta--erro {
@@ -2202,21 +2393,21 @@ input[type='date']::-webkit-date-and-time-value {
    mínimo. O que separa aceso de apagado é a pastilha branca e o peso. */
 .seletor-periodo {
   display: flex;
-  gap: 2px;
-  padding: 2px;
+  gap: var(--esp-2);
+  padding: var(--esp-2);
   border: none;
-  border-radius: 9px;
+  border-radius: calc(var(--r-1) + var(--esp-2)); /* o de dentro + o recuo: curvas paralelas */
   background-color: var(--segmentado-fundo);
 }
 
 .seletor-periodo__item {
-  padding: 5px 11px;
+  padding: var(--esp-4) var(--esp-12);
   border: none;
-  border-radius: 7px;
+  border-radius: var(--r-1);
   background: none;
   color: var(--c-700);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -2247,16 +2438,24 @@ input[type='date']::-webkit-date-and-time-value {
    ===================================================================== */
 
 .modal {
+  /* Rolar até o fim da janela não continua rolando a tela de trás. */
+  overscroll-behavior: contain;
   position: fixed;
   inset: 0;
   z-index: 50;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 32px 24px;
+  padding: var(--esp-32) var(--esp-24);
   background-color: var(--veu-modal);
   backdrop-filter: saturate(160%) blur(12px);
   overflow-y: auto;
+}
+
+/* Recebe o foco ao abrir (para o leitor de tela ler o título), mas não
+   é um controle: sem anel em volta da janela inteira. */
+.modal__caixa:focus {
+  outline: none;
 }
 
 .modal__caixa {
@@ -2272,8 +2471,8 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: var(--esp-12);
+  padding: var(--esp-16) var(--esp-20);
   border-bottom: 1px solid var(--borda);
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
@@ -2282,7 +2481,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .modal__titulo {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--fs-16);
   font-weight: 600;
   letter-spacing: var(--tr-titulo);
 }
@@ -2301,7 +2500,7 @@ input[type='date']::-webkit-date-and-time-value {
   border-radius: 50%;
   background-color: var(--c-100);
   color: var(--c-700);
-  font-size: 1.25rem;
+  font-size: var(--fs-20);
   line-height: 1;
   cursor: pointer;
 }
@@ -2324,7 +2523,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .modal__corpo {
-  padding: 20px;
+  padding: var(--esp-20);
 }
 
 /* =====================================================================
@@ -2343,7 +2542,7 @@ input[type='date']::-webkit-date-and-time-value {
 .acoes {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
+  gap: var(--esp-10);
 }
 
 /* O botão é uma FICHA: o ícone no alto, e embaixo o que ela faz, quanto
@@ -2355,10 +2554,10 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--esp-2);
   min-width: 0;
   min-height: var(--altura, 92px);
-  padding: 16px;
+  padding: var(--esp-16);
   border: 1px solid var(--borda-casa);
   border-radius: var(--r-3);
   background: var(--degrade-suave);
@@ -2383,15 +2582,15 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .cartao-acao__rotulo {
-  margin-top: 12px;
+  margin-top: var(--esp-12);
   color: var(--texto);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 600;
   line-height: 1.3;
 }
 
 .cartao-acao__valor {
-  font-size: 1.5rem;
+  font-size: var(--fs-24);
   font-weight: 700;
   letter-spacing: var(--tr-numero);
   line-height: 1.15;
@@ -2399,7 +2598,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .cartao-acao__rodape {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
 }
 
 /* Venda ocupa a linha: é o que ela repete dez vezes por dia. Além do
@@ -2431,7 +2630,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .cartao-acao--grande .cartao-acao__valor {
-  font-size: 2rem;
+  font-size: var(--fs-32);
 }
 
 .cartao-acao--medio {
@@ -2446,8 +2645,8 @@ input[type='date']::-webkit-date-and-time-value {
   --altura: 68px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 8px;
+  gap: var(--esp-8);
+  padding: var(--esp-12) var(--esp-8);
 }
 
 .cartao-acao--pequeno .cartao-acao__selo {
@@ -2477,7 +2676,7 @@ input[type='date']::-webkit-date-and-time-value {
 .inicio {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--esp-16);
   height: 100%;
 }
 
@@ -2501,8 +2700,11 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 @media (min-width: 901px) {
+  /* Os cartões ocupam a altura que sobra — até 640px. Num notebook isso
+     nunca chega (sobram ~520); num monitor alto, sem o teto, o cartão de
+     Venda virava um retrato de 600 × 900. */
   .acoes {
-    max-height: none;
+    max-height: 640px;
     grid-template-rows: 1fr 1fr minmax(74px, 0.42fr);
   }
 
@@ -2517,7 +2719,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 @media (min-width: 1100px) {
   .acoes {
-    gap: 14px;
+    gap: var(--esp-14);
   }
 
   /* Tela larga: Venda deixa de ser uma faixa e vira um bloco de meia
@@ -2528,7 +2730,7 @@ input[type='date']::-webkit-date-and-time-value {
     grid-column: span 3;
     grid-row: span 2;
     --altura: 100%;
-    padding: 24px;
+    padding: var(--esp-24);
   }
 
   .cartao-acao--grande .cartao-acao__valor {
@@ -2536,12 +2738,12 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--grande .cartao-acao__rotulo {
-    font-size: 1.0625rem;
+    font-size: var(--fs-17);
   }
 
   .cartao-acao--medio {
     --altura: 0;
-    padding: 18px 20px;
+    padding: var(--esp-20);
   }
 
   /* Aqui sobra largura: ícone e rótulo lado a lado, alinhados à
@@ -2550,8 +2752,8 @@ input[type='date']::-webkit-date-and-time-value {
     --altura: 74px;
     flex-direction: row;
     justify-content: flex-start;
-    gap: 12px;
-    padding: 14px 18px;
+    gap: var(--esp-12);
+    padding: var(--esp-14) var(--esp-16);
   }
 
   .cartao-acao--pequeno .cartao-acao__rotulo {
@@ -2583,13 +2785,13 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 6px;
+  gap: var(--esp-12);
+  margin-bottom: var(--esp-6);
 }
 
 .recentes__titulo {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--fs-17);
   font-weight: 700;
   letter-spacing: var(--tr-titulo);
 }
@@ -2597,7 +2799,7 @@ input[type='date']::-webkit-date-and-time-value {
 .recentes__ver {
   position: relative;
   color: var(--marca-rosa-texto);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 500;
   text-decoration: none;
 }
@@ -2616,15 +2818,15 @@ input[type='date']::-webkit-date-and-time-value {
 .recentes__lista {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px 20px;
+  gap: var(--esp-12) var(--esp-20);
 }
 
 .recente {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--esp-12);
   min-width: 0;
-  padding: 8px 0;
+  padding: var(--esp-8) 0;
 }
 
 .recente__textos {
@@ -2645,18 +2847,18 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .recente__titulo {
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 600;
 }
 
 .recente__detalhe {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
 }
 
 .recente__valor {
   flex: 0 0 auto;
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -2686,9 +2888,9 @@ input[type='date']::-webkit-date-and-time-value {
 .grade-produtos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
-  gap: 8px;
+  gap: var(--esp-8);
   max-height: 44vh;
-  margin-bottom: 16px;
+  margin-bottom: var(--esp-16);
   overflow-y: auto;
 }
 
@@ -2709,9 +2911,9 @@ input[type='date']::-webkit-date-and-time-value {
 .doce__toque {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--esp-8);
   width: 100%;
-  padding: 10px;
+  padding: var(--esp-10);
   border: none;
   border-radius: var(--r-2);
   background: none;
@@ -2741,18 +2943,18 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .doce__nome {
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 500;
   line-height: 1.25;
 }
 
 .doce__preco {
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 600;
 }
 
 .doce__estoque {
-  font-size: 0.6875rem;
+  font-size: var(--fs-12);
   color: var(--texto-suave);
 }
 
@@ -2765,13 +2967,13 @@ input[type='date']::-webkit-date-and-time-value {
   bottom: 6px;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--esp-4);
   height: 24px;
-  padding: 0 3px;
+  padding: 0 var(--esp-4);
   border-radius: var(--r-1);
   background-color: var(--acao);
   color: var(--c-0);
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
   font-weight: 600;
 }
 
@@ -2782,10 +2984,10 @@ input[type='date']::-webkit-date-and-time-value {
   width: 18px;
   height: 18px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--r-0);
   background-color: var(--sobre-acao-realce);
   color: var(--c-0);
-  font-size: 0.9rem;
+  font-size: var(--fs-14);
   line-height: 1;
   cursor: pointer;
 }
@@ -2797,8 +2999,8 @@ input[type='date']::-webkit-date-and-time-value {
 .barra-confirmar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-top: 14px;
+  gap: var(--esp-14);
+  padding-top: var(--esp-14);
   border-top: 1px solid var(--borda);
 }
 
@@ -2809,7 +3011,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .barra-confirmar__itens {
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
   color: var(--texto-suave);
 }
 
@@ -2823,13 +3025,13 @@ input[type='date']::-webkit-date-and-time-value {
   position: relative;
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--esp-8);
   padding: 0;
   border: none;
   background: none;
   color: var(--texto);
   font-family: inherit;
-  font-size: 1.5rem;
+  font-size: var(--fs-24);
   font-weight: 600;
   letter-spacing: var(--tr-numero);
   line-height: 1.1;
@@ -2848,7 +3050,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .barra-confirmar__editar {
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
   font-weight: 500;
   letter-spacing: 0;
   color: var(--texto-suave);
@@ -2870,13 +3072,13 @@ input[type='date']::-webkit-date-and-time-value {
 .total-editavel {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
+  gap: var(--esp-4);
   border-bottom: 2px solid var(--acao);
 }
 
 .total-editavel__moeda {
   color: var(--texto-suave);
-  font-size: 1rem;
+  font-size: var(--fs-16);
   font-weight: 500;
 }
 
@@ -2887,7 +3089,7 @@ input[type='date']::-webkit-date-and-time-value {
   background: none;
   color: var(--texto);
   font-family: inherit;
-  font-size: 1.5rem;
+  font-size: var(--fs-24);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tr-numero);
@@ -2908,14 +3110,14 @@ input[type='date']::-webkit-date-and-time-value {
    ===================================================================== */
 
 .valor {
-  margin-bottom: 14px;
+  margin-bottom: var(--esp-14);
   text-align: center;
 }
 
 .valor__rotulo {
   display: block;
-  margin-bottom: 3px;
-  font-size: 0.6875rem;
+  margin-bottom: var(--esp-4);
+  font-size: var(--fs-12);
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -2926,12 +3128,12 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 5px;
+  gap: var(--esp-4);
 }
 
 .valor__moeda {
   color: var(--texto-suave);
-  font-size: 1.25rem;
+  font-size: var(--fs-20);
   font-weight: 500;
 }
 
@@ -2943,7 +3145,7 @@ input[type='date']::-webkit-date-and-time-value {
   background: none;
   color: var(--texto);
   font-family: inherit;
-  font-size: 2.5rem;
+  font-size: var(--fs-40);
   font-weight: 600;
   letter-spacing: var(--tr-numero);
 }
@@ -2979,7 +3181,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* 2px a mais: o espaço do cursor depois do último dígito. */
 .dinheiro-justo__medida {
-  padding-right: 2px;
+  padding-right: var(--esp-2);
   visibility: hidden;
   white-space: pre;
 }
@@ -2987,18 +3189,18 @@ input[type='date']::-webkit-date-and-time-value {
 .atalhos-valor {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: var(--esp-6);
+  margin-bottom: var(--esp-14);
 }
 
 .atalho-valor {
-  min-height: 34px;
+  min-height: var(--altura-p);
   border: 1px solid var(--borda);
   border-radius: var(--r-1);
   background-color: var(--superficie);
   color: var(--texto-suave);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   font-weight: 500;
   cursor: pointer;
 }
@@ -3012,19 +3214,19 @@ input[type='date']::-webkit-date-and-time-value {
 .formas {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 5px 0 16px;
+  gap: var(--esp-6);
+  margin: var(--esp-4) 0 var(--esp-16);
 }
 
 .forma {
   flex: 1 0 auto;
-  padding: 9px 13px;
+  padding: var(--esp-8) var(--esp-12);
   border: 1px solid var(--borda);
   border-radius: var(--r-1);
   background-color: var(--superficie);
   color: var(--texto-suave);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 500;
   cursor: pointer;
 }
@@ -3047,25 +3249,25 @@ input[type='date']::-webkit-date-and-time-value {
 
 .total-previa,
 .previsao {
-  padding: 12px 14px;
+  padding: var(--esp-12) var(--esp-14);
   border: 1px solid var(--borda);
   border-radius: var(--r-2);
   background-color: var(--c-50);
 }
 
 .total-previa {
-  margin: 16px 0 14px;
-  font-size: 1rem;
+  margin: var(--esp-16) 0 var(--esp-14);
+  font-size: var(--fs-16);
   font-weight: 500;
 }
 
 .previsao {
-  margin: 14px 0;
+  margin: var(--esp-14) 0;
 }
 
 .previsao__titulo {
-  margin: 0 0 6px;
-  font-size: 0.6875rem;
+  margin: 0 0 var(--esp-6);
+  font-size: var(--fs-12);
   font-weight: 600;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -3074,14 +3276,14 @@ input[type='date']::-webkit-date-and-time-value {
 
 .previsao__lista {
   margin: 0;
-  padding-left: 18px;
-  font-size: 0.875rem;
+  padding-left: var(--esp-16);
+  font-size: var(--fs-14);
 }
 
 .previsao__aviso {
-  margin: 0 0 10px;
+  margin: 0 0 var(--esp-10);
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
 }
 
 .fechamento__falta {
@@ -3114,7 +3316,7 @@ input[type='date']::-webkit-date-and-time-value {
 .bloco__titulo {
   margin: 0;
   color: var(--texto);
-  font-size: 1.0625rem;
+  font-size: var(--fs-17);
   font-weight: 700;
   letter-spacing: var(--tr-titulo);
 }
@@ -3124,8 +3326,8 @@ input[type='date']::-webkit-date-and-time-value {
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 6px 14px;
-  margin-bottom: 12px;
+  gap: var(--esp-6) var(--esp-14);
+  margin-bottom: var(--esp-12);
 }
 
 /* Um estado ao lado dos chips ("Dia fechado"): mesma altura, mas não é
@@ -3134,11 +3336,11 @@ input[type='date']::-webkit-date-and-time-value {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 12px;
-  font-size: 0.875rem;
+  gap: var(--esp-6);
+  height: var(--altura-m);
+  padding: 0 var(--esp-12);
+  border-radius: var(--r-2);
+  font-size: var(--fs-14);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -3161,7 +3363,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .extrato__total-nota {
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
 }
 
 /* Linhas de uma conta: o nome à esquerda, o valor à direita, um fio
@@ -3173,10 +3375,10 @@ input[type='date']::-webkit-date-and-time-value {
 .conta-linhas > div {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
-  padding: 10px 0;
+  gap: var(--esp-16);
+  padding: var(--esp-10) 0;
   border-top: 1px solid var(--c-200);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 .conta-linhas dt {
@@ -3208,19 +3410,19 @@ input[type='date']::-webkit-date-and-time-value {
 .fechar {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
+  gap: var(--esp-28);
 }
 
 .fechar__principal {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--esp-14);
 }
 
 /* O esperado é o bloco cinza da tela: o número grande e, embaixo, a conta
    que chegou nele. */
 .fechar__conta {
-  padding: 18px 20px 8px;
+  padding: var(--esp-16) var(--esp-20) var(--esp-8);
   border: 1px solid var(--borda-casa);
   border-radius: var(--r-2);
   background: var(--degrade-suave);
@@ -3229,13 +3431,13 @@ input[type='date']::-webkit-date-and-time-value {
 .fechar__rotulo {
   margin: 0;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 500;
 }
 
 .fechar__esperado {
-  margin: 2px 0 12px;
-  font-size: 2.25rem;
+  margin: var(--esp-2) 0 var(--esp-12);
+  font-size: var(--fs-32);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -3244,14 +3446,14 @@ input[type='date']::-webkit-date-and-time-value {
 .fechar__nota {
   margin: 0;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
 }
 
 .fechar__form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 6px;
+  gap: var(--esp-12);
+  padding-top: var(--esp-6);
 }
 
 .fechar__form .valor,
@@ -3264,7 +3466,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .fechar__historico .bloco__titulo {
-  margin-bottom: 4px;
+  margin-bottom: var(--esp-4);
 }
 
 /* A diferença em palavras, com o ícone e a cor do estado — nunca só a
@@ -3272,11 +3474,11 @@ input[type='date']::-webkit-date-and-time-value {
 .veredito {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--esp-10);
   margin: 0;
-  padding: 12px 14px;
+  padding: var(--esp-12) var(--esp-14);
   border-radius: var(--r-2);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 500;
 }
 
@@ -3304,13 +3506,13 @@ input[type='date']::-webkit-date-and-time-value {
 .resumo {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--esp-16);
 }
 
 .resumo__rotulo {
   margin: 0;
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 500;
 }
 
@@ -3330,33 +3532,33 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .resumo__explica {
-  margin: 4px 0 0;
+  margin: var(--esp-4) 0 0;
   color: var(--texto-suave);
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
 }
 
 .resumo__grade {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
-  margin-top: 6px;
+  gap: var(--esp-28);
+  margin-top: var(--esp-6);
 }
 
 .resumo__lado {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: var(--esp-28);
 }
 
 .resumo__bloco > .bloco__titulo {
-  margin-bottom: 10px;
+  margin-bottom: var(--esp-10);
 }
 
 .resumo__vazio {
   margin: 0;
-  padding: 20px 0;
+  padding: var(--esp-20) 0;
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
 }
 
 /* Como receberam: nome e valor em cima, a fatia do total embaixo — o
@@ -3364,7 +3566,7 @@ input[type='date']::-webkit-date-and-time-value {
 .formas-pagamento {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--esp-14);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3373,8 +3575,8 @@ input[type='date']::-webkit-date-and-time-value {
 .forma-pagamento {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px 12px;
-  font-size: 0.9375rem;
+  gap: var(--esp-6) var(--esp-12);
+  font-size: var(--fs-15);
 }
 
 .forma-pagamento__valor {
@@ -3386,7 +3588,7 @@ input[type='date']::-webkit-date-and-time-value {
 .forma-pagamento__fatia {
   display: inline-block;
   min-width: 3.2em;
-  margin-left: 8px;
+  margin-left: var(--esp-8);
   color: var(--texto-suave);
   font-weight: 400;
   text-align: right;
@@ -3395,16 +3597,16 @@ input[type='date']::-webkit-date-and-time-value {
 .forma-pagamento__trilho {
   grid-column: 1 / -1;
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--r-0);
   background-color: var(--ok-fundo);
 }
 
 .forma-pagamento__barra {
   display: block;
   height: 100%;
-  border-radius: 3px;
+  border-radius: var(--r-0);
   background-color: var(--ok);
-  transition: width 360ms var(--curva-entra);
+  transition: width var(--dur-4) var(--curva-entra);
 }
 
 /* ---------- Gráfico de colunas por dia ----------
@@ -3418,7 +3620,7 @@ input[type='date']::-webkit-date-and-time-value {
 .grafico {
   --grafico-altura: 180px;
   display: flex;
-  gap: 8px;
+  gap: var(--esp-8);
 }
 
 .grafico__eixo {
@@ -3427,7 +3629,7 @@ input[type='date']::-webkit-date-and-time-value {
   width: 52px;
   height: var(--grafico-altura);
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -3492,7 +3694,7 @@ input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--r-1);
   background: none;
   color: inherit;
   font: inherit;
@@ -3503,11 +3705,11 @@ input[type='date']::-webkit-date-and-time-value {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 2px;
+  gap: var(--esp-2);
   height: var(--grafico-altura);
   padding: 0 14%;
-  border-radius: 8px 8px 0 0;
-  transition: background-color 150ms ease-out;
+  border-radius: var(--r-1) var(--r-1) 0 0;
+  transition: background-color var(--dur-2) ease-out;
 }
 
 /* O dia apontado ganha um véu por trás das barras: ela vê que o toque
@@ -3520,8 +3722,8 @@ input[type='date']::-webkit-date-and-time-value {
   flex: 0 1 24px;
   min-width: 2px;
   max-width: 24px;
-  border-radius: 4px 4px 0 0;
-  transition: height 360ms var(--curva-entra);
+  border-radius: var(--r-0) var(--r-0) 0 0;
+  transition: height var(--dur-4) var(--curva-entra);
 }
 
 .grafico__barra--venda,
@@ -3540,14 +3742,14 @@ input[type='date']::-webkit-date-and-time-value {
   height: 26px;
   overflow: visible;
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
   line-height: 26px;
   text-align: center;
   white-space: nowrap;
 }
 
 .grafico__dias--denso .grafico__rotulo {
-  font-size: 0.6875rem;
+  font-size: var(--fs-12);
 }
 
 /* A dica do dia: o valor em destaque, o nome da série depois, e um traço
@@ -3558,15 +3760,15 @@ input[type='date']::-webkit-date-and-time-value {
   z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--esp-4);
   min-width: 150px;
-  padding: 9px 12px;
+  padding: var(--esp-8) var(--esp-12);
   border: 1px solid var(--borda);
-  border-radius: 10px;
+  border-radius: var(--r-1);
   background-color: var(--superficie);
   box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.2);
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   text-align: left;
   white-space: nowrap;
   pointer-events: none;
@@ -3599,18 +3801,18 @@ input[type='date']::-webkit-date-and-time-value {
   display: inline-block;
   width: 10px;
   height: 3px;
-  margin-right: 6px;
-  border-radius: 2px;
+  margin-right: var(--esp-6);
+  border-radius: var(--r-0);
   vertical-align: middle;
 }
 
 .grafico__legenda {
   display: flex;
-  gap: 14px;
+  gap: var(--esp-14);
   margin: 0;
   padding: 0;
   color: var(--texto-suave);
-  font-size: 0.8125rem;
+  font-size: var(--fs-13);
   list-style: none;
 }
 
@@ -3618,22 +3820,22 @@ input[type='date']::-webkit-date-and-time-value {
   display: inline-block;
   width: 10px;
   height: 10px;
-  margin-right: 6px;
-  border-radius: 2px;
+  margin-right: var(--esp-6);
+  border-radius: var(--r-0);
 }
 
 /* Os números do gráfico, para quem não aponta nem vê a cor. */
 .grafico__tabela {
-  margin-top: 8px;
+  margin-top: var(--esp-8);
 }
 
 .grafico__tabela summary {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--esp-8);
   min-height: 44px;
   color: var(--marca-rosa-texto);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 600;
   cursor: pointer;
   list-style: none;
@@ -3651,7 +3853,7 @@ input[type='date']::-webkit-date-and-time-value {
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(-45deg);
-  transition: transform 200ms var(--curva-entra);
+  transition: transform var(--dur-2) var(--curva-entra);
 }
 
 .grafico__tabela[open] summary::after {
@@ -3661,12 +3863,12 @@ input[type='date']::-webkit-date-and-time-value {
 .tabela-simples {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
 }
 
 .tabela-simples th,
 .tabela-simples td {
-  padding: 8px 0;
+  padding: var(--esp-8) 0;
   border-bottom: 1px solid var(--c-100);
   text-align: right;
 }
@@ -3693,13 +3895,13 @@ input[type='date']::-webkit-date-and-time-value {
   .fechar {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
-    gap: 40px;
+    gap: var(--esp-40);
   }
 
   .resumo__grade {
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
     align-items: start;
-    gap: 40px;
+    gap: var(--esp-40);
   }
 
   /* O Resumo e o Fechar dia CABEM na tela, como o Início e o Caixa: a
@@ -3718,7 +3920,7 @@ input[type='date']::-webkit-date-and-time-value {
     flex-wrap: wrap;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 12px 24px;
+    gap: var(--esp-12) var(--esp-24);
   }
 
   .pagina-resumo > .resumo {
@@ -3729,7 +3931,7 @@ input[type='date']::-webkit-date-and-time-value {
   .resumo__numeros {
     display: flex;
     align-items: center;
-    gap: 32px;
+    gap: var(--esp-32);
   }
 
   .resumo__numeros > .resumo__lucro {
@@ -3755,7 +3957,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .pagina-resumo .resumo__lado {
-    gap: 22px;
+    gap: var(--esp-24);
   }
 
   /* A altura do gráfico sai do espaço que sobrou (unidade de contêiner),
@@ -3763,11 +3965,16 @@ input[type='date']::-webkit-date-and-time-value {
   .grafico__caixa {
     flex: 1 1 auto;
     min-height: 150px;
+    /* O teto do gráfico (420) mais a faixa dos dias: a caixa para junto
+       com ele, e o "Ver os números de cada dia" fica logo embaixo. */
+    max-height: 448px;
     container-type: size;
   }
 
+  /* Até 420px: num monitor alto, a barra de um dia passava de 1000px, e
+     comparar dias exigia percorrer a tela de cima a baixo. */
   .grafico__caixa > .grafico {
-    --grafico-altura: max(110px, calc(100cqh - 28px));
+    --grafico-altura: clamp(110px, calc(100cqh - 28px), 420px);
   }
 
   /* Minha conta: a própria conta à esquerda, a Equipe à direita. A linha
@@ -3784,7 +3991,7 @@ input[type='date']::-webkit-date-and-time-value {
     grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
-    gap: 40px;
+    gap: var(--esp-40);
     min-height: 0;
   }
 
@@ -3796,7 +4003,7 @@ input[type='date']::-webkit-date-and-time-value {
   .perfil__grupo--rolavel > .perfil__lista {
     min-height: 0;
     margin: 0 -12px;
-    padding: 0 12px;
+    padding: 0 var(--esp-12);
     overflow-y: auto;
   }
 }
@@ -3804,16 +4011,16 @@ input[type='date']::-webkit-date-and-time-value {
 @media (max-width: 560px) {
   .grafico {
     --grafico-altura: 150px;
-    gap: 6px;
+    gap: var(--esp-6);
   }
 
   .grafico__eixo {
     width: 44px;
-    font-size: 0.6875rem;
+    font-size: var(--fs-12);
   }
 
   .fechar__esperado {
-    font-size: 2rem;
+    font-size: var(--fs-32);
   }
 }
 
@@ -3852,8 +4059,8 @@ input[type='date']::-webkit-date-and-time-value {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  padding: 48px 32px 24px;
+  gap: var(--esp-24);
+  padding: var(--esp-48) var(--esp-32) var(--esp-24);
 }
 
 .login__form {
@@ -3864,14 +4071,14 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .login__form > .campo {
-  margin-bottom: 14px;
+  margin-bottom: var(--esp-14);
 }
 
 /* A logo sozinha, sem moldura: ela já é redonda e tem a própria borda. */
 .login__medalha {
   display: flex;
   align-self: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--esp-12);
 }
 
 .login__medalha img {
@@ -3880,9 +4087,9 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .login__nome {
-  margin: 0 0 2px;
+  margin: 0 0 var(--esp-2);
   color: var(--marca-rosa-texto);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 700;
   text-align: center;
 }
@@ -3890,7 +4097,7 @@ input[type='date']::-webkit-date-and-time-value {
 .login__titulo {
   margin: 0;
   color: var(--texto);
-  font-size: 1.75rem;
+  font-size: var(--fs-28);
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.15;
@@ -3898,15 +4105,15 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .login__sub {
-  margin: 6px 0 24px;
+  margin: var(--esp-6) 0 var(--esp-24);
   color: var(--texto-suave);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   text-align: center;
 }
 
 /* Link de acesso que não vale mais: o motivo, entre o título e o botão. */
 .login__aviso {
-  margin: 16px 0 8px;
+  margin: var(--esp-16) 0 var(--esp-8);
 }
 
 /* O "Mostrar" mora dentro do campo da senha, à direita. */
@@ -3929,13 +4136,13 @@ input[type='date']::-webkit-date-and-time-value {
   right: 0;
   bottom: 0;
   min-width: 84px;
-  padding: 0 14px;
+  padding: 0 var(--esp-14);
   border: none;
   border-radius: 0 var(--r-1) var(--r-1) 0;
   background: none;
   color: var(--marca-rosa-texto);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--fs-14);
   font-weight: 600;
   cursor: pointer;
 }
@@ -3950,14 +4157,14 @@ input[type='date']::-webkit-date-and-time-value {
 
 .login__entrar {
   min-height: 48px;
-  margin-top: 10px;
-  font-size: 1rem;
+  margin-top: var(--esp-10);
+  font-size: var(--fs-16);
 }
 
 .login__rodape {
   margin: 0;
   color: var(--texto-suave);
-  font-size: 0.75rem;
+  font-size: var(--fs-12);
 }
 
 @media (max-width: 900px) {
@@ -3977,8 +4184,8 @@ input[type='date']::-webkit-date-and-time-value {
     z-index: 1;
     justify-content: flex-start;
     margin-top: -28px;
-    padding: 0 20px 20px;
-    border-radius: 24px 24px 0 0;
+    padding: 0 var(--esp-20) var(--esp-20);
+    border-radius: var(--r-4) var(--r-4) 0 0;
     background-color: var(--superficie);
   }
 
@@ -3998,15 +4205,34 @@ input[type='date']::-webkit-date-and-time-value {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--esp-12);
   min-height: 100vh;
   min-height: 100dvh;
   color: var(--texto-suave);
 }
 
+.pagina-erro {
+  padding: var(--esp-24);
+  text-align: center;
+}
+
+.pagina-erro__titulo {
+  margin: 0;
+  color: var(--texto);
+  font-size: var(--fs-24);
+  font-weight: 700;
+  letter-spacing: var(--tr-titulo);
+}
+
+.pagina-erro__texto {
+  max-width: 34ch;
+  margin: 0 0 var(--esp-8);
+  font-size: var(--fs-15);
+}
+
 .conteudo--atualizando {
   opacity: 0.5;
-  transition: opacity 0.12s ease-out;
+  transition: opacity var(--dur-1) ease-out;
 }
 
 /* =====================================================================
@@ -4016,11 +4242,11 @@ input[type='date']::-webkit-date-and-time-value {
 .marca {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--esp-8);
 }
 
 .app__topo .marca {
-  padding: 2px 8px 6px;
+  padding: var(--esp-2) var(--esp-8) var(--esp-6);
 }
 
 .marca__logo {
@@ -4030,7 +4256,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .marca__nome {
   color: var(--texto);
-  font-size: 0.9375rem;
+  font-size: var(--fs-15);
   font-weight: 600;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -4038,7 +4264,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 .marca--grande {
   flex-direction: column;
-  gap: 10px;
+  gap: var(--esp-10);
 }
 
 .marca--grande .marca__logo {
@@ -4046,7 +4272,7 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 .marca--grande .marca__nome {
-  font-size: 1.25rem;
+  font-size: var(--fs-20);
 }
 
 .icone {
@@ -4077,8 +4303,8 @@ input[type='date']::-webkit-date-and-time-value {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 7px 10px 7px 14px;
+    gap: var(--esp-12);
+    padding: var(--esp-8) var(--esp-10) var(--esp-8) var(--esp-14);
     border-right: none;
     border-bottom: 1px solid var(--borda);
   }
@@ -4141,7 +4367,7 @@ input[type='date']::-webkit-date-and-time-value {
      sobem junto e a lista ganha a altura toda; o cabeçalho do dia continua
      grudando no alto. */
   .extrato {
-    gap: 12px;
+    gap: var(--esp-12);
     height: auto;
   }
 
@@ -4152,22 +4378,22 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cabeca__titulo {
-    font-size: 1.75rem;
+    font-size: var(--fs-28);
   }
 
   /* Os chips vão de uma borda da tela à outra enquanto rolam, e começam
      alinhados com o resto do texto. */
   .extrato__chips {
     margin: -4px -14px;
-    padding: 4px 14px;
+    padding: var(--esp-4) var(--esp-14);
   }
 
   .extrato__resumo {
-    padding: 12px 14px;
+    padding: var(--esp-12) var(--esp-14);
   }
 
   .extrato__total-valor {
-    font-size: 1.125rem;
+    font-size: var(--fs-17);
   }
 
   /* O "grudar no alto" conta a partir do respiro do quadro que rola: com
@@ -4178,7 +4404,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .extrato__item {
-    gap: 12px;
+    gap: var(--esp-12);
   }
 
   .icone-aro {
@@ -4204,7 +4430,7 @@ input[type='date']::-webkit-date-and-time-value {
     position: absolute;
     top: 10px;
     left: 50%;
-    margin-left: 8px;
+    margin-left: var(--esp-8);
     min-width: 8px;
     height: 8px;
     padding: 0;
@@ -4234,7 +4460,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--pequeno .cartao-acao__rotulo {
-    font-size: 0.875rem;
+    font-size: var(--fs-14);
   }
 
   .nav {
@@ -4255,13 +4481,13 @@ input[type='date']::-webkit-date-and-time-value {
   .nav__item {
     flex: 1 1 0;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--esp-4);
     min-width: 0;
     min-height: var(--barra-baixo);
-    padding: 10px 2px 8px;
+    padding: var(--esp-10) var(--esp-2) var(--esp-8);
     border-radius: 0;
     color: var(--texto-suave);
-    font-size: 0.75rem;
+    font-size: var(--fs-12);
     font-weight: 600;
     letter-spacing: 0;
   }
@@ -4297,7 +4523,7 @@ input[type='date']::-webkit-date-and-time-value {
   .nav__marca {
     width: 36px;
     height: 4px;
-    border-radius: 0 0 4px 4px;
+    border-radius: 0 0 var(--r-0) var(--r-0);
     background: var(--degrade-traco);
     transform: translateX(calc(var(--marca-x) + var(--marca-w) / 2 - 18px));
   }
@@ -4311,7 +4537,7 @@ input[type='date']::-webkit-date-and-time-value {
   .app__conteudo {
     --respiro-topo: 16px;
     --avanco-barra: var(--barra-raio);
-    padding: var(--respiro-topo) 14px calc(20px + var(--avanco-barra));
+    padding: var(--respiro-topo) var(--esp-14) calc(var(--esp-20) + var(--avanco-barra));
   }
 
   .seletor-periodo {
@@ -4320,8 +4546,8 @@ input[type='date']::-webkit-date-and-time-value {
 
   .seletor-periodo__item {
     flex: 1;
-    padding: 6px 4px;
-    font-size: 0.75rem;
+    padding: var(--esp-6) var(--esp-4);
+    font-size: var(--fs-12);
     text-align: center;
   }
 
@@ -4336,7 +4562,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao {
-    padding: 16px;
+    padding: var(--esp-16);
   }
 
   /* Formulário mais apertado no celular. O respiro entre campos é o que
@@ -4344,15 +4570,15 @@ input[type='date']::-webkit-date-and-time-value {
      que empurra o botão de enviar para fora da tela, e aí ela não vê que
      existe um botão. */
   .campo {
-    margin-bottom: 11px;
+    margin-bottom: var(--esp-12);
   }
 
   .campo__rotulo {
-    margin-bottom: 4px;
+    margin-bottom: var(--esp-4);
   }
 
   .cartao__aviso {
-    margin-top: 10px;
+    margin-top: var(--esp-10);
   }
 
   /* O modal vira tela cheia: em 390px, margem lateral é espaço perdido. */
@@ -4368,7 +4594,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .modal__corpo {
-    padding: 16px;
+    padding: var(--esp-16);
   }
 }
 
@@ -4376,6 +4602,8 @@ input[type='date']::-webkit-date-and-time-value {
    a cliente errar o toque e desistir de lançar pelo celular. */
 @media (pointer: coarse) {
   .campo__entrada,
+  .chip,
+  .atalho-valor,
   .botao,
   .forma,
   .seletor-periodo__item,
@@ -4400,7 +4628,7 @@ input[type='date']::-webkit-date-and-time-value {
      meio dos formulários. Os 34px passam o mínimo de 24 da WCAG 2.5.8
      (AA); os 44 são recomendação de plataforma, não exigência. */
   .botao--texto {
-    min-height: 34px;
+    min-height: var(--altura-p);
   }
 
   .edicao-item__tirar {
@@ -4419,7 +4647,7 @@ input[type='date']::-webkit-date-and-time-value {
   .campo__entrada,
   .extrato__busca,
   .extrato__data .campo__entrada {
-    font-size: 1rem;
+    font-size: var(--fs-16);
   }
 }
 
@@ -4437,8 +4665,8 @@ input[type='date']::-webkit-date-and-time-value {
     flex-direction: row;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px;
-    padding-top: 10px;
+    gap: var(--esp-12);
+    padding-top: var(--esp-10);
     border-top: 1px solid var(--c-200);
   }
 }
@@ -4455,27 +4683,27 @@ input[type='date']::-webkit-date-and-time-value {
 @media (max-height: 640px) {
   .app__conteudo {
     --respiro-topo: 12px;
-    padding: var(--respiro-topo) 14px calc(16px + var(--avanco-barra, 0px));
+    padding: var(--respiro-topo) var(--esp-14) calc(var(--esp-16) + var(--avanco-barra, 0px));
   }
 
   .cabeca__titulo {
-    font-size: 1.5rem;
+    font-size: var(--fs-24);
   }
 
   .cabeca__sub {
-    font-size: 0.875rem;
+    font-size: var(--fs-14);
   }
 
   .inicio {
-    gap: 10px;
+    gap: var(--esp-10);
   }
 
   .acoes {
-    gap: 8px;
+    gap: var(--esp-8);
   }
 
   .cartao-acao {
-    padding: 10px 12px;
+    padding: var(--esp-10) var(--esp-12);
   }
 
   /* Tela baixa: o ícone sai de cima do texto e vai para o canto, menor.
@@ -4510,8 +4738,8 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--pequeno {
-    gap: 4px;
-    padding: 8px;
+    gap: var(--esp-4);
+    padding: var(--esp-8);
   }
 
   .cartao-acao--grande {
@@ -4519,7 +4747,7 @@ input[type='date']::-webkit-date-and-time-value {
   }
 
   .cartao-acao--grande .cartao-acao__valor {
-    font-size: 1.5rem;
+    font-size: var(--fs-24);
   }
 
   .cartao-acao--medio {
@@ -4532,8 +4760,8 @@ input[type='date']::-webkit-date-and-time-value {
 
   .nav__item {
     min-height: 56px;
-    padding-top: 8px;
-    padding-bottom: 6px;
+    padding-top: var(--esp-8);
+    padding-bottom: var(--esp-6);
   }
 }
 
@@ -4630,12 +4858,12 @@ input[type='date']::-webkit-date-and-time-value {
    sobra `transform` nenhum no elemento — um `transform` parado mudaria a
    referência dos elementos fixos e grudados dentro da tela. */
 .app__conteudo > :not(h1) {
-  animation: entra-subindo 300ms var(--curva-entra) backwards;
+  animation: entra-subindo var(--dur-3) var(--curva-entra) backwards;
 }
 
 /* Início: os cartões entram em cascata, na ordem de leitura. */
 .acoes > .cartao-acao {
-  animation: entra-subindo 420ms var(--curva-entra) backwards;
+  animation: entra-subindo var(--dur-4) var(--curva-entra) backwards;
 }
 
 .acoes > :nth-child(2) {
@@ -4660,7 +4888,7 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* O ícone do item que acabou de ficar ativo dá um realce. */
 .nav__item--ativo .icone {
-  animation: realca 380ms var(--curva-ios);
+  animation: realca var(--dur-4) var(--curva-ios);
 }
 
 /* ---------- Toque ----------
@@ -4683,13 +4911,13 @@ input[type='date']::-webkit-date-and-time-value {
 .opcao,
 .perfil__item,
 .botao-olho {
-  transition-duration: 200ms;
+  transition-duration: var(--dur-2);
   transition-property: background-color, border-color, color, box-shadow, transform, opacity;
   transition-timing-function: var(--curva-entra);
 }
 
 .nav__item .icone {
-  transition: color 200ms var(--curva-entra);
+  transition: color var(--dur-2) var(--curva-entra);
 }
 
 :is(
@@ -4705,20 +4933,20 @@ input[type='date']::-webkit-date-and-time-value {
     .botao-olho
   ):active:not(:disabled) {
   transform: scale(0.96);
-  transition-duration: 80ms;
+  transition-duration: var(--dur-1);
 }
 
 /* Os cartões grandes afundam menos: 4% de um cartão de 360px é um
    deslocamento que se vê como tremida, não como toque. */
 .cartao-acao:active {
   transform: scale(0.98);
-  transition-duration: 80ms;
+  transition-duration: var(--dur-1);
 }
 
 /* Linhas de lista não encolhem — escurecem, como nas listas do iPhone. */
 :is(.extrato__item, .opcao, .perfil__item):active {
   background-color: var(--marca-rosa-bruma);
-  transition-duration: 60ms;
+  transition-duration: var(--dur-1);
 }
 
 /* ---------- Seleção ---------- */
@@ -4727,7 +4955,7 @@ input[type='date']::-webkit-date-and-time-value {
    instante em que ligam. */
 .chip[aria-pressed='true'],
 .forma--ativa {
-  animation: aperta 280ms var(--curva-ios);
+  animation: aperta var(--dur-3) var(--curva-ios);
 }
 
 /* O visto da opção escolhida (Período) e o contador do doce na Venda
@@ -4735,12 +4963,12 @@ input[type='date']::-webkit-date-and-time-value {
    `key` e é outro elemento (ver VendaRapida.jsx). */
 .opcao .icone,
 .doce__contador {
-  animation: pula 300ms var(--curva-entra);
+  animation: pula var(--dur-3) var(--curva-entra);
 }
 
 .doce__contador strong {
   display: inline-block;
-  animation: aperta 220ms var(--curva-ios);
+  animation: aperta var(--dur-2) var(--curva-ios);
 }
 
 /* ---------- Valores e listas que mudam ---------- */
@@ -4748,33 +4976,33 @@ input[type='date']::-webkit-date-and-time-value {
 /* O valor do cartão do Início muda de `key` quando ela lança: o número
    novo sobe no lugar do antigo. */
 .cartao-acao__valor {
-  animation: numero-muda 360ms var(--curva-entra) backwards;
+  animation: numero-muda var(--dur-4) var(--curva-entra) backwards;
 }
 
 /* A quantidade de um item muda de `key` quando ela compra ou produz: o
    número novo sobe no lugar do antigo. */
 .item-linha__valor {
-  animation: numero-muda 360ms var(--curva-entra) backwards;
+  animation: numero-muda var(--dur-4) var(--curva-entra) backwards;
 }
 
 /* A lista do Caixa entra de novo a cada período ou chip. */
 .extrato__troca {
-  animation: aparece 260ms var(--curva-entra);
+  animation: aparece var(--dur-3) var(--curva-entra);
 }
 
 /* Aviso ("Venda alterada.") desce no lugar. */
 .alerta {
-  animation: desce 260ms var(--curva-entra);
+  animation: desce var(--dur-3) var(--curva-entra);
 }
 
 /* ---------- Janelas ---------- */
 
 .modal {
-  animation: aparece 200ms ease-out;
+  animation: aparece var(--dur-2) ease-out;
 }
 
 .modal__caixa {
-  animation: janela-entra 300ms var(--curva-ios);
+  animation: janela-entra var(--dur-3) var(--curva-ios);
 }
 
 @media (max-width: 900px) {

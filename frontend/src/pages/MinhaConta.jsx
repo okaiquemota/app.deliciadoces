@@ -17,6 +17,7 @@ import { equipe } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
 import { data as formatarData } from '../utils/formato.js';
 import { TEMAS, escolherTema, temaEscolhido } from '../utils/tema.js';
+import { Esqueleto } from '../components/Esqueleto.jsx';
 
 /**
  * Conta do usuário: nome, e-mail de acesso e senha.
@@ -520,7 +521,7 @@ function Equipe({ aoAviso }) {
           {erro}
         </p>
       )}
-      {pessoas === null && !erro && <p className="perfil__carregando">Carregando...</p>}
+      {pessoas === null && !erro && <Esqueleto linhas={2} rotulo="Carregando a equipe" />}
       {pessoas?.map((p) => (
         <Item
           key={p.id}

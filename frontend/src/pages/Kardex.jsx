@@ -34,6 +34,7 @@ import {
   quantidade,
   UNIDADE_CURTA,
 } from '../utils/formato.js';
+import { Esqueleto } from '../components/Esqueleto.jsx';
 
 /**
  * Kardex: o extrato do ESTOQUE, no mesmo desenho do Caixa.
@@ -404,11 +405,11 @@ export function Kardex() {
         </p>
       )}
 
-      <Resumo visiveis={visiveis} doItem={doItem} atual={atual} />
+      <Resumo visiveis={visiveis} doItem={doItem} atual={atual} carregando={linhas === null} />
 
       <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
         {linhas === null ? (
-          <p className="extrato__vazio">Carregando...</p>
+          <Esqueleto linhas={6} />
         ) : dias.length === 0 ? (
           <p className="extrato__vazio">
             {busca.trim()
@@ -487,14 +488,19 @@ export function Kardex() {
  * tem agora — as três colunas de um kardex. Olhando tudo, latas e
  * brigadeiros não se somam: aí são contagens do que aconteceu.
  */
-function Resumo({ visiveis, doItem, atual }) {
+function Resumo({ visiveis, doItem, atual, carregando }) {
   if (doItem) {
     const entrou = visiveis.reduce((s, a) => s + Math.max(a.delta, 0), 0);
     const saiu = visiveis.reduce((s, a) => s + Math.max(-a.delta, 0), 0);
     return (
       <div className="extrato__resumo">
-        <Total rotulo="Entrou" valor={quantidade(entrou, doItem.unidade)} tom="entrada" />
-        <Total rotulo="Saiu" valor={quantidade(saiu, doItem.unidade)} />
+        <Total
+          rotulo="Entrou"
+          valor={quantidade(entrou, doItem.unidade)}
+          tom="entrada"
+          carregando={carregando}
+        />
+        <Total rotulo="Saiu" valor={quantidade(saiu, doItem.unidade)} carregando={carregando} />
         <Total
           rotulo="Tem agora"
           valor={atual ? quantidade(atual.quantidadeAtual, atual.unidade) : '—'}
@@ -506,9 +512,9 @@ function Resumo({ visiveis, doItem, atual }) {
   const quantos = (tipo) => visiveis.filter((a) => a.tipo === tipo).length;
   return (
     <div className="extrato__resumo">
-      <Total rotulo="Lotes" valor={quantos('producao')} />
-      <Total rotulo="Vendas" valor={quantos('venda')} />
-      <Total rotulo="Perdas" valor={quantos('perda')} />
+      <Total rotulo="Lotes" valor={quantos('producao')} carregando={carregando} />
+      <Total rotulo="Vendas" valor={quantos('venda')} carregando={carregando} />
+      <Total rotulo="Perdas" valor={quantos('perda')} carregando={carregando} />
     </div>
   );
 }

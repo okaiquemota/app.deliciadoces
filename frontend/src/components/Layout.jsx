@@ -290,6 +290,11 @@ export function Layout() {
 
   return (
     <div className={recolhido ? 'app app--recolhida' : 'app'}>
+      {/* O primeiro Tab da página: leva direto à tela, sem passar pelos
+          itens do menu. Só aparece quando recebe o foco. */}
+      <a className="pular" href="#conteudo">
+        Pular para o conteúdo
+      </a>
       {/* `header` e não `div`: é o marco de cabeçalho da página, e sem ele
           a marca e a conta ficavam fora de qualquer marco — conteúdo que
           um leitor de tela não alcança pela navegação por regiões. */}
@@ -380,7 +385,7 @@ export function Layout() {
       </div>
 
       <div className="app__principal">
-        <main className="app__conteudo">
+        <main className="app__conteudo" id="conteudo" tabIndex={-1}>
           {/* O título fica DENTRO do `main`: fora dele era conteúdo sem
               marco, e é justamente por ele que quem usa leitor de tela
               percebe que a página mudou. */}

@@ -20,6 +20,7 @@ import {
   quandoPorExtenso,
   rotuloDoDia,
   rotuloDoPeriodo,
+  ValorCarregando,
 } from '../components/Extrato.jsx';
 import { despesas, produtos, vendas } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
@@ -30,6 +31,7 @@ import {
   quantidade,
   ROTULO_PAGAMENTO,
 } from '../utils/formato.js';
+import { Esqueleto } from '../components/Esqueleto.jsx';
 
 /**
  * Caixa: o extrato do dinheiro, no desenho do extrato dos apps de banco.
@@ -317,12 +319,14 @@ export function Caixa() {
           <div className="extrato__total">
             <span className="extrato__total-rotulo">Entrou</span>
             <span className="extrato__total-valor extrato__total-valor--entrada">
-              {moeda(totais.entrou)}
+              {lancamentos === null ? <ValorCarregando /> : moeda(totais.entrou)}
             </span>
           </div>
           <div className="extrato__total">
             <span className="extrato__total-rotulo">Saiu</span>
-            <span className="extrato__total-valor">{moeda(totais.saiu)}</span>
+            <span className="extrato__total-valor">
+              {lancamentos === null ? <ValorCarregando /> : moeda(totais.saiu)}
+            </span>
           </div>
           <div className="extrato__total">
             <span className="extrato__total-rotulo">Saldo</span>
@@ -333,7 +337,13 @@ export function Caixa() {
                   : 'extrato__total-valor'
               }
             >
-              {totais.saldo < 0 ? comSinal(-1, -totais.saldo) : moeda(totais.saldo)}
+              {lancamentos === null ? (
+                <ValorCarregando />
+              ) : totais.saldo < 0 ? (
+                comSinal(-1, -totais.saldo)
+              ) : (
+                moeda(totais.saldo)
+              )}
             </span>
           </div>
         </div>
@@ -341,7 +351,7 @@ export function Caixa() {
 
       <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
         {lancamentos === null ? (
-          <p className="extrato__vazio">Carregando...</p>
+          <Esqueleto linhas={6} />
         ) : dias.length === 0 ? (
           <p className="extrato__vazio">
             {busca.trim()

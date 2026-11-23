@@ -24,6 +24,7 @@ import {
   quantidade,
   UNIDADE_CURTA,
 } from '../utils/formato.js';
+import { Esqueleto } from '../components/Esqueleto.jsx';
 
 /**
  * Produção: os DOCES. A pergunta desta tela é "o que eu tenho para
@@ -134,18 +135,21 @@ export function Producao() {
       )}
 
       <div className={admin ? 'extrato__resumo' : 'extrato__resumo extrato__resumo--dois'}>
-        <Total rotulo="Doces" valor={todos.length} />
+        <Total carregando={catalogo === null} rotulo="Doces" valor={todos.length} />
         <Total
+          carregando={catalogo === null}
           rotulo="Acabando"
           valor={quantosAcabando}
           tom={quantosAcabando ? 'alerta' : undefined}
         />
-        {admin && <Total rotulo="Valor à venda" valor={moeda(valorAVenda)} />}
+        {admin && (
+          <Total carregando={catalogo === null} rotulo="Valor à venda" valor={moeda(valorAVenda)} />
+        )}
       </div>
 
       <div className={atualizando ? 'extrato__lista conteudo--atualizando' : 'extrato__lista'}>
         {catalogo === null ? (
-          <p className="extrato__vazio">Carregando...</p>
+          <Esqueleto linhas={4} />
         ) : todos.length === 0 ? (
           <div className="extrato__vazio">
             <p>Nenhum doce cadastrado ainda.</p>
