@@ -83,3 +83,6 @@ desktop.ini
 uploads/
 tmp/
 temp/
+
+# Prints do banner da feira (gerados por `npm run banner:prints`)
+banner-prints/

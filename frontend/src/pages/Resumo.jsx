@@ -317,8 +317,11 @@ function GraficoDias({ serie }) {
   const teto = tetoRedondo(maior);
   const marcas = [teto, teto / 2, 0];
   // Com um mês, rótulo em todo dia vira borrão: um por semana, e o último.
+  // O semanal some quando cai a menos de 3 dias do último: no dia 23, o
+  // "dom 22" e o "seg 23" ficavam um por cima do outro.
   const denso = serie.length > 10;
-  const mostraRotulo = (i) => !denso || i % 7 === 0 || i === serie.length - 1;
+  const ultimo = serie.length - 1;
+  const mostraRotulo = (i) => !denso || i === ultimo || (i % 7 === 0 && ultimo - i >= 3);
   const lado = (i) =>
     i < serie.length / 4 ? 'esquerda' : i >= (serie.length * 3) / 4 ? 'direita' : 'meio';
 
