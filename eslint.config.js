@@ -34,7 +34,7 @@ export default [
 
   // ------------------------------------------------------------- backend
   {
-    files: ['backend/**/*.js', 'api/**/*.mjs', '*.js'],
+    files: ['backend/**/*.js', 'api/**/*.mjs', 'scripts/**/*.mjs', '*.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
@@ -51,6 +51,15 @@ export default [
       eqeqeq: ['error', 'smart'],
       'no-var': 'error',
       'prefer-const': 'error',
+    },
+  },
+
+  // Scripts de apoio (prints do banner): rodam no Node, mas o que vai
+  // dentro de `page.evaluate` do Playwright roda no navegador.
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
     },
   },
 
