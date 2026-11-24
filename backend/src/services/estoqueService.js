@@ -145,6 +145,7 @@ export const estoqueService = {
       vendaId = null,
       producaoId = null,
       despesaId = null,
+      loteId = null,
       usuarioId = null,
       data = undefined,
     } = dados;
@@ -186,6 +187,7 @@ export const estoqueService = {
         vendaId,
         producaoId,
         despesaId,
+        loteId,
         usuarioId,
         ...(data ? { data } : {}),
       },
@@ -329,62 +331,232 @@ export const estoqueService = {
   },
 
   /**
-   * A validade do que ESTÁ NA PRATELEIRA, por ingrediente.
+   * As compras que ainda estão NA PRATELEIRA, por ingrediente.
    *
-   * O sistema não sabe de qual compra saiu cada uso: a saída não aponta
-   * para a entrada. A regra é a da confeitaria — o mais antigo sai
-   * primeiro. Então o que sobrou são as compras MAIS RECENTES, até somar
-   * o saldo de hoje; as mais velhas já foram usadas.
+   * O sistema não sabe de qual compra saiu cada uso: a saída da produção
+   * não aponta para a entrada. A regra é a da confeitaria — o mais antigo
+   * sai primeiro. Então o que sobrou são as compras MAIS RECENTES, até
+   * somar o saldo de hoje; as mais velhas já foram usadas.
    *
    * Com 3 latas compradas em setembro (vencem 10/10), 5 em outubro
-   * (vencem 20/11) e 4 no estoque, as 4 são de outubro: a data que
-   * importa é 20/11, e não a de setembro, que já acabou.
+   * (vencem 20/11) e 4 no estoque, as 4 são de outubro.
    *
-   * Devolve, por ingrediente, a data MAIS PRÓXIMA entre as compras na
-   * prateleira e quanto (estimado) vence nela. Compra sem validade ocupa
-   * lugar na prateleira mas não tem data para mostrar.
+   * A exceção é o DESCARTE: jogar fora um lote aponta para a compra dele
+   * (`loteId`), e o que foi descartado sai daquela compra, não da mais
+   * antiga. Antes, "perdi 3 latas" tirava as 3 da compra mais velha —
+   * quando a vencida era a mais nova, o aviso de vencido não sumia nunca.
+   *
+   * Cada linha: a compra (`id`), quando entrou, a validade, quanto entrou
+   * e quanto (estimado) `resta` dela.
    */
-  async validadesNaPrateleira() {
-    const lotes = await prisma.$queryRaw`
-      WITH compras AS (
-        SELECT m."insumoId", m.quantidade, m.validade, i."quantidadeAtual" AS saldo,
-               SUM(m.quantidade) OVER (
-                 PARTITION BY m."insumoId"
-                 ORDER BY m.data DESC, m."criadoEm" DESC, m.id DESC
-                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-               ) AS acumulado
+  async lotesNaPrateleira({ insumoId = null } = {}) {
+    const linhas = await prisma.$queryRaw`
+      WITH descartes AS (
+        SELECT "loteId", SUM(quantidade) AS q
+        FROM movimentacoes_estoque
+        WHERE "loteId" IS NOT NULL AND tipo = 'PERDA'
+        GROUP BY "loteId"
+      ),
+      compras AS (
+        SELECT m.id, m."insumoId", m."usuarioId", m.data, m."criadoEm", m.validade,
+               m.quantidade AS comprado,
+               GREATEST(m.quantidade - COALESCE(d.q, 0), 0) AS livre,
+               i."quantidadeAtual" AS saldo
         FROM movimentacoes_estoque m
         JOIN insumos i ON i.id = m."insumoId"
+        LEFT JOIN descartes d ON d."loteId" = m.id
         WHERE m.tipo = 'ENTRADA_COMPRA' AND i.ativo AND i."quantidadeAtual" > 0
+          ${insumoId ? Prisma.sql`AND m."insumoId" = ${insumoId}` : Prisma.empty}
+      ),
+      acumulado AS (
+        SELECT *, SUM(livre) OVER (
+                 PARTITION BY "insumoId"
+                 ORDER BY data DESC, "criadoEm" DESC, id DESC
+                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+               ) AS ate_aqui
+        FROM compras
       )
-      SELECT "insumoId", validade, LEAST(quantidade, saldo - (acumulado - quantidade)) AS resta
-      FROM compras
-      WHERE acumulado - quantidade < saldo AND validade IS NOT NULL
-      ORDER BY "insumoId", validade`;
+      SELECT id, "insumoId", "usuarioId", data, validade, comprado,
+             LEAST(livre, saldo - (ate_aqui - livre)) AS resta
+      FROM acumulado
+      WHERE livre > 0 AND ate_aqui - livre < saldo
+      ORDER BY "insumoId", validade NULLS LAST, data`;
 
     const hoje = colunaDoDia(diaDoCliente());
+    return linhas.map((l) => {
+      const dia = l.validade ? diaDaColuna(l.validade) : null;
+      // Dias em data cheia, do dia de Brasília: o que vence hoje continua
+      // "vence hoje" até a meia-noite, e não vira "vencido" à tarde.
+      const dias = dia ? Math.round((colunaDoDia(dia) - hoje) / DIA) : null;
+      return {
+        id: l.id,
+        insumoId: l.insumoId,
+        usuarioId: l.usuarioId,
+        data: l.data,
+        validade: dia,
+        dias,
+        vencido: dias !== null && dias < 0,
+        comprado: Number(l.comprado),
+        resta: Number(Number(l.resta).toFixed(3)),
+      };
+    });
+  },
+
+  /**
+   * A validade do que está na prateleira, por ingrediente: a data MAIS
+   * PRÓXIMA entre as compras que sobraram (ver `lotesNaPrateleira`) e
+   * quanto (estimado) vence nela. Compra sem validade ocupa lugar na
+   * prateleira mas não tem data para mostrar.
+   */
+  async validadesNaPrateleira() {
+    const lotes = await estoqueService.lotesNaPrateleira();
     const porInsumo = new Map();
     for (const l of lotes) {
-      const dia = diaDaColuna(l.validade);
+      if (!l.validade) continue;
       const atual = porInsumo.get(l.insumoId);
       // A lista vem da validade mais próxima para a mais longe: a primeira
       // de cada ingrediente é a que vale; outra compra com o MESMO dia soma.
-      if (atual && atual.validade !== dia) continue;
+      if (atual && atual.validade !== l.validade) continue;
       if (atual) {
-        atual.quantidade = Number((atual.quantidade + Number(l.resta)).toFixed(3));
+        atual.quantidade = Number((atual.quantidade + l.resta).toFixed(3));
         continue;
       }
-      // Dias em data cheia, do dia de Brasília: o que vence hoje continua
-      // "vence hoje" até a meia-noite, e não vira "vencido" à tarde.
-      const dias = Math.round((colunaDoDia(dia) - hoje) / DIA);
       porInsumo.set(l.insumoId, {
-        validade: dia,
-        dias,
-        vencido: dias < 0,
-        quantidade: Number(l.resta),
+        validade: l.validade,
+        dias: l.dias,
+        vencido: l.vencido,
+        quantidade: l.resta,
       });
     }
     return porInsumo;
+  },
+
+  /** Uma compra de ingrediente, ou 404. */
+  async compra(id) {
+    const mov = await prisma.movimentacaoEstoque.findUnique({
+      where: { id },
+      include: { insumo: { select: { nome: true, unidade: true } } },
+    });
+    if (!mov || mov.tipo !== 'ENTRADA_COMPRA' || !mov.insumoId) {
+      throw AppError.naoEncontrado('Compra não encontrada.');
+    }
+    return mov;
+  },
+
+  /**
+   * Joga fora (o que resta de) uma compra: a PERDA aponta para ela, e é
+   * dela que o estoque sai. Sem `quantidade`, descarta tudo o que resta.
+   */
+  async descartarLote(loteId, { quantidade = null, motivo = null } = {}, usuarioId = null) {
+    const lote = await estoqueService.compra(loteId);
+    const naPrateleira = (await estoqueService.lotesNaPrateleira({ insumoId: lote.insumoId })).find(
+      (l) => l.id === loteId
+    );
+    if (!naPrateleira || naPrateleira.resta <= 0) {
+      throw new AppError(
+        'Desta compra não sobrou nada no estoque: já foi usada ou descartada.',
+        422
+      );
+    }
+
+    const quanto = quantidade == null ? naPrateleira.resta : Number(quantidade);
+    if (!(quanto > 0)) throw new AppError('Informe quanto vai jogar fora.', 422);
+    if (quanto > naPrateleira.resta + 0.0005) {
+      const n = naPrateleira.resta.toLocaleString('pt-BR');
+      throw new AppError(
+        `Desta compra restam só ${n}. Se há mais do que isso para jogar fora, ` +
+          'use o Ajustar para corrigir a contagem.',
+        422
+      );
+    }
+
+    const porque =
+      motivo?.trim() ||
+      (naPrateleira.vencido
+        ? `Venceu em ${naPrateleira.validade.split('-').reverse().join('/')}`
+        : 'Descartado');
+
+    return prisma.$transaction((tx) =>
+      estoqueService.movimentar(tx, {
+        tipo: 'PERDA',
+        insumoId: lote.insumoId,
+        quantidade: quanto,
+        motivo: porque,
+        loteId,
+        usuarioId,
+      })
+    );
+  },
+
+  /** Joga fora, de uma vez, tudo o que está vencido de um ingrediente. */
+  async descartarVencidos(insumoId, usuarioId = null) {
+    const vencidos = (await estoqueService.lotesNaPrateleira({ insumoId })).filter(
+      (l) => l.vencido
+    );
+    if (!vencidos.length) throw new AppError('Nada vencido no estoque deste ingrediente.', 422);
+
+    return prisma.$transaction(async (tx) => {
+      const feitos = [];
+      for (const l of vencidos) {
+        feitos.push(
+          await estoqueService.movimentar(tx, {
+            tipo: 'PERDA',
+            insumoId,
+            quantidade: l.resta,
+            motivo: `Venceu em ${l.validade.split('-').reverse().join('/')}`,
+            loteId: l.id,
+            usuarioId,
+          })
+        );
+      }
+      return { descartados: feitos.length, quantidade: vencidos.reduce((s, l) => s + l.resta, 0) };
+    });
+  },
+
+  /** Corrige a validade digitada errada numa compra. `null` tira a data. */
+  async corrigirValidade(loteId, validade) {
+    await estoqueService.compra(loteId);
+    return prisma.movimentacaoEstoque.update({ where: { id: loteId }, data: { validade } });
+  },
+
+  /**
+   * Desfaz uma compra lançada por engano: tira do saldo o que ela pôs.
+   *
+   * Descartes feitos dessa compra ficam (o que foi pro lixo, foi), só
+   * deixam de apontar para ela. O custo médio volta a ser o das compras
+   * que continuam na prateleira — sem isso, uma compra com preço errado
+   * deixava o custo dos doces errado para sempre.
+   */
+  async desfazerCompra(id) {
+    const compra = await estoqueService.compra(id);
+    await prisma.$transaction(async (tx) => {
+      await tx.movimentacaoEstoque.delete({ where: { id } });
+      await tx.insumo.update({
+        where: { id: compra.insumoId },
+        data: { quantidadeAtual: { decrement: Number(compra.quantidade) } },
+      });
+    });
+
+    const restantes = await estoqueService.lotesNaPrateleira({ insumoId: compra.insumoId });
+    const comCusto = await prisma.movimentacaoEstoque.findMany({
+      where: { id: { in: restantes.map((l) => l.id) }, custoUnitario: { gt: 0 } },
+      select: { id: true, custoUnitario: true },
+    });
+    const custos = new Map(comCusto.map((c) => [c.id, Number(c.custoUnitario)]));
+    let qtd = 0;
+    let valor = 0;
+    for (const l of restantes) {
+      if (!custos.has(l.id)) continue;
+      qtd += l.resta;
+      valor += l.resta * custos.get(l.id);
+    }
+    if (qtd > 0) {
+      await prisma.insumo.update({
+        where: { id: compra.insumoId },
+        data: { custoUnitario: (valor / qtd).toFixed(4) },
+      });
+    }
+    return compra;
   },
 
   /** Itens abaixo do mínimo — a cliente já ficou sem ingrediente várias vezes. */

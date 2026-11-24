@@ -610,6 +610,10 @@ function FormularioLote({ catalogo, produtoInicial, aoFechar, aoSalvar }) {
     };
   }, [produtoId, n]);
 
+  // Doce com receita: os ingredientes saem dela, no servidor. Antes a
+  // tela decidia pela prévia, que só existe depois de digitar quantos fez
+  // — e até lá dizia "este doce não tem receita" de um doce que tem.
+  const doceTemReceita = Boolean(doce?.rendimentoReceita);
   const temReceita = previsao.length > 0;
   const saldoDe = (id) => Number(listaInsumos.find((i) => i.id === id)?.quantidadeAtual ?? 0);
 
@@ -626,7 +630,7 @@ function FormularioLote({ catalogo, produtoInicial, aoFechar, aoSalvar }) {
         produtoId,
         quantidade: n,
         // Sem receita, manda o que ela informou na mão (pode ser nada).
-        ...(temReceita
+        ...(temReceita || doceTemReceita
           ? {}
           : {
               insumos: manuais
@@ -703,6 +707,13 @@ function FormularioLote({ catalogo, produtoInicial, aoFechar, aoSalvar }) {
                 );
               })}
             </ul>
+          </div>
+        ) : doceTemReceita ? (
+          <div className="previsao">
+            <h3 className="previsao__titulo">Vai usar (pela receita)</h3>
+            <p className="previsao__aviso">
+              Diga quantos fez e aparecem aqui os ingredientes que saem do Estoque.
+            </p>
           </div>
         ) : (
           <div className="previsao">

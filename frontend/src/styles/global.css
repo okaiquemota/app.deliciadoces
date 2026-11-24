@@ -2072,6 +2072,13 @@ input[type='date']::-webkit-date-and-time-value {
 }
 
 /* "Ver entradas e saídas no Kardex": link de texto, com a seta. */
+/* "Jogar fora o vencido": a ação que o vermelho da linha pedia, sem
+   precisar adivinhar que mora no Ajustar. */
+.detalhe__descartar {
+  width: 100%;
+  margin-top: var(--esp-6);
+}
+
 .detalhe__kardex {
   display: flex;
   align-items: center;

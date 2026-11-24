@@ -276,6 +276,13 @@ model MovimentacaoEstoque {
   validade      DateTime?        // preenchida nas entradas de compra
   motivo        String?          // obrigatório na aplicação quando tipo = PERDA ou AJUSTE
 
+  // Descarte de um lote específico: a PERDA aponta para a compra
+  // (ENTRADA_COMPRA) de onde saiu. Sem isso, jogar fora o creme de leite
+  // vencido tirava do estoque "o mais antigo" — que nem sempre é o
+  // vencido — e o aviso de vencido não sumia nunca. Apagar a compra não
+  // apaga o descarte: ele só deixa de apontar para ela.
+  loteId     String?
+
   // Rastreabilidade: de onde essa movimentação nasceu
   vendaId    String?
   producaoId String?
@@ -291,7 +298,11 @@ model MovimentacaoEstoque {
   despesa  Despesa?  @relation(fields: [despesaId], references: [id], onDelete: Cascade)
   usuario  Usuario?  @relation(fields: [usuarioId], references: [id])
 
+  lote      MovimentacaoEstoque?  @relation("DescarteDoLote", fields: [loteId], references: [id], onDelete: SetNull)
+  descartes MovimentacaoEstoque[] @relation("DescarteDoLote")
+
   @@index([data])
+  @@index([loteId])
   @@index([insumoId])
   @@index([produtoId])
   @@index([tipo])

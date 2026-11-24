@@ -31,8 +31,23 @@ export function errorHandler(erro, _req, res, _next) {
   // 2) Erros conhecidos do Prisma, traduzidos para algo legível
   if (erro instanceof Prisma.PrismaClientKnownRequestError) {
     if (erro.code === 'P2002') {
-      const campos = erro.meta?.target?.join?.(', ') ?? 'campo único';
-      return res.status(409).json({ erro: `Já existe um registro com este ${campos}.` });
+      // Com o driver adapter, o Prisma nem sempre diz o campo: a mensagem
+      // vinha "Já existe um registro com este campo único.", que não diz
+      // o que fazer. O modelo basta para falar a língua dela.
+      const porModelo = {
+        Insumo: 'Já existe um ingrediente com esse nome. Procure por ele na lista do Estoque.',
+        Produto: 'Já existe um doce com esse nome. Procure por ele na lista da Produção.',
+        Usuario: 'Esse e-mail ou usuário já é de outra pessoa da equipe.',
+        FechamentoDiario: 'Este dia já foi fechado.',
+      };
+      const campos = erro.meta?.target?.join?.(', ');
+      return res.status(409).json({
+        erro:
+          porModelo[erro.meta?.modelName] ??
+          (campos
+            ? `Já existe um registro com este ${campos}.`
+            : 'Já existe um registro igual a este.'),
+      });
     }
     if (erro.code === 'P2025') {
       return res.status(404).json({ erro: 'Registro não encontrado.' });
