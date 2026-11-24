@@ -18,7 +18,13 @@ import {
 } from '../components/EstoqueComum.jsx';
 import { estoque, insumos } from '../services/recursos.js';
 import { mensagemDeErro } from '../services/api.js';
-import { data as formatarData, moeda, quantidade, UNIDADE_CURTA } from '../utils/formato.js';
+import {
+  data as formatarData,
+  moeda,
+  paraInput,
+  quantidade,
+  UNIDADE_CURTA,
+} from '../utils/formato.js';
 import { Esqueleto } from '../components/Esqueleto.jsx';
 
 const UNIDADES = Object.entries(UNIDADE_CURTA).map(([valor, rotulo]) => ({
@@ -223,6 +229,7 @@ export function Estoque() {
           aoComprar={doDetalhe(setComprando)}
           aoAjustar={doDetalhe(setAjustando)}
           aoEditar={doDetalhe(setEditando)}
+          aoMudou={concluir(setAberto)}
         />
       )}
       {editando && (
@@ -306,8 +313,42 @@ function LinhaInsumo({ insumo: i, aoAbrir, aoComprar }) {
  * que se sabe dele — validade, custo, aviso, fornecedor. As ações ficam
  * no pé, com a compra (a mais comum) no lugar do polegar.
  */
-function DetalheInsumo({ insumo: i, aoFechar, aoComprar, aoAjustar, aoEditar }) {
+function DetalheInsumo({ insumo: i, aoFechar, aoComprar, aoAjustar, aoEditar, aoMudou }) {
   const { admin } = useAuth();
+  const [lotes, setLotes] = useState(null);
+  const [lote, setLote] = useState(null);
+  const [jogandoVencidos, setJogandoVencidos] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    insumos
+      .lotes(i.id)
+      .then((l) => vivo && setLotes(l))
+      .catch(() => vivo && setLotes([]));
+    return () => {
+      vivo = false;
+    };
+  }, [i.id]);
+
+  const vencidos = (lotes ?? []).filter((l) => l.vencido);
+  // Lista as compras quando há validade a acompanhar: sem data em nenhuma,
+  // ela não diz nada que o número grande já não diga.
+  const mostrarLotes = (lotes ?? []).some((l) => l.validade) || i.controlaValidade;
+
+  if (lote) {
+    return <DetalheLote lote={lote} insumo={i} aoVoltar={() => setLote(null)} aoMudou={aoMudou} />;
+  }
+  if (jogandoVencidos) {
+    return (
+      <JogarForaVencidos
+        insumo={i}
+        vencidos={vencidos}
+        aoVoltar={() => setJogandoVencidos(false)}
+        aoMudou={aoMudou}
+      />
+    );
+  }
+
   const acabando = estaAcabando(i);
   const prazo = prazoDaValidade(i.validade);
   const custo = Number(i.custoUnitario);
@@ -361,7 +402,45 @@ function DetalheInsumo({ insumo: i, aoFechar, aoComprar, aoAjustar, aoEditar }) 
         {i.fornecedorPadrao && <Dado rotulo="Fornecedor">{i.fornecedorPadrao}</Dado>}
       </dl>
 
+      {mostrarLotes && lotes && lotes.length > 0 && (
+        <div className="opcoes__bloco">
+          <h3 className="opcoes__grupo">Na prateleira, por compra</h3>
+          <div className="opcoes" role="group" aria-label="Compras na prateleira">
+            {lotes.map((l) => {
+              const p = prazoDaValidade(l);
+              return (
+                <button key={l.id} type="button" className="opcao" onClick={() => setLote(l)}>
+                  <span className="opcao__textos">
+                    <span>
+                      {quantidade(l.resta, i.unidade)} · comprado {formatarData(l.data)}
+                    </span>
+                    <span className={p?.classe ? `opcao__nota ${p.classe}` : 'opcao__nota'}>
+                      {p ? p.texto : 'sem validade'}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <LinkKardex item={{ lado: 'insumo', id: i.id, nome: i.nome, unidade: i.unidade }} />
+
+      {vencidos.length > 0 && (
+        <button
+          type="button"
+          className="botao botao--perigo detalhe__descartar"
+          onClick={() => setJogandoVencidos(true)}
+        >
+          Jogar fora o vencido (
+          {quantidade(
+            vencidos.reduce((t, l) => t + l.resta, 0),
+            i.unidade
+          )}
+          )
+        </button>
+      )}
 
       <div className="modal__acoes">
         <button type="button" className="botao botao--auto" onClick={aoAjustar}>
@@ -374,6 +453,269 @@ function DetalheInsumo({ insumo: i, aoFechar, aoComprar, aoAjustar, aoEditar }) 
           Comprei
         </button>
       </div>
+    </Modal>
+  );
+}
+
+/** "20/11/2026" a partir de "2026-11-20". */
+const diaPorExtenso = (dia) => dia.split('-').reverse().join('/');
+
+/**
+ * Jogar fora tudo o que venceu de um ingrediente, de uma vez. Cada compra
+ * vencida vira uma perda apontando para ela, com o motivo já escrito.
+ */
+function JogarForaVencidos({ insumo: i, vencidos, aoVoltar, aoMudou }) {
+  const [erro, setErro] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+  const total = vencidos.reduce((t, l) => t + l.resta, 0);
+
+  async function confirmar() {
+    setOcupado(true);
+    setErro('');
+    try {
+      await insumos.descartarVencidos(i.id);
+      aoMudou(`${quantidade(total, i.unidade)} de ${i.nome} vencido saiu do estoque.`);
+    } catch (e) {
+      setErro(mensagemDeErro(e));
+      setOcupado(false);
+    }
+  }
+
+  return (
+    <Modal aberto aoFechar={aoVoltar} titulo="Jogar fora o vencido?" largura={440}>
+      <dl className="lancamento__dados">
+        <Dado rotulo="Vai sair">
+          {vencidos.map((l) => (
+            <span key={l.id} className="lancamento__item">
+              {quantidade(l.resta, i.unidade)} · venceu {diaPorExtenso(l.validade)}
+            </span>
+          ))}
+        </Dado>
+      </dl>
+      <p className="lancamento__pergunta">
+        {i.nome} fica com {quantidade(Number(i.quantidadeAtual) - total, i.unidade)}. A perda
+        aparece no Kardex como “venceu”.
+      </p>
+      {erro && (
+        <p className="alerta alerta--erro" role="alert">
+          {erro}
+        </p>
+      )}
+      <div className="modal__acoes">
+        <button type="button" className="botao botao--auto" onClick={aoVoltar}>
+          Voltar
+        </button>
+        <button
+          type="button"
+          className="botao botao--auto botao--perigo"
+          disabled={ocupado}
+          onClick={confirmar}
+        >
+          {ocupado ? 'Jogando fora...' : 'Jogar fora'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * Uma compra na prateleira. Daqui se resolve o que impedia de limpar o
+ * vencido: jogar fora ESTA compra (e não "a mais antiga"), corrigir a
+ * validade digitada errada, ou desfazer a compra lançada por engano.
+ */
+function DetalheLote({ lote: l, insumo: i, aoVoltar, aoMudou }) {
+  const { usuario, admin } = useAuth();
+  const [modo, setModo] = useState('ver');
+  const [qtd, setQtd] = useState(paraCampo(l.resta));
+  const [motivo, setMotivo] = useState('');
+  const [validade, setValidade] = useState(l.validade ?? '');
+  const [erro, setErro] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+  const p = prazoDaValidade(l);
+  // A mesma regra do Caixa: a funcionária desfaz a compra dela, do dia.
+  const podeDesfazer = admin || (l.usuarioId === usuario?.id && paraInput(l.data) === paraInput());
+
+  const trocar = (m) => {
+    setModo(m);
+    setErro('');
+  };
+
+  async function fazer(acao, mensagem) {
+    setOcupado(true);
+    setErro('');
+    try {
+      await acao();
+      aoMudou(mensagem);
+    } catch (e) {
+      setErro(mensagemDeErro(e));
+      setOcupado(false);
+    }
+  }
+
+  function jogarFora(e) {
+    e.preventDefault();
+    const n = lerNumero(qtd);
+    if (!(n > 0)) {
+      setErro('Informe quanto vai jogar fora.');
+      return;
+    }
+    fazer(
+      () => estoque.descartarLote(l.id, { quantidade: n, motivo: motivo.trim() || null }),
+      `${quantidade(n, i.unidade)} de ${i.nome} saiu do estoque.`
+    );
+  }
+
+  function salvarValidade(e) {
+    e.preventDefault();
+    fazer(
+      () => estoque.corrigirValidade(l.id, validade || null),
+      `Validade da compra de ${i.nome} corrigida.`
+    );
+  }
+
+  const titulo = {
+    ver: `Compra de ${i.nome}`,
+    jogar: 'Jogar fora desta compra',
+    validade: 'Corrigir a validade',
+    desfazer: 'Desfazer esta compra?',
+  }[modo];
+
+  const mensagemErro = erro && (
+    <p className="alerta alerta--erro" role="alert">
+      {erro}
+    </p>
+  );
+
+  return (
+    <Modal aberto aoFechar={aoVoltar} titulo={titulo} largura={460}>
+      {modo === 'ver' && (
+        <>
+          <dl className="lancamento__dados">
+            <Dado rotulo="Entrou">
+              {quantidade(l.comprado, i.unidade)} em {formatarData(l.data)}
+            </Dado>
+            <Dado rotulo="Resta (estimado)">{quantidade(l.resta, i.unidade)}</Dado>
+            <Dado rotulo="Validade">
+              {l.validade ? (
+                <>
+                  {diaPorExtenso(l.validade)}
+                  {p && <span className={p.classe}> · {p.texto}</span>}
+                </>
+              ) : (
+                'Não informada'
+              )}
+            </Dado>
+          </dl>
+          {mensagemErro}
+          <div className="modal__acoes modal__acoes--separadas">
+            {podeDesfazer && (
+              <button
+                type="button"
+                className="botao botao--auto botao--texto"
+                onClick={() => trocar('desfazer')}
+              >
+                Desfazer compra
+              </button>
+            )}
+            <button type="button" className="botao botao--auto" onClick={() => trocar('validade')}>
+              Corrigir data
+            </button>
+            <button
+              type="button"
+              className={l.vencido ? 'botao botao--auto botao--perigo' : 'botao botao--auto'}
+              onClick={() => trocar('jogar')}
+            >
+              Jogar fora
+            </button>
+          </div>
+        </>
+      )}
+
+      {modo === 'jogar' && (
+        <form onSubmit={jogarFora}>
+          <p className="ajuste__atual">
+            Desta compra restam <strong>{quantidade(l.resta, i.unidade)}</strong>
+          </p>
+          <Texto
+            rotulo={`Quanto vai jogar fora (${curta(i.unidade)})`}
+            type="text"
+            inputMode="decimal"
+            value={qtd}
+            onChange={(e) => {
+              setQtd(e.target.value);
+              setErro('');
+            }}
+            required
+            autoFocus
+          />
+          <Texto
+            rotulo="Por quê (opcional)"
+            placeholder={l.vencido ? `Venceu em ${diaPorExtenso(l.validade)}` : 'Ex.: estragou'}
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+          />
+          {mensagemErro}
+          <div className="modal__acoes">
+            <button type="button" className="botao botao--auto" onClick={() => trocar('ver')}>
+              Voltar
+            </button>
+            <button type="submit" className="botao botao--auto botao--perigo" disabled={ocupado}>
+              {ocupado ? 'Registrando...' : 'Jogar fora'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {modo === 'validade' && (
+        <form onSubmit={salvarValidade}>
+          <Texto
+            rotulo="Validade certa"
+            type="date"
+            value={validade}
+            onChange={(e) => {
+              setValidade(e.target.value);
+              setErro('');
+            }}
+            autoFocus
+          />
+          <p className="ajuste__atual">Deixe em branco se a compra não tem validade.</p>
+          {mensagemErro}
+          <div className="modal__acoes">
+            <button type="button" className="botao botao--auto" onClick={() => trocar('ver')}>
+              Voltar
+            </button>
+            <button type="submit" className="botao botao--primario botao--auto" disabled={ocupado}>
+              {ocupado ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {modo === 'desfazer' && (
+        <>
+          <p className="lancamento__pergunta">
+            A compra de {quantidade(l.comprado, i.unidade)} de {formatarData(l.data)} some do
+            estoque, como se não tivesse sido lançada. Use quando lançou por engano; para o que
+            estragou ou venceu, use Jogar fora.
+          </p>
+          {mensagemErro}
+          <div className="modal__acoes">
+            <button type="button" className="botao botao--auto" onClick={() => trocar('ver')}>
+              Voltar
+            </button>
+            <button
+              type="button"
+              className="botao botao--auto botao--perigo"
+              disabled={ocupado}
+              onClick={() =>
+                fazer(() => estoque.desfazerCompra(l.id), `Compra de ${i.nome} desfeita.`)
+              }
+            >
+              {ocupado ? 'Desfazendo...' : 'Desfazer compra'}
+            </button>
+          </div>
+        </>
+      )}
     </Modal>
   );
 }

@@ -14,6 +14,9 @@ export const insumos = {
   criar: (corpo) => dados(api.post('/insumos', corpo)),
   atualizar: (id, corpo) => dados(api.put(`/insumos/${id}`, corpo)),
   inativar: (id) => dados(api.delete(`/insumos/${id}`)),
+  /** As compras que ainda estão na prateleira, com validade e quanto resta. */
+  lotes: (id) => dados(api.get(`/insumos/${id}/lotes`)),
+  descartarVencidos: (id) => dados(api.post(`/insumos/${id}/descartar-vencidos`)),
 };
 
 export const produtos = {
@@ -29,6 +32,9 @@ export const estoque = {
   movimentacoes: (params) => dados(api.get('/estoque/movimentacoes', { params })),
   movimentar: (corpo) => dados(api.post('/estoque/movimentacoes', corpo)),
   alertas: () => dados(api.get('/estoque/alertas')),
+  descartarLote: (id, corpo = {}) => dados(api.post(`/estoque/lotes/${id}/descartar`, corpo)),
+  corrigirValidade: (id, validade) => dados(api.patch(`/estoque/lotes/${id}`, { validade })),
+  desfazerCompra: (id) => dados(api.delete(`/estoque/movimentacoes/${id}`)),
 };
 
 export const vendas = {

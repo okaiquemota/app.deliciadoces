@@ -221,3 +221,82 @@ describe('aviso do menu', () => {
     expect((await estoqueService.alertas()).validadeProxima).toHaveLength(0);
   });
 });
+
+describe('jogar fora um lote', () => {
+  it('descartar a compra vencida tira ELA da prateleira, mesmo sendo a mais nova', async () => {
+    // O caso que travava: a compra nova vence antes. "Perdi 3" tirava da
+    // compra antiga, e o vencido ficava na lista para sempre.
+    const i = await criarInsumo({ controlaValidade: true });
+    await comprar(i.id, 5, diaMais(50));
+    const vencida = await comprar(i.id, 3, diaMais(-2));
+
+    expect((await validadeDe(i.id)).vencido).toBe(true);
+
+    await estoqueService.descartarLote(vencida.id);
+
+    const v = await validadeDe(i.id);
+    expect(v.vencido).toBe(false);
+    expect(v.validade).toBe(diaMais(50));
+    expect(v.quantidade).toBe(5);
+    expect(Number((await prisma.insumo.findUnique({ where: { id: i.id } })).quantidadeAtual)).toBe(
+      5
+    );
+  });
+
+  it('descartar vencidos joga fora todos os vencidos de uma vez, com o motivo escrito', async () => {
+    const i = await criarInsumo({ controlaValidade: true });
+    await comprar(i.id, 2, diaMais(-10));
+    await comprar(i.id, 4, diaMais(30));
+    await comprar(i.id, 1, diaMais(-1));
+
+    const r = await estoqueService.descartarVencidos(i.id);
+    expect(r.descartados).toBe(2);
+
+    const lotes = await estoqueService.lotesNaPrateleira({ insumoId: i.id });
+    expect(lotes.map((l) => l.resta)).toEqual([4]);
+    const perdas = await prisma.movimentacaoEstoque.findMany({ where: { tipo: 'PERDA' } });
+    expect(perdas.every((p) => p.motivo.startsWith('Venceu em'))).toBe(true);
+  });
+
+  it('não deixa jogar fora mais do que resta da compra', async () => {
+    const i = await criarInsumo({ controlaValidade: true });
+    const c = await comprar(i.id, 3, diaMais(-1));
+    await expect(estoqueService.descartarLote(c.id, { quantidade: 4 })).rejects.toThrow(
+      /restam só/
+    );
+  });
+
+  it('compra já usada não tem o que descartar', async () => {
+    const i = await criarInsumo({ controlaValidade: true });
+    const velha = await comprar(i.id, 3, diaMais(-1));
+    await comprar(i.id, 3, diaMais(20));
+    await usar(i.id, 3);
+    await expect(estoqueService.descartarLote(velha.id)).rejects.toThrow(/não sobrou nada/);
+  });
+
+  it('corrigir a validade digitada errada tira o aviso', async () => {
+    const i = await criarInsumo({ controlaValidade: true });
+    const c = await comprar(i.id, 3, diaMais(-1));
+    await estoqueService.corrigirValidade(c.id, colunaDoDia(diaMais(40)));
+    expect((await validadeDe(i.id)).vencido).toBe(false);
+  });
+
+  it('desfazer compra devolve o saldo e o custo médio das que ficaram', async () => {
+    const i = await criarInsumo({ controlaValidade: true });
+    await comprar(i.id, 2, diaMais(30)); // custo 10
+    const errada = await prisma.$transaction((tx) =>
+      estoqueService.movimentar(tx, {
+        tipo: 'ENTRADA_COMPRA',
+        insumoId: i.id,
+        quantidade: 2,
+        custoUnitario: 1000,
+      })
+    );
+    await prisma.insumo.update({ where: { id: i.id }, data: { custoUnitario: 505 } });
+
+    await estoqueService.desfazerCompra(errada.id);
+    const depois = await prisma.insumo.findUnique({ where: { id: i.id } });
+    expect(Number(depois.quantidadeAtual)).toBe(2);
+    expect(Number(depois.custoUnitario)).toBe(10);
+  });
+});

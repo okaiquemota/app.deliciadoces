@@ -18,7 +18,8 @@
     "prisma:reset": "prisma migrate reset",
     "db:seed": "node prisma/seed.js",
     "db:seed:demo": "node prisma/seed-demo.js",
-    "db:seed:banner": "node prisma/seed-banner.js"
+    "db:seed:banner": "node prisma/seed-banner.js",
+    "db:seed:apresentacao": "node prisma/seed-apresentacao.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

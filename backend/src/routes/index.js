@@ -28,6 +28,8 @@ import {
   produtoUpdateSchema,
   fichaTecnicaSchema,
   movimentacaoSchema,
+  descarteSchema,
+  validadeLoteSchema,
   vendaSchema,
   despesaSchema,
   despesaUpdateSchema,
@@ -106,7 +108,19 @@ router.put(
 // ---------------------------------------------------------------- estoque
 router.get('/estoque/movimentacoes', estoqueController.listarMovimentacoes);
 router.post('/estoque/movimentacoes', validar(movimentacaoSchema), estoqueController.movimentar);
+router.delete('/estoque/movimentacoes/:id', estoqueController.desfazerCompra);
 router.get('/estoque/alertas', estoqueController.alertas);
+
+// Lote = uma compra de ingrediente. Jogar fora aponta para ela (ver
+// estoqueService.lotesNaPrateleira), senão o vencido nunca saía da lista.
+router.get('/insumos/:id/lotes', estoqueController.lotes);
+router.post('/insumos/:id/descartar-vencidos', estoqueController.descartarVencidos);
+router.post(
+  '/estoque/lotes/:id/descartar',
+  validar(descarteSchema),
+  estoqueController.descartarLote
+);
+router.patch('/estoque/lotes/:id', validar(validadeLoteSchema), estoqueController.corrigirValidade);
 router.post('/estoque/recalcular', soAdmin, estoqueController.recalcular);
 
 // ----------------------------------------------------------------- vendas

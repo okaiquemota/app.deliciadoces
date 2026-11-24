@@ -120,6 +120,27 @@ export const estoqueController = {
   async alertas(_req, res) {
     res.json(await estoqueService.alertas());
   },
+  async lotes(req, res) {
+    await insumoService.porId(req.params.id);
+    res.json(await estoqueService.lotesNaPrateleira({ insumoId: req.params.id }));
+  },
+  async descartarLote(req, res) {
+    res
+      .status(201)
+      .json(await estoqueService.descartarLote(req.params.id, req.body, req.usuario.id));
+  },
+  async descartarVencidos(req, res) {
+    res.status(201).json(await estoqueService.descartarVencidos(req.params.id, req.usuario.id));
+  },
+  async corrigirValidade(req, res) {
+    res.json(await estoqueService.corrigirValidade(req.params.id, req.body.validade));
+  },
+  /** Desfazer compra: a funcionária desfaz a dela, do dia (a regra do Caixa). */
+  async desfazerCompra(req, res) {
+    exigirProprioDeHoje(req.usuario, await estoqueService.compra(req.params.id));
+    await estoqueService.desfazerCompra(req.params.id);
+    res.status(204).end();
+  },
   async recalcular(req, res) {
     res.json(
       await estoqueService.recalcularSaldo({

@@ -156,31 +156,32 @@ Pedido da cliente: "Vai ter mais pessoas sim. [Restrição] somente na parte de 
 
 ## 6. Regras de Negócio
 
-| ID   | Regra                                                                                                                          |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------ |
-| RN01 | Toda venda é à vista. Não existe fiado, parcela ou sinal                                                                       |
-| RN02 | O preço do item é **congelado** no momento da venda: mudar o preço do produto depois não altera venda antiga                   |
-| RN03 | Venda cancelada **não é apagada**: a linha permanece marcada como cancelada e o estoque é devolvido                            |
-| RN04 | `quantidadeAtual` é cache do histórico de movimentações. Só o `estoqueService` escreve nesse campo, sempre dentro de transação |
-| RN05 | Uma movimentação se refere a **exatamente um** entre ingrediente e produto, nunca aos dois                                     |
-| RN06 | Perda e ajuste exigem motivo registrado                                                                                        |
-| RN07 | Retirada pessoal reduz o caixa mas **não** é custo do negócio: não entra no cálculo de lucro                                   |
-| RN08 | No fechamento diário, retirada pessoal **conta** como saída: da gaveta o dinheiro saiu de verdade                              |
-| RN09 | Só dinheiro vivo entra no cálculo do fechamento. Venda no Pix ou cartão não passa pela gaveta                                  |
-| RN10 | Despesa sem forma de pagamento informada é contada como dinheiro, e a tela informa quantas foram assumidas assim               |
-| RN11 | O dia abre com o saldo **contado** no dia anterior, não com o calculado                                                        |
-| RN12 | Entrada de dinheiro sem produto informado **não** movimenta estoque                                                            |
-| RN13 | Não é permitido informar produtos e valor avulso na mesma venda                                                                |
-| RN14 | Ingrediente e produto têm nome único: cadastro duplicado racharia o saldo em dois                                              |
-| RN15 | Cadastro não é excluído, é inativado, para não quebrar o histórico                                                             |
-| RN16 | O ingrediente mais antigo é usado primeiro: é por essa regra que o sistema estima a validade do que sobrou no estoque          |
-| RN17 | O ajuste de contagem guarda o sinal: a contagem que achou menos aparece como saída no histórico, não como entrada              |
-| RN18 | Retirada pessoal só a administração lança, e só ela converte uma saída em retirada                                             |
-| RN19 | O cadastro do doce (preço e receita) é da administração. O operador cadastra ingrediente, mas o custo só chega pelo "Comprei"  |
-| RN20 | Lançamento de operador é sempre de agora: a data enviada é ignorada, para ninguém lançar num dia já fechado                    |
-| RN21 | "Do dia" é o dia de Brasília. Lançamento de outro dia já entrou num fechamento, e só a administração o corrige                 |
-| RN22 | Ninguém é apagado da equipe: quem sai perde o acesso, e o histórico continua dizendo quem lançou cada coisa                    |
-| RN23 | A administração não tira o próprio acesso nem troca a própria senha pela Equipe (a senha dela se troca pedindo a atual)        |
+| ID    | Regra                                                                                                                                                                   |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RN01  | Toda venda é à vista. Não existe fiado, parcela ou sinal                                                                                                                |
+| RN02  | O preço do item é **congelado** no momento da venda: mudar o preço do produto depois não altera venda antiga                                                            |
+| RN03  | Venda cancelada **não é apagada**: a linha permanece marcada como cancelada e o estoque é devolvido                                                                     |
+| RN04  | `quantidadeAtual` é cache do histórico de movimentações. Só o `estoqueService` escreve nesse campo, sempre dentro de transação                                          |
+| RN05  | Uma movimentação se refere a **exatamente um** entre ingrediente e produto, nunca aos dois                                                                              |
+| RN06  | Perda e ajuste exigem motivo registrado                                                                                                                                 |
+| RN07  | Retirada pessoal reduz o caixa mas **não** é custo do negócio: não entra no cálculo de lucro                                                                            |
+| RN08  | No fechamento diário, retirada pessoal **conta** como saída: da gaveta o dinheiro saiu de verdade                                                                       |
+| RN09  | Só dinheiro vivo entra no cálculo do fechamento. Venda no Pix ou cartão não passa pela gaveta                                                                           |
+| RN10  | Despesa sem forma de pagamento informada é contada como dinheiro, e a tela informa quantas foram assumidas assim                                                        |
+| RN11  | O dia abre com o saldo **contado** no dia anterior, não com o calculado                                                                                                 |
+| RN12  | Entrada de dinheiro sem produto informado **não** movimenta estoque                                                                                                     |
+| RN13  | Não é permitido informar produtos e valor avulso na mesma venda                                                                                                         |
+| RN14  | Ingrediente e produto têm nome único: cadastro duplicado racharia o saldo em dois                                                                                       |
+| RN15  | Cadastro não é excluído, é inativado, para não quebrar o histórico                                                                                                      |
+| RN16  | O ingrediente mais antigo é usado primeiro: é por essa regra que o sistema estima a validade do que sobrou no estoque                                                   |
+| RN16a | Jogar fora uma compra (lote) aponta para ela: o descarte sai **daquela** compra, não da mais antiga. Sem isso, o vencido que era a compra mais nova nunca saía da lista |
+| RN17  | O ajuste de contagem guarda o sinal: a contagem que achou menos aparece como saída no histórico, não como entrada                                                       |
+| RN18  | Retirada pessoal só a administração lança, e só ela converte uma saída em retirada                                                                                      |
+| RN19  | O cadastro do doce (preço e receita) é da administração. O operador cadastra ingrediente, mas o custo só chega pelo "Comprei"                                           |
+| RN20  | Lançamento de operador é sempre de agora: a data enviada é ignorada, para ninguém lançar num dia já fechado                                                             |
+| RN21  | "Do dia" é o dia de Brasília. Lançamento de outro dia já entrou num fechamento, e só a administração o corrige                                                          |
+| RN22  | Ninguém é apagado da equipe: quem sai perde o acesso, e o histórico continua dizendo quem lançou cada coisa                                                             |
+| RN23  | A administração não tira o próprio acesso nem troca a própria senha pela Equipe (a senha dela se troca pedindo a atual)                                                 |
 
 ### 6.1 Sobre RN09 — por que só dinheiro vivo
 

@@ -96,6 +96,18 @@ export const movimentacaoSchema = z
     path: ['insumoId'],
   });
 
+// ------------------------------------------------------------------ lote
+/** Jogar fora (parte de) uma compra. Sem quantidade, vai tudo o que resta. */
+export const descarteSchema = z.object({
+  quantidade: numero(0.001).optional().nullable(),
+  motivo: z.string().trim().max(200).optional().nullable(),
+});
+
+/** Corrigir a validade de uma compra; `null` tira a data. */
+export const validadeLoteSchema = z.object({
+  validade: z.coerce.date().nullable(),
+});
+
 // ----------------------------------------------------------------- venda
 /**
  * Dois jeitos de registrar dinheiro entrando, e a validação aceita os dois:

@@ -658,7 +658,15 @@ function Detalhe({ a, doItem, aoFechar, aoMudar, aoVerItem }) {
   const doDia =
     lote && (admin || (lote.usuarioId === usuario?.id && paraInput(a.data) === paraInput()));
   const podeExcluirLote = !doItem && a.tipo === 'producao' && doDia;
+  // Compra lançada por engano: desfaz daqui. A funcionária, só a dela, do dia.
+  const podeDesfazerCompra =
+    a.tipo === 'compra' &&
+    m.insumo &&
+    (admin || (m.usuarioId === usuario?.id && paraInput(a.data) === paraInput()));
 
+  if (excluindo === 'compra') {
+    return <DesfazerCompra m={m} a={a} aoVoltar={() => setExcluindo(false)} aoMudar={aoMudar} />;
+  }
   if (excluindo) {
     return <ExcluirLote a={a} aoVoltar={() => setExcluindo(false)} aoMudar={aoMudar} />;
   }
@@ -752,6 +760,15 @@ function Detalhe({ a, doItem, aoFechar, aoMudar, aoVerItem }) {
             Excluir lote
           </button>
         )}
+        {podeDesfazerCompra && (
+          <button
+            type="button"
+            className="botao botao--auto botao--perigo"
+            onClick={() => setExcluindo('compra')}
+          >
+            Desfazer compra
+          </button>
+        )}
         {a.tipo === 'venda' && (
           <Link to="/caixa" className="botao botao--auto">
             Abrir o Caixa
@@ -766,6 +783,59 @@ function Detalhe({ a, doItem, aoFechar, aoMudar, aoVerItem }) {
             Ver o Kardex de {a.alvo.nome}
           </button>
         )}
+      </div>
+    </Modal>
+  );
+}
+
+/** Desfazer uma compra lançada por engano: o que ela pôs sai do estoque. */
+function DesfazerCompra({ m, a, aoVoltar, aoMudar }) {
+  const [erro, setErro] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+
+  async function desfazer() {
+    setOcupado(true);
+    setErro('');
+    try {
+      await estoque.desfazerCompra(m.id);
+      aoMudar('Compra desfeita.');
+    } catch (e) {
+      setErro(mensagemDeErro(e));
+      setOcupado(false);
+    }
+  }
+
+  return (
+    <Modal aberto aoFechar={aoVoltar} titulo="Desfazer esta compra?" largura={440}>
+      <div className="lancamento__alvo">
+        <span className="lancamento__alvo-textos">
+          <span className="lancamento__alvo-titulo">
+            {quantidade(m.quantidade, m.insumo?.unidade)} de {m.insumo?.nome}
+          </span>
+          <span className="lancamento__alvo-quando">{quandoPorExtenso(a.data)}</span>
+        </span>
+      </div>
+      <p className="lancamento__pergunta">
+        Sai do estoque como se não tivesse sido lançada. Para o que estragou ou venceu, use Jogar
+        fora no Estoque.
+      </p>
+      {erro && (
+        <p className="alerta alerta--erro" role="alert">
+          {erro}
+        </p>
+      )}
+      <div className="modal__acoes">
+        <button type="button" className="botao botao--auto" onClick={aoVoltar}>
+          Voltar
+        </button>
+        <button
+          type="button"
+          className="botao botao--auto botao--perigo"
+          disabled={ocupado}
+          onClick={desfazer}
+        >
+          {ocupado ? 'Desfazendo...' : 'Desfazer'}
+        </button>
       </div>
     </Modal>
   );
